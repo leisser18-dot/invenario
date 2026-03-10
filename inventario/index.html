@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fibex - Inventario </title>
+    <title>Fibex - IT Assets Pro v.5.6</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -41,7 +41,6 @@
         .charts-wrapper { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; margin-bottom: 10px; }
         .charts-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
         
-        /* ESTILO GRÁFICAS STOCKIT */
         .chart-card { 
             background: white; 
             padding: 15px; 
@@ -101,16 +100,13 @@
 
 <header>
     <div>
-        <h1 style="margin:0; font-size: 22px; font-weight: 700; letter-spacing: -0.5px;"> <img src="https://internetenmizona.com/wp-content/uploads/2022/10/Fibex-Modificado.png" style="height:90px" onerror="this.src='https://via.placeholder.com/80x40?text=FIBEX'"> <span style="font-weight: 300; color: var(--text-muted);"> </span></h1>
-        <p id="currentDate" style="margin:2px 0 0; color: var(--text-muted); font-size: 12px;"></p>
+        <h1 style="margin:0; font-size: 22px; font-weight: 700; letter-spacing: -0.5px;"> <img src="https://internetenmizona.com/wp-content/uploads/2022/10/Fibex-Modificado.png" style="height:90px" onerror="this.src='https://via.placeholder.com/80x40?text=FIBEX'"></h1>
+        <p id="currentDate" style="margin:2px 0 0; color: #666; font-size: 12px;"></p>
     </div>
     <div style="display:flex; align-items:center; gap:12px;">
         <div style="text-align:right">
             <div style="font-weight:600; font-size:19px">Inventario Departamento de Sistemas</div>
-            <div style="font-size:11px; color:var(--text-muted)">Valencia</div>
-        </div>
-        <div style="width:35px; height:35px; background:#ddd; border-radius:50%; overflow:hidden">
-            <img src="" style="width:100%">
+            <div style="font-size:11px; color:#666">Valencia</div>
         </div>
     </div> 
     <div style="display:flex; gap:8px;">
@@ -120,7 +116,6 @@
         <button class="btn" style="background:var(--green-excel)" onclick="exportarExcelConImagen()">📊 Excel</button>
         <button class="btn" style="background:var(--blue-fibex)" onclick="cargarDesdeNube()">🔄 Refrescar</button>
     </div>
-
 </header>
 
 <div class="dashboard">
@@ -129,8 +124,8 @@
         <div class="card" onclick="filtrarDesdeCard('LAPTOP')"><span>💻</span><h3>Laptop</h3><p id="tL">0</p></div>
         <div class="card" onclick="filtrarDesdeCard('CELULAR')"><span>📱</span><h3>Móvil</h3><p id="tC">0</p></div>
         <div class="card" onclick="filtrarDesdeCard('IMPRESORA')"><span>🖨️</span><h3>Impresoras</h3><p id="tI">0</p></div>
-        <div class="card" onclick="filtrarDesdeCard('AUTOPAGO')"><span>🏧</span><h3>Auto Pago</h3><p id="tA">0</p></div>
-        <div class="card alert" onclick="filtrarRepetidos()"><span>⚠️</span><h3>Duplicadoss</h3><p id="tRep">0</p></div>
+        <div class="card" onclick="filtrarDesdeCard('AUTOPAGO')"><span>🏧</span><h3>AutoPago</h3><p id="tA">0</p></div>
+        <div class="card alert" onclick="filtrarRepetidos()"><span>⚠️</span><h3>Duplicados</h3><p id="tRep">0</p></div>
 </div>
 
 <div style="display: flex; gap: 10px; margin-bottom: 8px; align-items: center;">
@@ -181,7 +176,7 @@
     let chartT = null, chartS = null;
     let SORT_COL = "";
     let SORT_ASC = true;
-	document.getElementById('currentDate').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', 	month: 'long', year: 'numeric' });
+
     const COLUMNAS_OFICIALES = [
         'usuario', 'ubicacion', 'sede', 'departamento', 'nombre_pc', 'os', 'cpu', 
         'memoria_gb', 'disco', 'tipo', 'marca', 'modelo', 'serial', 'v_android', 
@@ -207,7 +202,34 @@
 
         COLUMNAS_OFICIALES.forEach(c => { 
             if(c === 'last_update' || c === 'tipo') return;
-            if(['diadema', 'mouse', 'teclado', 'monitor', 'bolsos'].includes(c)) {
+
+            if (c === 'sede') {
+                html += `<select id="sede">
+                            <option value="" selected disabled>SELECCIONE SEDE</option>
+                            <option value="TORRE FIBEX">TORRE FIBEX</option>
+                            <option value="TORRE CRISTAL">TORRE CRISTAL</option>
+                            <option value="DISTELNET">DISTELNET</option>
+                            <option value="PASEO LAS INDUSTRIAS">PASEO LAS INDUSTRIAS</option>
+                            <option value="METROPOLIS VALENCIA">METROPOLIS VALENCIA</option>
+                            <option value="METROPOLIS BARQUISIMETO">METROPOLIS BARQUISIMETO</option>
+                            <option value="AGROPECUARIA SIERRA MORANA">AGROPECUARIA SIERRA MORANA</option>
+                            <option value="ALIANZA MALL">ALIANZA MALL</option>
+                            <option value="AUTOCLUB BARCELONA">AUTOCLUB BARCELONA</option>
+                            <option value="CENTRO AUTOMOTRIZ CAGUA">CENTRO AUTOMOTRIZ CAGUA</option>
+                            <option value="CENTRO AUTOMOTRIZ VALLE DE LA PASCUA">CENTRO AUTOMOTRIZ VALLE DE LA PASCUA</option>
+                            <option value="CENTRO DE EXPERIENCIA">CENTRO DE EXPERIENCIA</option>
+                            <option value="CC SAMBIL">CC SAMBIL</option>
+                         </select>`;
+            } 
+            // MODIFICACIÓN CAMPO OS - SELECCIÓN DE SISTEMA OPERATIVO
+            else if (c === 'os') {
+                html += `<select id="os">
+                            <option value="" selected disabled>SELECCIONE OS</option>
+                            <option value="WINDOWS 10 PRO">WINDOWS 10 PRO</option>
+                            <option value="WINDOWS 11 PRO">WINDOWS 11 PRO</option>
+                         </select>`;
+            }
+            else if(['diadema', 'mouse', 'teclado', 'monitor', 'bolsos'].includes(c)) {
                 html += `<select id="${c}" onchange="togglePeriferico('${c}', this.value)"><option value="NO">${c.toUpperCase()}: NO</option><option value="SI">${c.toUpperCase()}: SI</option></select>`;
             } else if(c.startsWith('f_asig_')) {
                 html += `<input type="date" id="${c}" title="${c.toUpperCase()}" disabled>`;
@@ -225,7 +247,8 @@
         COLUMNAS_OFICIALES.forEach(c => {
             const el = document.getElementById(c);
             if(el) {
-                el.value = (el.tagName === 'SELECT' && el.id !== 'tipo') ? 'NO' : "";
+                // Ajustado para que 'sede', 'os' y 'tipo' limpien al valor vacío (placeholder)
+                el.value = (el.tagName === 'SELECT' && !['tipo', 'sede', 'os'].includes(el.id)) ? 'NO' : "";
                 if(c.startsWith('f_asig_')) el.disabled = true;
             }
         });
@@ -274,6 +297,20 @@
                 eq[c] = el.type === 'date' ? formatToMMDDYY(el.value) : el.value.toUpperCase();
             }
         });
+
+        const serialAValidar = (eq.serial || "").trim().toUpperCase();
+        if (serialAValidar !== "" && serialAValidar !== "S/N" && serialAValidar !== "N/A" && serialAValidar !== "-") {
+            const duplicado = DATA_LOCAL.find(item => 
+                item.id !== eq.id && 
+                String(item.serial || "").trim().toUpperCase() === serialAValidar
+            );
+            if (duplicado) {
+                alert(`⚠️ ERROR: El serial "${serialAValidar}" ya existe en el sistema.\nAsignado a: ${duplicado.usuario || 'Sin usuario'}`);
+                overlay.style.display = 'none';
+                return;
+            }
+        }
+
         if (document.getElementById('tipo').value === 'IMPRESORA') {
             eq['modelo'] = `${document.getElementById('modelo').value} - ${document.getElementById('conexion').value} - ${document.getElementById('consumible').value}`;
         }
@@ -324,22 +361,10 @@
         overlay.style.display='none';
     }
 
-    function limpiarFechaISO(valor) {
-        if (!valor || typeof valor !== 'string') return valor;
-        if (valor.includes('T') && valor.includes('Z')) {
-            const d = new Date(valor);
-            if (!isNaN(d.getTime())) {
-                return `${d.getUTCDate()}/${d.getUTCMonth() + 1}/${d.getUTCFullYear()}`;
-            }
-        }
-        return valor;
-    }
-
     function renderizarTable() {
         const tbody = document.getElementById('cuerpo');
         const headerRow = document.getElementById('header_cols');
         const buscar = document.getElementById('busqueda').value.toUpperCase();
-        
         const ignorarEnTabla = ['diadema', 'mouse', 'teclado', 'monitor'];
         
         tbody.innerHTML = '';
@@ -350,24 +375,13 @@
 
         COLUMNAS_OFICIALES.forEach(c => { 
             if(c !== 'tipo' && !ignorarEnTabla.includes(c)) {
-                let txt = c.toUpperCase();
-                if (c === 'teclado_modelo') txt = 'MODELO</br>TECLADO';
-                else if (c === 'mouse_modelo') txt = 'MODELO</br>MOUSE';
-                else if (c === 'monitor_modelo') txt = 'MODELO</br>MONITOR';
-                else if (c === 'f_asig_diadema') txt = 'FECHA ASIGNACION</br>DIADEMA';
-                else if (c === 'f_asig_mouse') txt = 'FECHA ASIGNACION</br>MOUSE';
-                else if (c === 'f_asig_teclado') txt = 'FECHA ASIGNACION</br>TECLADO';
-                else if (c === 'f_asig_monitor') txt = 'FECHA ASIGNACION</br>MONITOR';
-                else if (c === 'f_asig_bolsos') txt = 'FECHA ASIGNACION</br>BOLSOS';
-                
+                let txt = c.toUpperCase().replace('_', ' ');
                 let click = sortables.includes(c) ? `onclick="ordenarPor('${c}')"` : "";
-                let indicator = sortables.includes(c) ? " ↕" : "";
-                headerRow.innerHTML += `<th style="width:140px" ${click}>${txt}${indicator}</th>`; 
+                headerRow.innerHTML += `<th style="width:140px" ${click}>${txt} ↕</th>`; 
                 colsVisiblesCount++;
             }
         });
         headerRow.innerHTML += '<th class="sticky-action">GESTIÓN</th>';
-        
         document.getElementById('info_span_tech').colSpan = colsVisiblesCount;
 
         let filtrados = DATA_LOCAL.filter(eq => {
@@ -383,64 +397,14 @@
             COLUMNAS_OFICIALES.forEach(c => { 
                 if(c !== 'tipo' && !ignorarEnTabla.includes(c)) {
                     let v = eq[c] || '-';
-                    if(c.startsWith('f_asig_') || c === 'last_update') {
-                        v = limpiarFechaISO(v);
-                    }
-                    if(eq.tipo === 'IMPRESORA' && eq.modelo && eq.modelo.includes(' - ')) {
-                        const p = eq.modelo.split(' - ');
-                        if(c==='modelo') v=p[0]; if(c==='os') v=p[1]; if(c==='cpu') v=p[2];
-                    }
                     html += `<td>${v}</td>`; 
                 }
             });
-            html += `<td class="sticky-action">
-                        <button class="btn-edit" onclick="prepararEdicion('${eq.id}')">EDITAR</button>
-                     </td>`;
+            html += `<td class="sticky-action"><button class="btn-edit" onclick="prepararEdicion('${eq.id}')">EDITAR</button></td>`;
             tr.innerHTML = html; 
             tbody.appendChild(tr);
         });
         actualizarDashboardGlobal();
-    }
-
-    function filtrarRepetidos() {
-        const conteoSeriales = {};
-        DATA_LOCAL.forEach(eq => {
-            const s = String(eq.serial || "").trim().toUpperCase();
-            if (s && s !== "-" && s !== "N/A" && s !== "S/N") {
-                conteoSeriales[s] = (conteoSeriales[s] || 0) + 1;
-            }
-        });
-
-        const duplicados = DATA_LOCAL.filter(eq => {
-            const s = String(eq.serial || "").trim().toUpperCase();
-            return conteoSeriales[s] > 1;
-        });
-
-        const tbody = document.getElementById('cuerpo');
-        const ignorarEnTabla = ['diadema', 'mouse', 'teclado', 'monitor'];
-        tbody.innerHTML = '';
-
-        duplicados.forEach(eq => {
-            const tr = document.createElement('tr');
-            tr.style.backgroundColor = "#fff5f5"; 
-            
-            const tipoClase = `badge bg-${(eq.tipo || 'default').toLowerCase()}`;
-            let html = `<td class="sticky-check"><input type="checkbox" class="rowCheck" value="${eq.id}" onchange="updateUISelection()"></td><td class="sticky-type"><span class="${tipoClase}">${eq.tipo || '-'}</span></td>`;
-            
-            COLUMNAS_OFICIALES.forEach(c => { 
-                if(c !== 'tipo' && !ignorarEnTabla.includes(c)) {
-                    let v = eq[c] || '-';
-                    if(c.startsWith('f_asig_') || c === 'last_update') v = limpiarFechaISO(v);
-                    if(c === 'serial') v = `<strong style="color:red">⚠️ ${v}</strong>`;
-                    html += `<td>${v}</td>`; 
-                }
-            });
-            html += `<td class="sticky-action">
-                        <button class="btn-edit" onclick="prepararEdicion('${eq.id}')">EDITAR</button>
-                     </td>`;
-            tr.innerHTML = html; 
-            tbody.appendChild(tr);
-        });
     }
 
     function actualizarDashboardGlobal() {
@@ -450,14 +414,10 @@
         document.getElementById('tC').innerText = DATA_LOCAL.filter(x => x.tipo === 'CELULAR').length;
         document.getElementById('tI').innerText = DATA_LOCAL.filter(x => x.tipo === 'IMPRESORA').length;
         document.getElementById('tA').innerText = DATA_LOCAL.filter(x => x.tipo === 'AUTOPAGO').length;
-
-        const seriales = DATA_LOCAL.map(x => String(x.serial || "").trim().toUpperCase())
-                                   .filter(s => s && s !== "-" && s !== "N/A" && s !== "S/N");
         
-        const repetidos = seriales.filter((s, index) => seriales.indexOf(s) !== index);
-        const setRepetidos = new Set(repetidos);
-        const totalDups = DATA_LOCAL.filter(eq => setRepetidos.has(String(eq.serial).trim().toUpperCase())).length;
-        document.getElementById('tRep').innerText = totalDups;
+        const seriales = DATA_LOCAL.map(x => String(x.serial || "").trim().toUpperCase()).filter(s => s && s !== "-" && s !== "N/A" && s !== "S/N");
+        const setRepetidos = new Set(seriales.filter((s, index) => seriales.indexOf(s) !== index));
+        document.getElementById('tRep').innerText = DATA_LOCAL.filter(eq => setRepetidos.has(String(eq.serial).trim().toUpperCase())).length;
     }
 
     function cerrarModal() { document.getElementById('modal').style.display='none'; }
@@ -495,181 +455,35 @@
 
     function actualizarGraficas() {
         const tCount = {}, sCount = {};
-        const palette = ['#22c55e', '#3b82f6', '#6366f1', '#a855f7', '#94a3b8', '#f59e0b'];
-
         DATA_LOCAL.forEach(d => {
             if(d.tipo) tCount[d.tipo] = (tCount[d.tipo] || 0) + 1;
             if(d.sede) sCount[d.sede] = (sCount[d.sede] || 0) + 1;
         });
-
         if(chartT) chartT.destroy(); 
         if(chartS) chartS.destroy();
-
-        chartT = new Chart(document.getElementById('chartTipo'), { 
-            type: 'doughnut', 
-            data: { 
-                labels: Object.keys(tCount), 
-                datasets: [{ 
-                    data: Object.values(tCount), 
-                    backgroundColor: palette,
-                    borderWidth: 0,
-                    hoverOffset: 12
-                }] 
-            }, 
-            options: { 
-                maintainAspectRatio: false,
-                cutout: '70%',
-                plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } },
-                    title: { display: true, text: 'EQUIPOS POR TIPO', font: { size: 12, weight: 'bold' } }
-                }
-            } 
-        });
-
-        chartS = new Chart(document.getElementById('chartSede'), { 
-            type: 'bar', 
-            data: { 
-                labels: Object.keys(sCount), 
-                datasets: [{ 
-                    label: 'Sedes', 
-                    data: Object.values(sCount), 
-                    backgroundColor: '#3b82f6',
-                    borderRadius: 8,
-                    barThickness: 25
-                }] 
-            }, 
-            options: { 
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    title: { display: true, text: 'ACTIVOS POR SEDE', font: { size: 12, weight: 'bold' } }
-                },
-                scales: {
-                    y: { beginAtZero: true, grid: { display: false }, ticks: { font: { size: 10 } } },
-                    x: { grid: { display: false }, ticks: { font: { size: 10 } } }
-                }
-            } 
-        });
+        chartT = new Chart(document.getElementById('chartTipo'), { type: 'doughnut', data: { labels: Object.keys(tCount), datasets: [{ data: Object.values(tCount), backgroundColor: ['#22c55e', '#3b82f6', '#6366f1', '#a855f7', '#94a3b8', '#f59e0b'] }] }, options: { maintainAspectRatio: false, plugins: { title: { display: true, text: 'EQUIPOS POR TIPO' } } } });
+        chartS = new Chart(document.getElementById('chartSede'), { type: 'bar', data: { labels: Object.keys(sCount), datasets: [{ label: 'Sedes', data: Object.values(sCount), backgroundColor: '#3b82f6' }] }, options: { maintainAspectRatio: false, plugins: { title: { display: true, text: 'ACTIVOS POR SEDE' } } } });
     }
 
     async function exportarExcelConImagen() {
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Inventario IT');
-        const headerStyle = {
-            font: { bold: true, color: { argb: 'FFFFFFFF' } },
-            fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF014182' } },
-            alignment: { horizontal: 'center' }
-        };
-        worksheet.columns = COLUMNAS_OFICIALES.map(col => ({
-            header: col.toUpperCase(),
-            key: col,
-            width: 20
-        }));
-        worksheet.getRow(1).eachCell(cell => { cell.style = headerStyle; });
+        worksheet.columns = COLUMNAS_OFICIALES.map(col => ({ header: col.toUpperCase(), key: col, width: 20 }));
         DATA_LOCAL.forEach(eq => { worksheet.addRow(eq); });
         const buffer = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        saveAs(blob, `Inventario_Fibex_${new Date().toLocaleDateString()}.xlsx`);
+        saveAs(new Blob([buffer]), `Inventario_Fibex_${new Date().toLocaleDateString()}.xlsx`);
     }
-
-    function importarExcel(input) {
-        if (!input.files || !input.files[0]) return;
-        const file = input.files[0];
-        const reader = new FileReader();
-        const overlay = document.getElementById('loadingOverlay');
-        
-        overlay.style.display = 'flex';
-        document.getElementById('loadingText').innerText = "Procesando Excel...";
-
-        reader.onload = async (e) => {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-            
-            const hoy = new Date();
-            const lastUpdate = `${(hoy.getMonth()+1).toString().padStart(2,'0')}/${hoy.getDate().toString().padStart(2,'0')}/${hoy.getFullYear().toString().slice(-2)}`;
-
-            for (const row of jsonData) {
-                let eq = { id: "EQ-" + Math.random().toString(36).substr(2, 9), last_update: lastUpdate };
-                
-                COLUMNAS_OFICIALES.forEach(col => {
-                    const keyExcel = Object.keys(row).find(k => k.toLowerCase() === col.toLowerCase());
-                    eq[col] = keyExcel ? String(row[keyExcel]).toUpperCase() : (['diadema','mouse','teclado','monitor','bolsos'].includes(col) ? 'NO' : '');
-                });
-
-                try {
-                    await fetch(SCRIPT_URL, { 
-                        method: 'POST', 
-                        mode: 'no-cors', 
-                        body: JSON.stringify({ action: 'save', eq: eq }) 
-                    });
-                } catch (err) { console.error("Error importando fila", err); }
-            }
-            
-            input.value = ""; 
-            alert("Importación finalizada");
-            cargarDesdeNube();
-        };
-        reader.readAsArrayBuffer(file);
-    }
-
-    // --- FUNCIONES DE ELIMINACIÓN ACTIVADAS ---
 
     async function eliminarRegistro() {
         const id = document.getElementById('edit_id').value;
-        if(!id) return;
-        if(!confirm("¿Está seguro de eliminar este registro permanentemente?")) return;
-
-        const overlay = document.getElementById('loadingOverlay');
-        document.getElementById('loadingText').innerText = "Eliminando activo...";
-        overlay.style.display = 'flex';
-
-        try {
-            await fetch(SCRIPT_URL, { 
-                method: 'POST', 
-                mode: 'no-cors', 
-                body: JSON.stringify({ action: 'delete', id: id }) 
-            });
-            cerrarModal();
-            setTimeout(cargarDesdeNube, 1000);
-        } catch (e) {
-            alert("Error al eliminar el registro.");
-            overlay.style.display = 'none';
-        }
+        if(!id || !confirm("¿Eliminar este registro?")) return;
+        try { await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'delete', id: id }) }); cerrarModal(); cargarDesdeNube(); } catch (e) { alert("Error"); }
     }
 
-    async function eliminarSeleccionados() {
-        const checks = document.querySelectorAll('.rowCheck:checked');
-        const ids = Array.from(checks).map(cb => cb.value);
-        
-        if(ids.length === 0) return;
-        if(!confirm(`¿Desea eliminar los ${ids.length} activos seleccionados?`)) return;
-
-        const overlay = document.getElementById('loadingOverlay');
-        overlay.style.display = 'flex';
-        
-        try {
-            for(let i = 0; i < ids.length; i++) {
-                document.getElementById('loadingText').innerText = `Eliminando ${i+1} de ${ids.length}...`;
-                await fetch(SCRIPT_URL, { 
-                    method: 'POST', 
-                    mode: 'no-cors', 
-                    body: JSON.stringify({ action: 'delete', id: ids[i] }) 
-                });
-            }
-            document.getElementById('selectAll').checked = false;
-            updateUISelection();
-            setTimeout(cargarDesdeNube, 1000);
-        } catch (e) {
-            alert("Error durante la eliminación masiva.");
-            overlay.style.display = 'none';
-        }
-    }
-
-    window.onload = cargarDesdeNube;
+    window.onload = () => {
+        document.getElementById('currentDate').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        cargarDesdeNube();
+    };
 </script>
 </body>
-
 </html>
-
