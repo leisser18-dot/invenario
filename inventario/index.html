@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fibex - IT Assets Pro v.5.6</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root { 
+            --blue-fibex: #014182; --blue-light: #eef4ff; --green-excel: #217346; 
+            --red-alert: #d9534f; --orange-cell: #f39c12; --gray-bg: #f4f7f6;
+            --cyan-import: #00a8cc;
+            --border-color: #e0e6ed;
+            --stockit-green: #22c55e;
+            --stockit-blue: #3b82f6;
+        }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 5px; background-color: var(--gray-bg); color: #333; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px 15px; border-radius: 8px; border-bottom: 3px solid var(--blue-fibex); margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        
+        .dashboard { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; justify-content: flex-start; }
+        .card { 
+            background: white; padding: 6px 12px; border-radius: 20px; 
+            display: flex; align-items: center; gap: 8px; border: 1px solid #ddd;
+            cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        }
+        .card:hover { border-color: var(--blue-fibex); background: var(--blue-light); }
+        .card h3 { margin: 0; font-size: 11px; text-transform: uppercase; color: #666; font-weight: 700; }
+        .card p { margin: 0; font-size: 13px; font-weight: 800; color: var(--blue-fibex); }
+        .card.alert { border-left: 4px solid var(--red-alert); }
+
+        .collapsible-btn {
+            background: #fff; color: #666; cursor: pointer; padding: 6px;
+            width: 100%; border: 1px dashed #ccc; text-align: center; font-size: 11px;
+            border-radius: 8px; margin-bottom: 8px; font-weight: bold;
+        }
+        .charts-wrapper { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; margin-bottom: 10px; }
+        .charts-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        
+        /* ESTILO GRÁFICAS STOCKIT */
+        .chart-card { 
+            background: white; 
+            padding: 15px; 
+            border-radius: 12px; 
+            height: 240px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+
+        .table-wrapper { 
+            background: white; border-radius: 8px; overflow: auto; 
+            max-height: 75vh; box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            border: 1px solid var(--border-color);
+            width: 100%; 
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 4200px; table-layout: fixed; }
+        th { 
+            background: #f8f9fc; color: var(--blue-fibex); font-weight: 700; 
+            text-transform: uppercase; font-size: 10px; padding: 10px 8px;
+            border-bottom: 2px solid var(--border-color); position: sticky; top: 0; z-index: 10;
+            cursor: pointer; user-select: none;
+        }
+        th:hover { background: #edf2f7; }
+        td { padding: 6px 8px; border-bottom: 1px solid var(--border-color); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        tr:hover td { background-color: #f1f5f9; }
+        
+        .sticky-check { position: sticky; left: 0; background: #f8f9fc !important; z-index: 30; width: 35px; border-right: 1px solid var(--border-color); text-align: center; }
+        .sticky-type { position: sticky; left: 35px; background: white; z-index: 29; width: 110px; border-right: 1px solid var(--border-color); font-weight: bold; }
+        .sticky-action { position: sticky; right: 0; background: #f8f9fc !important; z-index: 25; width: 100px; text-align: center; border-left: 2px solid var(--border-color); }
+
+        .badge { padding: 3px 7px; border-radius: 4px; font-size: 9px; font-weight: 800; color: white; text-transform: uppercase; }
+        .bg-desktop { background: #4e73df; }
+        .bg-laptop { background: #1cc88a; }
+        .bg-celular { background: #f6c23e; }
+        .bg-impresora { background: #36b9cc; }
+        .bg-autopago { background: #858796; }
+
+        .btn-edit { background: var(--blue-fibex); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; margin-right: 2px; }
+        .btn { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: 600; display: flex; align-items: center; gap: 6px; font-size: 12px; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; border-radius: 15px; width: 900px; padding: 25px; max-height: 90vh; overflow-y: auto; }
+        .input-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; text-transform: uppercase; width: 100%; box-sizing: border-box; }
+
+        #loadingOverlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--blue-fibex); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div id="loadingOverlay"><div class="spinner"></div><p id="loadingText" style="font-size:12px;">Procesando...</p></div>
+
+<header>
+    <div>
+        <h1 style="margin:0; font-size: 22px; font-weight: 700; letter-spacing: -0.5px;"> <img src="https://internetenmizona.com/wp-content/uploads/2022/10/Fibex-Modificado.png" style="height:90px" onerror="this.src='https://via.placeholder.com/80x40?text=FIBEX'"> <span style="font-weight: 300; color: var(--text-muted);"> </span></h1>
+        <p id="currentDate" style="margin:2px 0 0; color: var(--text-muted); font-size: 12px;"></p>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px;">
+        <div style="text-align:right">
+            <div style="font-weight:600; font-size:19px">Inventario Departamento de Sistemas</div>
+            <div style="font-size:11px; color:var(--text-muted)">Valencia</div>
+        </div>
+        <div style="width:35px; height:35px; background:#ddd; border-radius:50%; overflow:hidden">
+            <img src="" style="width:100%">
+        </div>
+    </div> 
+    <div style="display:flex; gap:8px;">
+        <input type="file" id="importFile" style="display:none" accept=".xlsx, .xls" onchange="importarExcel(this)">
+        <button class="btn" style="background:var(--cyan-import)" onclick="document.getElementById('importFile').click()">📥 Importar</button>
+        <button id="btnBulkDelete" class="btn" style="background:var(--red-alert); display:none;" onclick="eliminarSeleccionados()">🗑️ Borrar</button>
+        <button class="btn" style="background:var(--green-excel)" onclick="exportarExcelConImagen()">📊 Excel</button>
+        <button class="btn" style="background:var(--blue-fibex)" onclick="cargarDesdeNube()">🔄 Refrescar</button>
+    </div>
+
+</header>
+
+<div class="dashboard">
+        <div class="card" onclick="filtrarDesdeCard('')"><span>📋</span><h3>Total</h3><p id="tEq">0</p></div>
+        <div class="card" onclick="filtrarDesdeCard('DESKTOP')"><span>🖥️</span><h3>Desktop</h3><p id="tD">0</p></div>
+        <div class="card" onclick="filtrarDesdeCard('LAPTOP')"><span>💻</span><h3>Laptop</h3><p id="tL">0</p></div>
+        <div class="card" onclick="filtrarDesdeCard('CELULAR')"><span>📱</span><h3>Móvil</h3><p id="tC">0</p></div>
+        <div class="card" onclick="filtrarDesdeCard('IMPRESORA')"><span>🖨️</span><h3>Impresoras</h3><p id="tI">0</p></div>
+        <div class="card" onclick="filtrarDesdeCard('AUTOPAGO')"><span>🏧</span><h3>AutoPago</h3><p id="tA">0</p></div>
+        <div class="card alert" onclick="filtrarRepetidos()"><span>⚠️</span><h3>Duplicadoss</h3><p id="tRep">0</p></div>
+</div>
+
+<div style="display: flex; gap: 10px; margin-bottom: 8px; align-items: center;">
+    <input type="text" id="busqueda" style="flex-grow: 1; padding: 6px 15px;" placeholder="🔍 Buscar activo..." oninput="renderizarTable()">
+    <button class="btn" style="background:var(--blue-fibex); white-space: nowrap;" onclick="nuevoActivo()">➕ Nuevo Activo</button>
+</div>
+
+<button type="button" class="collapsible-btn" onclick="toggleCharts(this)">Ver Gráficos Estadísticos ▼</button>
+<div class="charts-wrapper" id="chartsMenu">
+    <div class="charts-container">
+        <div class="chart-card"><canvas id="chartTipo"></canvas></div>
+        <div class="chart-card"><canvas id="chartSede"></canvas></div>
+    </div>
+</div>
+
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr id="header_main">
+                <th class="sticky-check"><input type="checkbox" id="selectAll" onchange="toggleAllChecks(this)"></th>
+                <th class="sticky-type" onclick="ordenarPor('tipo')">TIPO ↕</th>
+                <th colspan="24" id="info_span_tech" style="text-align:center; background: #f0f4f8; font-size: 9px; color: #888;">INFORMACIÓN TÉCNICA Y LOCALIZACIÓN</th>
+                <th class="sticky-action">GESTIÓN</th>
+            </tr>
+            <tr id="header_cols"></tr>
+        </thead>
+        <tbody id="cuerpo"></tbody>
+    </table>
+</div>
+
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle">Ficha de Activo</h3>
+        <input type="hidden" id="edit_id">
+        <div class="input-grid" id="modal_fields"></div>
+        <div style="margin-top:20px; text-align:right; display: flex; justify-content: flex-end; gap: 8px;">
+            <button class="btn" style="background:#888;" onclick="cerrarModal()">Cerrar</button>
+            <button id="btnDelete" class="btn" style="background:var(--red-alert); display:none;" onclick="eliminarRegistro()">Eliminar</button>
+            <button class="btn" style="background:var(--blue-fibex);" onclick="guardarRegistro()">💾 Guardar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxczImEZhMnNnRM1wlhJxc3i33MPNLRzhVYn6dCkCMKCO4tzY_zXe0Js5uF9O7cRuzH/exec"; 
+    let DATA_LOCAL = [];
+    let FILTRO_TIPO = "";
+    let chartT = null, chartS = null;
+    let SORT_COL = "";
+    let SORT_ASC = true;
+	document.getElementById('currentDate').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', 	month: 'long', year: 'numeric' });
+    const COLUMNAS_OFICIALES = [
+        'usuario', 'ubicacion', 'sede', 'departamento', 'nombre_pc', 'os', 'cpu', 
+        'memoria_gb', 'disco', 'tipo', 'marca', 'modelo', 'serial', 'v_android', 
+        'diadema', 'f_asig_diadema', 'mouse', 'mouse_modelo', 'f_asig_mouse', 'teclado', 'teclado_modelo', 
+        'f_asig_teclado', 'monitor', 'monitor_modelo', 'f_asig_monitor', 'bolsos', 'f_asig_bolsos', 'last_update'
+    ];
+
+    const DEP_PERIFERICOS = {
+        'diadema': ['f_asig_diadema'],
+        'mouse': ['mouse_modelo', 'f_asig_mouse'],
+        'teclado': ['teclado_modelo', 'f_asig_teclado'],
+        'monitor': ['monitor_modelo', 'f_asig_monitor'],
+        'bolsos': ['f_asig_bolsos']
+    };
+
+    function inicializarEstructuraModal() {
+        const container = document.getElementById('modal_fields');
+        if (container.innerHTML !== "") return;
+
+        let html = `<select id="tipo" onchange="toggleCamposDinamicos(this.value)"><option value="">TIPO: SELECCIONE</option><option value="DESKTOP">DESKTOP</option><option value="LAPTOP">LAPTOP</option><option value="CELULAR">CELULAR</option><option value="IMPRESORA">IMPRESORA</option><option value="AUTOPAGO">AUTOPAGO</option></select>`;
+        html += `<select id="conexion" style="display:none;"><option value="">CONEXIÓN: (IP, USB, RED)</option><option value="IP">IP</option><option value="USB">USB</option><option value="RED">RED</option></select>`;
+        html += `<select id="consumible" style="display:none;"><option value="">CONSUMIBLE: (TONER, TINTA)</option><option value="TONER">TONER</option><option value="TINTA">TINTA</option></select>`;
+
+        COLUMNAS_OFICIALES.forEach(c => { 
+            if(c === 'last_update' || c === 'tipo') return;
+            if(['diadema', 'mouse', 'teclado', 'monitor', 'bolsos'].includes(c)) {
+                html += `<select id="${c}" onchange="togglePeriferico('${c}', this.value)"><option value="NO">${c.toUpperCase()}: NO</option><option value="SI">${c.toUpperCase()}: SI</option></select>`;
+            } else if(c.startsWith('f_asig_')) {
+                html += `<input type="date" id="${c}" title="${c.toUpperCase()}" disabled>`;
+            } else {
+                html += `<input type="text" id="${c}" placeholder="${c==='cpu'?'PROCESADOR':c.toUpperCase()}">`;
+            }
+        });
+        container.innerHTML = html;
+    }
+
+    function nuevoActivo() {
+        abrirModal();
+        document.getElementById('edit_id').value = "";
+        document.getElementById('btnDelete').style.display = 'none';
+        COLUMNAS_OFICIALES.forEach(c => {
+            const el = document.getElementById(c);
+            if(el) {
+                el.value = (el.tagName === 'SELECT' && el.id !== 'tipo') ? 'NO' : "";
+                if(c.startsWith('f_asig_')) el.disabled = true;
+            }
+        });
+    }
+
+    function abrirModal() { 
+        inicializarEstructuraModal();
+        document.getElementById('modal').style.display='flex';
+    }
+
+    function prepararEdicion(id) {
+        const eq = DATA_LOCAL.find(x => x.id == id);
+        if(!eq) return;
+        abrirModal();
+        document.getElementById('edit_id').value = eq.id;
+        document.getElementById('btnDelete').style.display = 'block';
+        COLUMNAS_OFICIALES.forEach(c => { 
+            const el = document.getElementById(c);
+            if(el) {
+                if (el.type === 'date') el.value = formatToISO(eq[c]);
+                else el.value = eq[c] || (['diadema','mouse','teclado','monitor','bolsos'].includes(c)?'NO':"");
+            }
+        });
+        if (eq.tipo === 'IMPRESORA' && eq.modelo && eq.modelo.includes(' - ')) {
+            const p = eq.modelo.split(' - ');
+            if(document.getElementById('modelo')) document.getElementById('modelo').value = p[0] || "";
+            if(document.getElementById('conexion')) document.getElementById('conexion').value = p[1] || "";
+            if(document.getElementById('consumible')) document.getElementById('consumible').value = p[2] || "";
+        }
+        toggleCamposDinamicos(eq.tipo);
+        ['diadema', 'mouse', 'teclado', 'monitor', 'bolsos'].forEach(p => {
+            const val = eq[p] || "NO";
+            togglePeriferico(p, val);
+        });
+    }
+
+    async function guardarRegistro() {
+        const overlay = document.getElementById('loadingOverlay');
+        overlay.style.display = 'flex';
+        const hoy = new Date();
+        const lastUpdate = `${(hoy.getMonth()+1).toString().padStart(2,'0')}/${hoy.getDate().toString().padStart(2,'0')}/${hoy.getFullYear().toString().slice(-2)}`;
+        let eq = { id: document.getElementById('edit_id').value || "EQ-" + Date.now(), last_update: lastUpdate };
+        COLUMNAS_OFICIALES.forEach(c => { 
+            const el = document.getElementById(c);
+            if(el && c !== 'last_update') {
+                eq[c] = el.type === 'date' ? formatToMMDDYY(el.value) : el.value.toUpperCase();
+            }
+        });
+        if (document.getElementById('tipo').value === 'IMPRESORA') {
+            eq['modelo'] = `${document.getElementById('modelo').value} - ${document.getElementById('conexion').value} - ${document.getElementById('consumible').value}`;
+        }
+        try {
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'save', eq: eq }) });
+            cerrarModal();
+            setTimeout(cargarDesdeNube, 1000);
+        } catch (e) {
+            alert("Error al guardar");
+            overlay.style.display = 'none';
+        }
+    }
+
+    function togglePeriferico(p, v) {
+        if(!DEP_PERIFERICOS[p]) return;
+        DEP_PERIFERICOS[p].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) { 
+                el.disabled = (v !== "SI"); 
+                if (v !== "SI") el.value = ""; 
+            }
+        });
+    }
+
+    function toggleCamposDinamicos(tipo) {
+        COLUMNAS_OFICIALES.forEach(c => { if(document.getElementById(c)) document.getElementById(c).style.display = 'block'; });
+        const con = document.getElementById('conexion');
+        const cns = document.getElementById('consumible');
+        if(con) con.style.display = (tipo === 'IMPRESORA') ? 'block' : 'none';
+        if(cns) cns.style.display = (tipo === 'IMPRESORA') ? 'block' : 'none';
+        let quitar = [];
+        if (tipo === 'IMPRESORA') quitar = ['usuario', 'nombre_pc', 'os', 'cpu', 'memoria_gb', 'disco', 'v_android', 'diadema', 'f_asig_diadema', 'mouse', 'mouse_modelo', 'f_asig_mouse', 'teclado', 'teclado_modelo', 'f_asig_teclado', 'monitor', 'monitor_modelo', 'f_asig_monitor', 'bolsos', 'f_asig_bolsos'];
+        else if (tipo === 'CELULAR' || tipo === 'AUTOPAGO') quitar = ['diadema', 'f_asig_diadema', 'mouse', 'mouse_modelo', 'f_asig_mouse', 'teclado', 'teclado_modelo', 'f_asig_teclado', 'monitor', 'monitor_modelo', 'f_asig_monitor', 'bolsos', 'f_asig_bolsos'];
+        else if (tipo === 'DESKTOP') quitar = ['v_android', 'bolsos', 'f_asig_bolsos'];
+        else if (tipo === 'LAPTOP') quitar = ['v_android', 'teclado', 'teclado_modelo', 'f_asig_teclado'];
+        quitar.forEach(id => { if(document.getElementById(id)) { document.getElementById(id).style.display = 'none'; } });
+    }
+
+    async function cargarDesdeNube() {
+        const overlay = document.getElementById('loadingOverlay');
+        document.getElementById('loadingText').innerText = "Sincronizando...";
+        overlay.style.display='flex';
+        try { 
+            const res = await fetch(SCRIPT_URL + "?action=get"); 
+            DATA_LOCAL = await res.json(); 
+            renderizarTable(); 
+        } catch(e) { console.error(e); }
+        overlay.style.display='none';
+    }
+
+    function limpiarFechaISO(valor) {
+        if (!valor || typeof valor !== 'string') return valor;
+        if (valor.includes('T') && valor.includes('Z')) {
+            const d = new Date(valor);
+            if (!isNaN(d.getTime())) {
+                return `${d.getUTCDate()}/${d.getUTCMonth() + 1}/${d.getUTCFullYear()}`;
+            }
+        }
+        return valor;
+    }
+
+    function renderizarTable() {
+        const tbody = document.getElementById('cuerpo');
+        const headerRow = document.getElementById('header_cols');
+        const buscar = document.getElementById('busqueda').value.toUpperCase();
+        
+        const ignorarEnTabla = ['diadema', 'mouse', 'teclado', 'monitor'];
+        
+        tbody.innerHTML = '';
+        headerRow.innerHTML = '<th class="sticky-check">Sel</th><th class="sticky-type" onclick="ordenarPor(\'tipo\')">TIPO ↕</th>';
+        
+        const sortables = ['usuario', 'ubicacion', 'sede', 'departamento', 'nombre_pc'];
+        let colsVisiblesCount = 0;
+
+        COLUMNAS_OFICIALES.forEach(c => { 
+            if(c !== 'tipo' && !ignorarEnTabla.includes(c)) {
+                let txt = c.toUpperCase();
+                if (c === 'teclado_modelo') txt = 'MODELO</br>TECLADO';
+                else if (c === 'mouse_modelo') txt = 'MODELO</br>MOUSE';
+                else if (c === 'monitor_modelo') txt = 'MODELO</br>MONITOR';
+                else if (c === 'f_asig_diadema') txt = 'FECHA ASIGNACION</br>DIADEMA';
+                else if (c === 'f_asig_mouse') txt = 'FECHA ASIGNACION</br>MOUSE';
+                else if (c === 'f_asig_teclado') txt = 'FECHA ASIGNACION</br>TECLADO';
+                else if (c === 'f_asig_monitor') txt = 'FECHA ASIGNACION</br>MONITOR';
+                else if (c === 'f_asig_bolsos') txt = 'FECHA ASIGNACION</br>BOLSOS';
+                
+                let click = sortables.includes(c) ? `onclick="ordenarPor('${c}')"` : "";
+                let indicator = sortables.includes(c) ? " ↕" : "";
+                headerRow.innerHTML += `<th style="width:140px" ${click}>${txt}${indicator}</th>`; 
+                colsVisiblesCount++;
+            }
+        });
+        headerRow.innerHTML += '<th class="sticky-action">GESTIÓN</th>';
+        
+        document.getElementById('info_span_tech').colSpan = colsVisiblesCount;
+
+        let filtrados = DATA_LOCAL.filter(eq => {
+            const cTipo = FILTRO_TIPO === "" || (eq.tipo && eq.tipo.toUpperCase() === FILTRO_TIPO);
+            const cBusq = Object.values(eq).some(val => String(val).toUpperCase().includes(buscar));
+            return cTipo && cBusq;
+        });
+
+        filtrados.forEach(eq => {
+            const tr = document.createElement('tr');
+            const tipoClase = `badge bg-${(eq.tipo || 'default').toLowerCase()}`;
+            let html = `<td class="sticky-check"><input type="checkbox" class="rowCheck" value="${eq.id}" onchange="updateUISelection()"></td><td class="sticky-type"><span class="${tipoClase}">${eq.tipo || '-'}</span></td>`;
+            COLUMNAS_OFICIALES.forEach(c => { 
+                if(c !== 'tipo' && !ignorarEnTabla.includes(c)) {
+                    let v = eq[c] || '-';
+                    if(c.startsWith('f_asig_') || c === 'last_update') {
+                        v = limpiarFechaISO(v);
+                    }
+                    if(eq.tipo === 'IMPRESORA' && eq.modelo && eq.modelo.includes(' - ')) {
+                        const p = eq.modelo.split(' - ');
+                        if(c==='modelo') v=p[0]; if(c==='os') v=p[1]; if(c==='cpu') v=p[2];
+                    }
+                    html += `<td>${v}</td>`; 
+                }
+            });
+            html += `<td class="sticky-action">
+                        <button class="btn-edit" onclick="prepararEdicion('${eq.id}')">EDITAR</button>
+                     </td>`;
+            tr.innerHTML = html; 
+            tbody.appendChild(tr);
+        });
+        actualizarDashboardGlobal();
+    }
+
+    function filtrarRepetidos() {
+        const conteoSeriales = {};
+        DATA_LOCAL.forEach(eq => {
+            const s = String(eq.serial || "").trim().toUpperCase();
+            if (s && s !== "-" && s !== "N/A" && s !== "S/N") {
+                conteoSeriales[s] = (conteoSeriales[s] || 0) + 1;
+            }
+        });
+
+        const duplicados = DATA_LOCAL.filter(eq => {
+            const s = String(eq.serial || "").trim().toUpperCase();
+            return conteoSeriales[s] > 1;
+        });
+
+        const tbody = document.getElementById('cuerpo');
+        const ignorarEnTabla = ['diadema', 'mouse', 'teclado', 'monitor'];
+        tbody.innerHTML = '';
+
+        duplicados.forEach(eq => {
+            const tr = document.createElement('tr');
+            tr.style.backgroundColor = "#fff5f5"; 
+            
+            const tipoClase = `badge bg-${(eq.tipo || 'default').toLowerCase()}`;
+            let html = `<td class="sticky-check"><input type="checkbox" class="rowCheck" value="${eq.id}" onchange="updateUISelection()"></td><td class="sticky-type"><span class="${tipoClase}">${eq.tipo || '-'}</span></td>`;
+            
+            COLUMNAS_OFICIALES.forEach(c => { 
+                if(c !== 'tipo' && !ignorarEnTabla.includes(c)) {
+                    let v = eq[c] || '-';
+                    if(c.startsWith('f_asig_') || c === 'last_update') v = limpiarFechaISO(v);
+                    if(c === 'serial') v = `<strong style="color:red">⚠️ ${v}</strong>`;
+                    html += `<td>${v}</td>`; 
+                }
+            });
+            html += `<td class="sticky-action">
+                        <button class="btn-edit" onclick="prepararEdicion('${eq.id}')">EDITAR</button>
+                     </td>`;
+            tr.innerHTML = html; 
+            tbody.appendChild(tr);
+        });
+    }
+
+    function actualizarDashboardGlobal() {
+        document.getElementById('tEq').innerText = DATA_LOCAL.length;
+        document.getElementById('tD').innerText = DATA_LOCAL.filter(x => x.tipo === 'DESKTOP').length;
+        document.getElementById('tL').innerText = DATA_LOCAL.filter(x => x.tipo === 'LAPTOP').length;
+        document.getElementById('tC').innerText = DATA_LOCAL.filter(x => x.tipo === 'CELULAR').length;
+        document.getElementById('tI').innerText = DATA_LOCAL.filter(x => x.tipo === 'IMPRESORA').length;
+        document.getElementById('tA').innerText = DATA_LOCAL.filter(x => x.tipo === 'AUTOPAGO').length;
+
+        const seriales = DATA_LOCAL.map(x => String(x.serial || "").trim().toUpperCase())
+                                   .filter(s => s && s !== "-" && s !== "N/A" && s !== "S/N");
+        
+        const repetidos = seriales.filter((s, index) => seriales.indexOf(s) !== index);
+        const setRepetidos = new Set(repetidos);
+        const totalDups = DATA_LOCAL.filter(eq => setRepetidos.has(String(eq.serial).trim().toUpperCase())).length;
+        document.getElementById('tRep').innerText = totalDups;
+    }
+
+    function cerrarModal() { document.getElementById('modal').style.display='none'; }
+    function formatToMMDDYY(d) { if(!d) return ''; const p=d.split('-'); return `${p[1]}/${p[2]}/${p[0].slice(-2)}`; }
+    function formatToISO(d) { if(!d || !d.includes('/')) return ''; const p=d.split('/'); return `20${p[2]}-${p[0].padStart(2,'0')}-${p[1].padStart(2,'0')}`; }
+    
+    function ordenarPor(col) {
+        SORT_ASC = (SORT_COL === col) ? !SORT_ASC : true;
+        SORT_COL = col;
+        DATA_LOCAL.sort((a, b) => {
+            let vA = String(a[col] || "").toUpperCase();
+            let vB = String(b[col] || "").toUpperCase();
+            return SORT_ASC ? vA.localeCompare(vB) : vB.localeCompare(vA);
+        });
+        renderizarTable();
+    }
+
+    function updateUISelection() {
+        const sel = document.querySelectorAll('.rowCheck:checked').length;
+        document.getElementById('btnBulkDelete').style.display = sel > 0 ? 'flex' : 'none';
+    }
+
+    function toggleAllChecks(source) {
+        document.querySelectorAll('.rowCheck').forEach(c => c.checked = source.checked);
+        updateUISelection();
+    }
+
+    function filtrarDesdeCard(t) { FILTRO_TIPO = t; renderizarTable(); }
+
+    function toggleCharts(btn) {
+        const content = document.getElementById("chartsMenu");
+        if (content.style.maxHeight) { content.style.maxHeight = null; btn.innerText = "Ver Gráficos ▼"; }
+        else { content.style.maxHeight = content.scrollHeight + "px"; btn.innerText = "Ocultar Gráficos ▲"; actualizarGraficas(); }
+    }
+
+    function actualizarGraficas() {
+        const tCount = {}, sCount = {};
+        const palette = ['#22c55e', '#3b82f6', '#6366f1', '#a855f7', '#94a3b8', '#f59e0b'];
+
+        DATA_LOCAL.forEach(d => {
+            if(d.tipo) tCount[d.tipo] = (tCount[d.tipo] || 0) + 1;
+            if(d.sede) sCount[d.sede] = (sCount[d.sede] || 0) + 1;
+        });
+
+        if(chartT) chartT.destroy(); 
+        if(chartS) chartS.destroy();
+
+        chartT = new Chart(document.getElementById('chartTipo'), { 
+            type: 'doughnut', 
+            data: { 
+                labels: Object.keys(tCount), 
+                datasets: [{ 
+                    data: Object.values(tCount), 
+                    backgroundColor: palette,
+                    borderWidth: 0,
+                    hoverOffset: 12
+                }] 
+            }, 
+            options: { 
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } },
+                    title: { display: true, text: 'EQUIPOS POR TIPO', font: { size: 12, weight: 'bold' } }
+                }
+            } 
+        });
+
+        chartS = new Chart(document.getElementById('chartSede'), { 
+            type: 'bar', 
+            data: { 
+                labels: Object.keys(sCount), 
+                datasets: [{ 
+                    label: 'Sedes', 
+                    data: Object.values(sCount), 
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 8,
+                    barThickness: 25
+                }] 
+            }, 
+            options: { 
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: 'ACTIVOS POR SEDE', font: { size: 12, weight: 'bold' } }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { display: false }, ticks: { font: { size: 10 } } },
+                    x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                }
+            } 
+        });
+    }
+
+    async function exportarExcelConImagen() {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Inventario IT');
+        const headerStyle = {
+            font: { bold: true, color: { argb: 'FFFFFFFF' } },
+            fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF014182' } },
+            alignment: { horizontal: 'center' }
+        };
+        worksheet.columns = COLUMNAS_OFICIALES.map(col => ({
+            header: col.toUpperCase(),
+            key: col,
+            width: 20
+        }));
+        worksheet.getRow(1).eachCell(cell => { cell.style = headerStyle; });
+        DATA_LOCAL.forEach(eq => { worksheet.addRow(eq); });
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        saveAs(blob, `Inventario_Fibex_${new Date().toLocaleDateString()}.xlsx`);
+    }
+
+    function importarExcel(input) {
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+        const reader = new FileReader();
+        const overlay = document.getElementById('loadingOverlay');
+        
+        overlay.style.display = 'flex';
+        document.getElementById('loadingText').innerText = "Procesando Excel...";
+
+        reader.onload = async (e) => {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+            
+            const hoy = new Date();
+            const lastUpdate = `${(hoy.getMonth()+1).toString().padStart(2,'0')}/${hoy.getDate().toString().padStart(2,'0')}/${hoy.getFullYear().toString().slice(-2)}`;
+
+            for (const row of jsonData) {
+                let eq = { id: "EQ-" + Math.random().toString(36).substr(2, 9), last_update: lastUpdate };
+                
+                COLUMNAS_OFICIALES.forEach(col => {
+                    const keyExcel = Object.keys(row).find(k => k.toLowerCase() === col.toLowerCase());
+                    eq[col] = keyExcel ? String(row[keyExcel]).toUpperCase() : (['diadema','mouse','teclado','monitor','bolsos'].includes(col) ? 'NO' : '');
+                });
+
+                try {
+                    await fetch(SCRIPT_URL, { 
+                        method: 'POST', 
+                        mode: 'no-cors', 
+                        body: JSON.stringify({ action: 'save', eq: eq }) 
+                    });
+                } catch (err) { console.error("Error importando fila", err); }
+            }
+            
+            input.value = ""; 
+            alert("Importación finalizada");
+            cargarDesdeNube();
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // --- FUNCIONES DE ELIMINACIÓN ACTIVADAS ---
+
+    async function eliminarRegistro() {
+        const id = document.getElementById('edit_id').value;
+        if(!id) return;
+        if(!confirm("¿Está seguro de eliminar este registro permanentemente?")) return;
+
+        const overlay = document.getElementById('loadingOverlay');
+        document.getElementById('loadingText').innerText = "Eliminando activo...";
+        overlay.style.display = 'flex';
+
+        try {
+            await fetch(SCRIPT_URL, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                body: JSON.stringify({ action: 'delete', id: id }) 
+            });
+            cerrarModal();
+            setTimeout(cargarDesdeNube, 1000);
+        } catch (e) {
+            alert("Error al eliminar el registro.");
+            overlay.style.display = 'none';
+        }
+    }
+
+    async function eliminarSeleccionados() {
+        const checks = document.querySelectorAll('.rowCheck:checked');
+        const ids = Array.from(checks).map(cb => cb.value);
+        
+        if(ids.length === 0) return;
+        if(!confirm(`¿Desea eliminar los ${ids.length} activos seleccionados?`)) return;
+
+        const overlay = document.getElementById('loadingOverlay');
+        overlay.style.display = 'flex';
+        
+        try {
+            for(let i = 0; i < ids.length; i++) {
+                document.getElementById('loadingText').innerText = `Eliminando ${i+1} de ${ids.length}...`;
+                await fetch(SCRIPT_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    body: JSON.stringify({ action: 'delete', id: ids[i] }) 
+                });
+            }
+            document.getElementById('selectAll').checked = false;
+            updateUISelection();
+            setTimeout(cargarDesdeNube, 1000);
+        } catch (e) {
+            alert("Error durante la eliminación masiva.");
+            overlay.style.display = 'none';
+        }
+    }
+
+    window.onload = cargarDesdeNube;
+</script>
+</body>
+</html>
