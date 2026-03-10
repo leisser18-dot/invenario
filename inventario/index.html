@@ -247,7 +247,6 @@
         COLUMNAS_OFICIALES.forEach(c => {
             const el = document.getElementById(c);
             if(el) {
-                // Ajustado para que 'sede', 'os' y 'tipo' limpien al valor vacío (placeholder)
                 el.value = (el.tagName === 'SELECT' && !['tipo', 'sede', 'os'].includes(el.id)) ? 'NO' : "";
                 if(c.startsWith('f_asig_')) el.disabled = true;
             }
@@ -356,6 +355,17 @@
         try { 
             const res = await fetch(SCRIPT_URL + "?action=get"); 
             DATA_LOCAL = await res.json(); 
+            
+            // Ordenar por fecha más reciente (campo last_update) al iniciar o refrescar
+            DATA_LOCAL.sort((a, b) => {
+                const parseDate = (d) => {
+                    if (!d || typeof d !== 'string' || !d.includes('/')) return 0;
+                    const [m, day, y] = d.split('/');
+                    return new Date(`20${y}`, m - 1, day).getTime();
+                };
+                return parseDate(b.last_update) - parseDate(a.last_update);
+            });
+
             renderizarTable(); 
         } catch(e) { console.error(e); }
         overlay.style.display='none';
@@ -487,4 +497,3 @@
 </script>
 </body>
 </html>
-
