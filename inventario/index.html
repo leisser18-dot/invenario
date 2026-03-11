@@ -8,6 +8,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.2/docxtemplater.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pizzip/3.1.4/pizzip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip-utils/0.1.0/jszip-utils.min.js"></script>
     
     <style>
         :root { 
@@ -121,7 +124,7 @@
         tr:hover td { background-color: #f1f5f9; }
         .sticky-check { position: sticky; left: 0; background: #f8f9fc !important; z-index: 30; width: 35px; border-right: 1px solid var(--border-color); text-align: center; }
         .sticky-type { position: sticky; left: 35px; background: white; z-index: 29; width: 110px; border-right: 1px solid var(--border-color); font-weight: bold; }
-        .sticky-action { position: sticky; right: 0; background: #f8f9fc !important; z-index: 25; width: 100px; text-align: center; border-left: 2px solid var(--border-color); }
+        .sticky-action { position: sticky; right: 0; background: #f8f9fc !important; z-index: 25; width: 120px; text-align: center; border-left: 2px solid var(--border-color); }
         .badge { padding: 3px 7px; border-radius: 4px; font-size: 9px; font-weight: 800; color: white; text-transform: uppercase; }
         .bg-desktop { background: #4e73df; }
         .bg-laptop { background: #1cc88a; }
@@ -519,7 +522,10 @@
             const tr = document.createElement('tr');
             let html = `<td class="sticky-check"><input type="checkbox" class="rowCheck" value="${eq.id}" onchange="updateUISelection()"></td><td class="sticky-type"><span class="badge bg-${(eq.tipo || 'default').toLowerCase()}">${eq.tipo || '-'}</span></td>`;
             COLUMNAS_OFICIALES.forEach(c => { if(c !== 'tipo' && !ignorarEnTabla.includes(c)) html += `<td>${eq[c] || '-'}</td>`; });
-            html += `<td class="sticky-action"><button class="btn-edit" onclick="prepararEdicion('${eq.id}')">EDITAR</button></td>`;
+            html += `<td class="sticky-action">
+                        <button class="btn-edit" onclick="prepararEdicion('${eq.id}')">EDITAR</button>
+                        <button class="btn-edit" style="background:#6c757d" onclick="generarActa('${eq.id}')">DOCX</button>
+                     </td>`;
             tr.innerHTML = html; tbody.appendChild(tr);
         });
         actualizarDashboardGlobal();
@@ -554,6 +560,54 @@
     }
     async function exportarExcelConImagen() { const workbook = new ExcelJS.Workbook(); const worksheet = workbook.addWorksheet('Inventario IT'); worksheet.columns = COLUMNAS_OFICIALES.map(col => ({ header: col.toUpperCase(), key: col, width: 20 })); DATA_LOCAL.forEach(eq => { worksheet.addRow(eq); }); const buffer = await workbook.xlsx.writeBuffer(); saveAs(new Blob([buffer]), `Inventario_Fibex_${new Date().toLocaleDateString()}.xlsx`); }
     async function eliminarRegistro() { const id = document.getElementById('edit_id').value; if(!id || !confirm("¿Eliminar este registro?")) return; try { await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'delete', id: id }) }); cerrarModal(); cargarDesdeNube(); } catch (e) { alert("Error"); } }
+
+    /**
+     * Función para generar el Acta de Entrega en Word (.docx).
+     */
+    async function generarActa(id) {
+        const eq = DATA_LOCAL.find(x => x.id == id);
+        if (!eq) return;
+
+        // Ruta de tu plantilla en el mismo directorio (GitHub Pages compatible)
+        const urlPlantilla = "plantilla_acta.docx"; 
+
+        JSZipUtils.getBinaryContent(urlPlantilla, function(error, content) {
+            if (error) {
+                alert("Error al cargar la plantilla. Asegúrate de que 'plantilla_acta.docx' esté en la misma carpeta que el index.html.");
+                console.error(error);
+                return;
+            }
+
+            try {
+                const zip = new PizZip(content);
+                const doc = new window.docxtemplater(zip, {
+                    paragraphLoop: true,
+                    linebreaks: true,
+                });
+
+                // Mapeo de datos para el Word
+                doc.setData({
+                    ...eq,
+                    fecha_hoy: new Date().toLocaleDateString('es-ES'),
+                    departamento: eq.departamento || "S/D",
+                    sede: eq.sede || "S/D"
+                });
+
+                doc.render();
+
+                const out = doc.getZip().generate({
+                    type: "blob",
+                    mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                });
+
+                // Descarga automática del archivo generado
+                saveAs(out, `Acta_Entrega_${eq.usuario.replace(/ /g, "_")}.docx`);
+            } catch (err) {
+                console.error(err);
+                alert("Error al procesar el documento Word.");
+            }
+        });
+    }
 
     window.onload = () => {
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
