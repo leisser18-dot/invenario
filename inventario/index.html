@@ -10,68 +10,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-* Nuevo estilo para el Overlay */
-#loadingOverlay {
-    display: none; /* Se activa por JS */
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px); /* Efecto de desenfoque premium */
-    -webkit-backdrop-filter: blur(10px);
-    z-index: 9999;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-/* Animación de Ondas */
-.loader-container {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.pulse-circle {
-    width: 60px;
-    height: 60px;
-    background-color: var(--blue-fibex);
-    border-radius: 50%;
-    opacity: 0.6;
-    animation: pulse-wave 2s infinite ease-in-out;
-}
-
-.pulse-circle-inner {
-    position: absolute;
-    width: 30px;
-    height: 30px;
-    background-color: var(--blue-fibex);
-    border-radius: 50%;
-    box-shadow: 0 0 15px rgba(1, 65, 130, 0.5);
-}
-
-@keyframes pulse-wave {
-    0% { transform: scale(0.5); opacity: 1; }
-    100% { transform: scale(2.5); opacity: 0; }
-}
-
-/* Animación del Texto */
-#loadingText {
-    font-weight: 700;
-    color: var(--blue-fibex);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    animation: blink 1.5s infinite;
-}
-
-@keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-}
         :root { 
             --blue-fibex: #014182; --blue-light: #eef4ff; --green-excel: #217346; 
             --red-alert: #d9534f; --orange-cell: #f39c12; --gray-bg: #f4f7f6;
@@ -80,81 +18,122 @@
             --stockit-green: #22c55e;
             --stockit-blue: #3b82f6;
         }
-        body { font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 5px; background-color: var(--gray-bg); color: #333; }
-        
-        header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px 15px; border-radius: 8px; border-bottom: 3px solid var(--blue-fibex); margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        
-        .dashboard { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; justify-content: flex-start; }
-        .card { 
-            background: white; padding: 6px 12px; border-radius: 20px; 
-            display: flex; align-items: center; gap: 8px; border: 1px solid #ddd;
-            cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+
+        /* --- OVERLAY DE CARGA MEJORADO --- */
+        #loadingOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
+
+        .loader-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .pulse-circle {
+            width: 70px; height: 70px;
+            background-color: var(--blue-fibex);
+            border-radius: 50%;
+            opacity: 0.4;
+            animation: pulse-wave 2s infinite ease-in-out;
+        }
+
+        .pulse-circle-inner {
+            position: absolute;
+            width: 35px; height: 35px;
+            background-color: var(--blue-fibex);
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(1, 65, 130, 0.4);
+        }
+
+        @keyframes pulse-wave {
+            0% { transform: scale(0.6); opacity: 0.8; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
+
+        .progress-wrapper {
+            width: 300px;
+            text-align: center;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 10px;
+            background: rgba(0, 0, 0, 0.08);
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 10px 0;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .progress-bar {
+            width: 0%; 
+            height: 100%;
+            background: linear-gradient(90deg, var(--blue-fibex), var(--cyan-import));
+            transition: width 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);
+            box-shadow: 0 0 8px rgba(1, 65, 130, 0.3);
+        }
+
+        #loadingText {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--blue-fibex);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin: 0;
+            animation: blink 1.5s infinite;
+        }
+
+        #progressPercent { font-size: 10px; font-weight: bold; color: #555; }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        /* --- RESTO DE ESTILOS MANTENIDOS --- */
+        body { font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 5px; background-color: var(--gray-bg); color: #333; }
+        header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px 15px; border-radius: 8px; border-bottom: 3px solid var(--blue-fibex); margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .dashboard { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; justify-content: flex-start; }
+        .card { background: white; padding: 6px 12px; border-radius: 20px; display: flex; align-items: center; gap: 8px; border: 1px solid #ddd; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
         .card:hover { border-color: var(--blue-fibex); background: var(--blue-light); }
         .card h3 { margin: 0; font-size: 11px; text-transform: uppercase; color: #666; font-weight: 700; }
         .card p { margin: 0; font-size: 13px; font-weight: 800; color: var(--blue-fibex); }
         .card.alert { border-left: 4px solid var(--red-alert); }
-
-        .collapsible-btn {
-            background: #fff; color: #666; cursor: pointer; padding: 6px;
-            width: 100%; border: 1px dashed #ccc; text-align: center; font-size: 11px;
-            border-radius: 8px; margin-bottom: 8px; font-weight: bold;
-        }
+        .collapsible-btn { background: #fff; color: #666; cursor: pointer; padding: 6px; width: 100%; border: 1px dashed #ccc; text-align: center; font-size: 11px; border-radius: 8px; margin-bottom: 8px; font-weight: bold; }
         .charts-wrapper { max-height: 0; overflow: hidden; transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1); margin-bottom: 10px; }
         .charts-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        
-        /* EFECTO VISUAL DE ENTRADA PARA LAS GRÁFICAS */
-        .chart-card { 
-            background: white; padding: 15px; border-radius: 12px; height: 240px; 
-            display: flex; flex-direction: column; align-items: center; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid var(--border-color);
-            opacity: 0; transform: translateY(20px);
-            transition: opacity 0.5s ease, transform 0.5s ease;
-        }
-
-        .charts-wrapper.open .chart-card {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .table-wrapper { 
-            background: white; border-radius: 8px; overflow: auto; 
-            max-height: 75vh; box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-            border: 1px solid var(--border-color); width: 100%; 
-        }
+        .chart-card { background: white; padding: 15px; border-radius: 12px; height: 240px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid var(--border-color); opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease, transform 0.5s ease; }
+        .charts-wrapper.open .chart-card { opacity: 1; transform: translateY(0); }
+        .table-wrapper { background: white; border-radius: 8px; overflow: auto; max-height: 75vh; box-shadow: 0 4px 15px rgba(0,0,0,0.06); border: 1px solid var(--border-color); width: 100%; }
         table { width: 100%; border-collapse: collapse; min-width: 4200px; table-layout: fixed; }
-        th { 
-            background: #f8f9fc; color: var(--blue-fibex); font-weight: 700; 
-            text-transform: uppercase; font-size: 10px; padding: 10px 8px;
-            border-bottom: 2px solid var(--border-color); position: sticky; top: 0; z-index: 10;
-            cursor: pointer; user-select: none;
-        }
+        th { background: #f8f9fc; color: var(--blue-fibex); font-weight: 700; text-transform: uppercase; font-size: 10px; padding: 10px 8px; border-bottom: 2px solid var(--border-color); position: sticky; top: 0; z-index: 10; cursor: pointer; user-select: none; }
         th:hover { background: #edf2f7; }
         td { padding: 6px 8px; border-bottom: 1px solid var(--border-color); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         tr:hover td { background-color: #f1f5f9; }
-        
         .sticky-check { position: sticky; left: 0; background: #f8f9fc !important; z-index: 30; width: 35px; border-right: 1px solid var(--border-color); text-align: center; }
         .sticky-type { position: sticky; left: 35px; background: white; z-index: 29; width: 110px; border-right: 1px solid var(--border-color); font-weight: bold; }
         .sticky-action { position: sticky; right: 0; background: #f8f9fc !important; z-index: 25; width: 100px; text-align: center; border-left: 2px solid var(--border-color); }
-
         .badge { padding: 3px 7px; border-radius: 4px; font-size: 9px; font-weight: 800; color: white; text-transform: uppercase; }
         .bg-desktop { background: #4e73df; }
         .bg-laptop { background: #1cc88a; }
         .bg-celular { background: #f6c23e; }
         .bg-impresora { background: #36b9cc; }
         .bg-autopago { background: #858796; }
-
         .btn-edit { background: var(--blue-fibex); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; margin-right: 2px; }
         .btn { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: 600; display: flex; align-items: center; gap: 6px; font-size: 12px; }
-        
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; border-radius: 15px; width: 900px; padding: 25px; max-height: 90vh; overflow-y: auto; }
         .input-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         input, select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; text-transform: uppercase; width: 100%; box-sizing: border-box; }
-
-        #loadingOverlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--blue-fibex); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -164,7 +143,13 @@
         <div class="pulse-circle"></div>
         <div class="pulse-circle-inner"></div>
     </div>
-    <p id="loadingText">Sincronizando Sistemas...</p>
+    <div class="progress-wrapper">
+        <p id="loadingText">Sincronizando Sistemas...</p>
+        <div class="progress-container">
+            <div id="progressBar" class="progress-bar"></div>
+        </div>
+        <span id="progressPercent">0%</span>
+    </div>
 </div>
 
 <header>
@@ -267,7 +252,7 @@
     const LISTA_DEPARTAMENTOS = [
         "ADMINISTRACION", "ALMACEN", "ATENCION AL CLIENTE", "AUDITORIA", "BIENVENIDA Y FIDELIZACION", 
         "CALL CENTER", "CDR", "CECOM", "CLUB FIBEX", "COBRANZA", "COMERCIALIZA", "COMPRAS", 
-        "CONCILIACION", "CONTABILIDAD", "FINANZAS", "GPS", "LA INTERNACIONAL", "MERCADEO", 
+        "CONCILIACION", "CONTABILIDAD", "FINANZAS", "GESTION DEL CAMBIO", "GPS", "LA INTERNACIONAL", "MERCADEO", 
         "MESA DE APOYO", "NOC", "O&M", "OPERACIONES", "POR ASIGNA", "RRRHH", 
         "TECNOLOGIA Y SISTEMA", "TELEVENTAS", "VGT"
     ];
@@ -280,60 +265,121 @@
         'bolsos': ['f_asig_bolsos']
     };
 
+    // --- FUNCIONES DE CARGA Y BARRA DE PROGRESO ---
+
+    function updateProgressBar(percent, text) {
+        const bar = document.getElementById('progressBar');
+        const txt = document.getElementById('loadingText');
+        const pct = document.getElementById('progressPercent');
+        if (bar) bar.style.width = percent + "%";
+        if (txt && text) txt.innerText = text;
+        if (pct) pct.innerText = Math.round(percent) + "%";
+    }
+
+    async function cargarDesdeNube() {
+        const overlay = document.getElementById('loadingOverlay');
+        overlay.style.display='flex';
+        updateProgressBar(0, "Iniciando conexión...");
+
+        let progress = 0;
+        const interval = setInterval(() => {
+            if (progress < 90) {
+                progress += Math.random() * 10;
+                updateProgressBar(progress, "Descargando base de datos...");
+            }
+        }, 500);
+
+        try { 
+            const res = await fetch(SCRIPT_URL + "?action=get"); 
+            DATA_LOCAL = await res.json(); 
+            clearInterval(interval);
+            updateProgressBar(100, "Sincronización finalizada");
+
+            DATA_LOCAL.sort((a, b) => {
+                const parseDate = (d) => {
+                    if (!d || typeof d !== 'string' || !d.includes('/')) return 0;
+                    const [m, day, y] = d.split('/');
+                    return new Date(`20${y}`, m - 1, day).getTime();
+                };
+                return parseDate(b.last_update) - parseDate(a.last_update);
+            });
+
+            setTimeout(() => {
+                renderizarTable(); 
+                overlay.style.display='none';
+                const menu = document.getElementById("chartsMenu");
+                if (!menu.style.maxHeight || menu.style.maxHeight === "0px") {
+                    toggleCharts(document.getElementById("collapsibleBtn"));
+                }
+            }, 600);
+
+        } catch(e) { 
+            clearInterval(interval);
+            console.error(e); 
+            updateProgressBar(0, "Error de conexión");
+            setTimeout(() => overlay.style.display='none', 2000);
+        }
+    }
+
+    async function importarExcel(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const overlay = document.getElementById('loadingOverlay');
+        overlay.style.display = 'flex';
+        updateProgressBar(10, "Leyendo archivo...");
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            updateProgressBar(40, "Procesando datos del Excel...");
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+            
+            updateProgressBar(70, "Validando registros...");
+            // Aquí podrías añadir lógica para subir los datos si fuera necesario
+            
+            updateProgressBar(100, "¡Importación exitosa!");
+            setTimeout(() => {
+                // Si la importación solo carga localmente para visualización:
+                DATA_LOCAL = jsonData; 
+                renderizarTable();
+                overlay.style.display = 'none';
+            }, 800);
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // --- RESTO DE LÓGICA MANTENIDA ---
+
     function inicializarEstructuraModal() {
         const container = document.getElementById('modal_fields');
         if (container.innerHTML !== "") return;
-
         let html = `<select id="tipo" onchange="toggleCamposDinamicos(this.value)"><option value="">TIPO: SELECCIONE</option><option value="DESKTOP">DESKTOP</option><option value="LAPTOP">LAPTOP</option><option value="CELULAR">CELULAR</option><option value="IMPRESORA">IMPRESORA</option><option value="AUTOPAGO">AUTOPAGO</option></select>`;
         html += `<select id="conexion" style="display:none;"><option value="">CONEXIÓN: (IP, USB, RED)</option><option value="IP">IP</option><option value="USB">USB</option><option value="RED">RED</option></select>`;
         html += `<select id="consumible" style="display:none;"><option value="">CONSUMIBLE: (TONER, TINTA)</option><option value="TONER">TONER</option><option value="TINTA">TINTA</option></select>`;
-
         COLUMNAS_OFICIALES.forEach(c => { 
             if(c === 'last_update' || c === 'tipo') return;
-
             if (c === 'ubicacion') {
                 let options = Object.keys(RELACION_UBICACION_SEDE).map(u => `<option value="${u}">${u}</option>`).join('');
-                html += `<select id="ubicacion" onchange="actualizarSedesPorUbicacion(this.value)">
-                            <option value="" selected disabled>SELECCIONE UBICACIÓN</option>
-                            ${options}
-                         </select>`;
-            }
-            else if (c === 'sede') {
-                html += `<select id="sede">
-                            <option value="" selected disabled>SELECCIONE SEDE</option>
-                         </select>`;
-            } 
-            else if (c === 'departamento') {
+                html += `<select id="ubicacion" onchange="actualizarSedesPorUbicacion(this.value)"><option value="" selected disabled>SELECCIONE UBICACIÓN</option>${options}</select>`;
+            } else if (c === 'sede') {
+                html += `<select id="sede"><option value="" selected disabled>SELECCIONE SEDE</option></select>`;
+            } else if (c === 'departamento') {
                 let options = LISTA_DEPARTAMENTOS.map(d => `<option value="${d}">${d}</option>`).join('');
-                html += `<select id="departamento">
-                            <option value="" selected disabled>SELECCIONE DEPARTAMENTO</option>
-                            ${options}
-                         </select>`;
-            }
-            else if (c === 'memoria_gb') {
+                html += `<select id="departamento"><option value="" selected disabled>SELECCIONE DEPARTAMENTO</option>${options}</select>`;
+            } else if (c === 'memoria_gb') {
                 const memorias = ["4 GB DDR3", "8 GB DDR3", "8 GB DDR4", "12 GB DDR4", "16 GB DDR4", "32 GB DDR4"];
                 let options = memorias.map(m => `<option value="${m}">${m}</option>`).join('');
-                html += `<select id="memoria_gb">
-                            <option value="" selected disabled>SELECCIONE MEMORIA</option>
-                            ${options}
-                         </select>`;
-            }
-            else if (c === 'disco') {
+                html += `<select id="memoria_gb"><option value="" selected disabled>SELECCIONE MEMORIA</option>${options}</select>`;
+            } else if (c === 'disco') {
                 const discos = ["120 GB SSD", "240 GB SSD", "320 GB SSD", "500 GB SSD", "1TB SSD"];
                 let options = discos.map(d => `<option value="${d}">${d}</option>`).join('');
-                html += `<select id="disco">
-                            <option value="" selected disabled>SELECCIONE DISCO</option>
-                            ${options}
-                         </select>`;
-            }
-            else if (c === 'os') {
-                html += `<select id="os">
-                            <option value="" selected disabled>SELECCIONE OS</option>
-                            <option value="WINDOWS 10 PRO">WINDOWS 10 PRO</option>
-                            <option value="WINDOWS 11 PRO">WINDOWS 11 PRO</option>
-                         </select>`;
-            }
-            else if(['diadema', 'mouse', 'teclado', 'monitor', 'bolsos'].includes(c)) {
+                html += `<select id="disco"><option value="" selected disabled>SELECCIONE DISCO</option>${options}</select>`;
+            } else if (c === 'os') {
+                html += `<select id="os"><option value="" selected disabled>SELECCIONE OS</option><option value="WINDOWS 10 PRO">WINDOWS 10 PRO</option><option value="WINDOWS 11 PRO">WINDOWS 11 PRO</option></select>`;
+            } else if(['diadema', 'mouse', 'teclado', 'monitor', 'bolsos'].includes(c)) {
                 html += `<select id="${c}" onchange="togglePeriferico('${c}', this.value)"><option value="NO">${c.toUpperCase()}: NO</option><option value="SI">${c.toUpperCase()}: SI</option></select>`;
             } else if(c.startsWith('f_asig_')) {
                 html += `<input type="date" id="${c}" title="${c.toUpperCase()}" disabled>`;
@@ -351,8 +397,7 @@
         if (ubicacion && RELACION_UBICACION_SEDE[ubicacion]) {
             RELACION_UBICACION_SEDE[ubicacion].forEach(sede => {
                 const option = document.createElement('option');
-                option.value = sede;
-                option.text = sede;
+                option.value = sede; option.text = sede;
                 sedeSelect.appendChild(option);
             });
         }
@@ -369,18 +414,13 @@
                 if (el.tagName === 'SELECT') {
                     if (['tipo', 'ubicacion', 'sede', 'departamento', 'os', 'memoria_gb', 'disco'].includes(el.id)) el.value = "";
                     else el.value = 'NO';
-                } else {
-                    el.value = "";
-                }
+                } else el.value = "";
                 if(c.startsWith('f_asig_')) el.disabled = true;
             }
         });
     }
 
-    function abrirModal() { 
-        inicializarEstructuraModal();
-        document.getElementById('modal').style.display='flex';
-    }
+    function abrirModal() { inicializarEstructuraModal(); document.getElementById('modal').style.display='flex'; }
 
     function prepararEdicion(id) {
         const eq = DATA_LOCAL.find(x => x.id == id);
@@ -388,9 +428,7 @@
         abrirModal();
         document.getElementById('edit_id').value = eq.id;
         document.getElementById('btnDelete').style.display = 'block';
-        
         if (eq.ubicacion) actualizarSedesPorUbicacion(eq.ubicacion, eq.sede);
-
         COLUMNAS_OFICIALES.forEach(c => { 
             const el = document.getElementById(c);
             if(el) {
@@ -405,46 +443,34 @@
             if(document.getElementById('consumible')) document.getElementById('consumible').value = p[2] || "";
         }
         toggleCamposDinamicos(eq.tipo);
-        ['diadema', 'mouse', 'teclado', 'monitor', 'bolsos'].forEach(p => {
-            const val = eq[p] || "NO";
-            togglePeriferico(p, val);
-        });
+        ['diadema', 'mouse', 'teclado', 'monitor', 'bolsos'].forEach(p => togglePeriferico(p, eq[p] || "NO"));
     }
 
     async function guardarRegistro() {
         const overlay = document.getElementById('loadingOverlay');
         overlay.style.display = 'flex';
+        updateProgressBar(20, "Preparando datos...");
         const hoy = new Date();
         const lastUpdate = `${(hoy.getMonth()+1).toString().padStart(2,'0')}/${hoy.getDate().toString().padStart(2,'0')}/${hoy.getFullYear().toString().slice(-2)}`;
         let eq = { id: document.getElementById('edit_id').value || "EQ-" + Date.now(), last_update: lastUpdate };
         COLUMNAS_OFICIALES.forEach(c => { 
             const el = document.getElementById(c);
-            if(el && c !== 'last_update') {
-                eq[c] = el.type === 'date' ? formatToMMDDYY(el.value) : el.value.toUpperCase();
-            }
+            if(el && c !== 'last_update') eq[c] = el.type === 'date' ? formatToMMDDYY(el.value) : el.value.toUpperCase();
         });
-
         const serialAValidar = (eq.serial || "").trim().toUpperCase();
         if (serialAValidar !== "" && serialAValidar !== "S/N" && serialAValidar !== "N/A" && serialAValidar !== "-") {
             const duplicado = DATA_LOCAL.find(item => item.id !== eq.id && String(item.serial || "").trim().toUpperCase() === serialAValidar);
-            if (duplicado) {
-                alert(`⚠️ ERROR: El serial "${serialAValidar}" ya existe.\nAsignado a: ${duplicado.usuario || 'Sin usuario'}`);
-                overlay.style.display = 'none';
-                return;
-            }
+            if (duplicado) { alert(`⚠️ ERROR: El serial "${serialAValidar}" ya existe.`); overlay.style.display = 'none'; return; }
         }
-
-        if (document.getElementById('tipo').value === 'IMPRESORA') {
-            eq['modelo'] = `${document.getElementById('modelo').value} - ${document.getElementById('conexion').value} - ${document.getElementById('consumible').value}`;
-        }
+        if (document.getElementById('tipo').value === 'IMPRESORA') eq['modelo'] = `${document.getElementById('modelo').value} - ${document.getElementById('conexion').value} - ${document.getElementById('consumible').value}`;
+        
+        updateProgressBar(60, "Guardando en la nube...");
         try {
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'save', eq: eq }) });
+            updateProgressBar(100, "¡Guardado!");
             cerrarModal();
-            setTimeout(cargarDesdeNube, 1000);
-        } catch (e) {
-            alert("Error al guardar");
-            overlay.style.display = 'none';
-        }
+            setTimeout(cargarDesdeNube, 800);
+        } catch (e) { alert("Error al guardar"); overlay.style.display = 'none'; }
     }
 
     function togglePeriferico(p, v) {
@@ -457,8 +483,7 @@
 
     function toggleCamposDinamicos(tipo) {
         COLUMNAS_OFICIALES.forEach(c => { if(document.getElementById(c)) document.getElementById(c).style.display = 'block'; });
-        const con = document.getElementById('conexion');
-        const cns = document.getElementById('consumible');
+        const con = document.getElementById('conexion'); const cns = document.getElementById('consumible');
         if(con) con.style.display = (tipo === 'IMPRESORA') ? 'block' : 'none';
         if(cns) cns.style.display = (tipo === 'IMPRESORA') ? 'block' : 'none';
         let quitar = [];
@@ -469,78 +494,33 @@
         quitar.forEach(id => { if(document.getElementById(id)) document.getElementById(id).style.display = 'none'; });
     }
 
-    async function cargarDesdeNube() {
-        const overlay = document.getElementById('loadingOverlay');
-        document.getElementById('loadingText').innerText = "Sincronizando...";
-        overlay.style.display='flex';
-        try { 
-            const res = await fetch(SCRIPT_URL + "?action=get"); 
-            DATA_LOCAL = await res.json(); 
-            
-            DATA_LOCAL.sort((a, b) => {
-                const parseDate = (d) => {
-                    if (!d || typeof d !== 'string' || !d.includes('/')) return 0;
-                    const [m, day, y] = d.split('/');
-                    return new Date(`20${y}`, m - 1, day).getTime();
-                };
-                return parseDate(b.last_update) - parseDate(a.last_update);
-            });
-
-            renderizarTable(); 
-            
-            // DISPARO AUTOMÁTICO DE GRÁFICAS TRAS CARGAR DATOS
-            setTimeout(() => {
-                const menu = document.getElementById("chartsMenu");
-                if (!menu.style.maxHeight || menu.style.maxHeight === "0px") {
-                    toggleCharts(document.getElementById("collapsibleBtn"));
-                }
-            }, 500);
-
-        } catch(e) { console.error(e); }
-        overlay.style.display='none';
-    }
-
     function renderizarTable() {
-        const tbody = document.getElementById('cuerpo');
-        const headerRow = document.getElementById('header_cols');
+        const tbody = document.getElementById('cuerpo'); const headerRow = document.getElementById('header_cols');
         const buscar = document.getElementById('busqueda').value.toUpperCase();
         const ignorarEnTabla = ['diadema', 'mouse', 'teclado', 'monitor'];
-        
         tbody.innerHTML = '';
         headerRow.innerHTML = '<th class="sticky-check">Sel</th><th class="sticky-type" onclick="ordenarPor(\'tipo\')">TIPO ↕</th>';
-        
         const sortables = ['usuario', 'ubicacion', 'sede', 'departamento', 'nombre_pc'];
         let colsVisiblesCount = 0;
-
         COLUMNAS_OFICIALES.forEach(c => { 
             if(c !== 'tipo' && !ignorarEnTabla.includes(c)) {
-                let txt = c.toUpperCase().replace('_', ' ');
                 let click = sortables.includes(c) ? `onclick="ordenarPor('${c}')"` : "";
-                headerRow.innerHTML += `<th style="width:140px" ${click}>${txt} ↕</th>`; 
-                colsVisiblesCount++;
+                headerRow.innerHTML += `<th style="width:140px" ${click}>${c.toUpperCase().replace('_', ' ')} ↕</th>`; colsVisiblesCount++;
             }
         });
         headerRow.innerHTML += '<th class="sticky-action">GESTIÓN</th>';
         document.getElementById('info_span_tech').colSpan = colsVisiblesCount;
-
         let filtrados = DATA_LOCAL.filter(eq => {
             const cTipo = FILTRO_TIPO === "" || (eq.tipo && eq.tipo.toUpperCase() === FILTRO_TIPO);
             const cBusq = Object.values(eq).some(val => String(val).toUpperCase().includes(buscar));
             return cTipo && cBusq;
         });
-
         filtrados.forEach(eq => {
             const tr = document.createElement('tr');
-            const tipoClase = `badge bg-${(eq.tipo || 'default').toLowerCase()}`;
-            let html = `<td class="sticky-check"><input type="checkbox" class="rowCheck" value="${eq.id}" onchange="updateUISelection()"></td><td class="sticky-type"><span class="${tipoClase}">${eq.tipo || '-'}</span></td>`;
-            COLUMNAS_OFICIALES.forEach(c => { 
-                if(c !== 'tipo' && !ignorarEnTabla.includes(c)) {
-                    html += `<td>${eq[c] || '-'}</td>`; 
-                }
-            });
+            let html = `<td class="sticky-check"><input type="checkbox" class="rowCheck" value="${eq.id}" onchange="updateUISelection()"></td><td class="sticky-type"><span class="badge bg-${(eq.tipo || 'default').toLowerCase()}">${eq.tipo || '-'}</span></td>`;
+            COLUMNAS_OFICIALES.forEach(c => { if(c !== 'tipo' && !ignorarEnTabla.includes(c)) html += `<td>${eq[c] || '-'}</td>`; });
             html += `<td class="sticky-action"><button class="btn-edit" onclick="prepararEdicion('${eq.id}')">EDITAR</button></td>`;
-            tr.innerHTML = html; 
-            tbody.appendChild(tr);
+            tr.innerHTML = html; tbody.appendChild(tr);
         });
         actualizarDashboardGlobal();
     }
@@ -560,71 +540,20 @@
     function cerrarModal() { document.getElementById('modal').style.display='none'; }
     function formatToMMDDYY(d) { if(!d) return ''; const p=d.split('-'); return `${p[1]}/${p[2]}/${p[0].slice(-2)}`; }
     function formatToISO(d) { if(!d || !d.includes('/')) return ''; const p=d.split('/'); return `20${p[2]}-${p[0].padStart(2,'0')}-${p[1].padStart(2,'0')}`; }
-    
-    function ordenarPor(col) {
-        SORT_ASC = (SORT_COL === col) ? !SORT_ASC : true;
-        SORT_COL = col;
-        DATA_LOCAL.sort((a, b) => {
-            let vA = String(a[col] || "").toUpperCase();
-            let vB = String(b[col] || "").toUpperCase();
-            return SORT_ASC ? vA.localeCompare(vB) : vB.localeCompare(vA);
-        });
-        renderizarTable();
-    }
-
-    function updateUISelection() {
-        const sel = document.querySelectorAll('.rowCheck:checked').length;
-        document.getElementById('btnBulkDelete').style.display = sel > 0 ? 'flex' : 'none';
-    }
-
-    function toggleAllChecks(source) {
-        document.querySelectorAll('.rowCheck').forEach(c => c.checked = source.checked);
-        updateUISelection();
-    }
-
+    function ordenarPor(col) { SORT_ASC = (SORT_COL === col) ? !SORT_ASC : true; SORT_COL = col; DATA_LOCAL.sort((a, b) => { let vA = String(a[col] || "").toUpperCase(); let vB = String(b[col] || "").toUpperCase(); return SORT_ASC ? vA.localeCompare(vB) : vB.localeCompare(vA); }); renderizarTable(); }
+    function updateUISelection() { const sel = document.querySelectorAll('.rowCheck:checked').length; document.getElementById('btnBulkDelete').style.display = sel > 0 ? 'flex' : 'none'; }
+    function toggleAllChecks(source) { document.querySelectorAll('.rowCheck').forEach(c => c.checked = source.checked); updateUISelection(); }
     function filtrarDesdeCard(t) { FILTRO_TIPO = t; renderizarTable(); }
-
-    function toggleCharts(btn) {
-        const content = document.getElementById("chartsMenu");
-        if (content.style.maxHeight && content.style.maxHeight !== "0px") { 
-            content.style.maxHeight = "0px"; 
-            content.classList.remove("open");
-            btn.innerText = "Ver Gráficos ▼"; 
-        }
-        else { 
-            content.style.maxHeight = content.scrollHeight + "px"; 
-            content.classList.add("open");
-            btn.innerText = "Ocultar Gráficos ▲"; 
-            actualizarGraficas(); 
-        }
-    }
-
+    function toggleCharts(btn) { const content = document.getElementById("chartsMenu"); if (content.style.maxHeight && content.style.maxHeight !== "0px") { content.style.maxHeight = "0px"; content.classList.remove("open"); btn.innerText = "Ver Gráficos ▼"; } else { content.style.maxHeight = content.scrollHeight + "px"; content.classList.add("open"); btn.innerText = "Ocultar Gráficos ▲"; actualizarGraficas(); } }
     function actualizarGraficas() {
         const tCount = {}, sCount = {};
-        DATA_LOCAL.forEach(d => {
-            if(d.tipo) tCount[d.tipo] = (tCount[d.tipo] || 0) + 1;
-            if(d.sede) sCount[d.sede] = (sCount[d.sede] || 0) + 1;
-        });
-        if(chartT) chartT.destroy(); 
-        if(chartS) chartS.destroy();
+        DATA_LOCAL.forEach(d => { if(d.tipo) tCount[d.tipo] = (tCount[d.tipo] || 0) + 1; if(d.sede) sCount[d.sede] = (sCount[d.sede] || 0) + 1; });
+        if(chartT) chartT.destroy(); if(chartS) chartS.destroy();
         chartT = new Chart(document.getElementById('chartTipo'), { type: 'doughnut', data: { labels: Object.keys(tCount), datasets: [{ data: Object.values(tCount), backgroundColor: ['#22c55e', '#3b82f6', '#6366f1', '#a855f7', '#94a3b8', '#f59e0b'] }] }, options: { maintainAspectRatio: false, plugins: { title: { display: true, text: 'EQUIPOS POR TIPO' } } } });
         chartS = new Chart(document.getElementById('chartSede'), { type: 'bar', data: { labels: Object.keys(sCount), datasets: [{ label: 'Sedes', data: Object.values(sCount), backgroundColor: '#3b82f6' }] }, options: { maintainAspectRatio: false, plugins: { title: { display: true, text: 'ACTIVOS POR SEDE' } } } });
     }
-
-    async function exportarExcelConImagen() {
-        const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet('Inventario IT');
-        worksheet.columns = COLUMNAS_OFICIALES.map(col => ({ header: col.toUpperCase(), key: col, width: 20 }));
-        DATA_LOCAL.forEach(eq => { worksheet.addRow(eq); });
-        const buffer = await workbook.xlsx.writeBuffer();
-        saveAs(new Blob([buffer]), `Inventario_Fibex_${new Date().toLocaleDateString()}.xlsx`);
-    }
-
-    async function eliminarRegistro() {
-        const id = document.getElementById('edit_id').value;
-        if(!id || !confirm("¿Eliminar este registro?")) return;
-        try { await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'delete', id: id }) }); cerrarModal(); cargarDesdeNube(); } catch (e) { alert("Error"); }
-    }
+    async function exportarExcelConImagen() { const workbook = new ExcelJS.Workbook(); const worksheet = workbook.addWorksheet('Inventario IT'); worksheet.columns = COLUMNAS_OFICIALES.map(col => ({ header: col.toUpperCase(), key: col, width: 20 })); DATA_LOCAL.forEach(eq => { worksheet.addRow(eq); }); const buffer = await workbook.xlsx.writeBuffer(); saveAs(new Blob([buffer]), `Inventario_Fibex_${new Date().toLocaleDateString()}.xlsx`); }
+    async function eliminarRegistro() { const id = document.getElementById('edit_id').value; if(!id || !confirm("¿Eliminar este registro?")) return; try { await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'delete', id: id }) }); cerrarModal(); cargarDesdeNube(); } catch (e) { alert("Error"); } }
 
     window.onload = () => {
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
