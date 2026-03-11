@@ -10,6 +10,68 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
+* Nuevo estilo para el Overlay */
+#loadingOverlay {
+    display: none; /* Se activa por JS */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px); /* Efecto de desenfoque premium */
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 9999;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Animación de Ondas */
+.loader-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.pulse-circle {
+    width: 60px;
+    height: 60px;
+    background-color: var(--blue-fibex);
+    border-radius: 50%;
+    opacity: 0.6;
+    animation: pulse-wave 2s infinite ease-in-out;
+}
+
+.pulse-circle-inner {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: var(--blue-fibex);
+    border-radius: 50%;
+    box-shadow: 0 0 15px rgba(1, 65, 130, 0.5);
+}
+
+@keyframes pulse-wave {
+    0% { transform: scale(0.5); opacity: 1; }
+    100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* Animación del Texto */
+#loadingText {
+    font-weight: 700;
+    color: var(--blue-fibex);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
         :root { 
             --blue-fibex: #014182; --blue-light: #eef4ff; --green-excel: #217346; 
             --red-alert: #d9534f; --orange-cell: #f39c12; --gray-bg: #f4f7f6;
@@ -38,13 +100,21 @@
             width: 100%; border: 1px dashed #ccc; text-align: center; font-size: 11px;
             border-radius: 8px; margin-bottom: 8px; font-weight: bold;
         }
-        .charts-wrapper { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; margin-bottom: 10px; }
+        .charts-wrapper { max-height: 0; overflow: hidden; transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1); margin-bottom: 10px; }
         .charts-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
         
+        /* EFECTO VISUAL DE ENTRADA PARA LAS GRÁFICAS */
         .chart-card { 
             background: white; padding: 15px; border-radius: 12px; height: 240px; 
             display: flex; flex-direction: column; align-items: center; 
             box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid var(--border-color);
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .charts-wrapper.open .chart-card {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .table-wrapper { 
@@ -89,7 +159,13 @@
 </head>
 <body>
 
-<div id="loadingOverlay"><div class="spinner"></div><p id="loadingText" style="font-size:12px;">Procesando...</p></div>
+<div id="loadingOverlay">
+    <div class="loader-container">
+        <div class="pulse-circle"></div>
+        <div class="pulse-circle-inner"></div>
+    </div>
+    <p id="loadingText">Sincronizando Sistemas...</p>
+</div>
 
 <header>
     <div>
@@ -126,7 +202,7 @@
     <button class="btn" style="background:var(--blue-fibex); white-space: nowrap;" onclick="nuevoActivo()">➕ Nuevo Activo</button>
 </div>
 
-<button type="button" class="collapsible-btn" onclick="toggleCharts(this)">Ver Gráficos Estadísticos ▼</button>
+<button type="button" id="collapsibleBtn" class="collapsible-btn" onclick="toggleCharts(this)">Ver Gráficos Estadísticos ▼</button>
 <div class="charts-wrapper" id="chartsMenu">
     <div class="charts-container">
         <div class="chart-card"><canvas id="chartTipo"></canvas></div>
@@ -188,6 +264,14 @@
         "YARACUY": ["YARITAGUA"]
     };
 
+    const LISTA_DEPARTAMENTOS = [
+        "ADMINISTRACION", "ALMACEN", "ATENCION AL CLIENTE", "AUDITORIA", "BIENVENIDA Y FIDELIZACION", 
+        "CALL CENTER", "CDR", "CECOM", "CLUB FIBEX", "COBRANZA", "COMERCIALIZA", "COMPRAS", 
+        "CONCILIACION", "CONTABILIDAD", "FINANZAS", "GPS", "LA INTERNACIONAL", "MERCADEO", 
+        "MESA DE APOYO", "NOC", "O&M", "OPERACIONES", "POR ASIGNA", "RRRHH", 
+        "TECNOLOGIA Y SISTEMA", "TELEVENTAS", "VGT"
+    ];
+
     const DEP_PERIFERICOS = {
         'diadema': ['f_asig_diadema'],
         'mouse': ['mouse_modelo', 'f_asig_mouse'],
@@ -219,6 +303,29 @@
                             <option value="" selected disabled>SELECCIONE SEDE</option>
                          </select>`;
             } 
+            else if (c === 'departamento') {
+                let options = LISTA_DEPARTAMENTOS.map(d => `<option value="${d}">${d}</option>`).join('');
+                html += `<select id="departamento">
+                            <option value="" selected disabled>SELECCIONE DEPARTAMENTO</option>
+                            ${options}
+                         </select>`;
+            }
+            else if (c === 'memoria_gb') {
+                const memorias = ["4 GB DDR3", "8 GB DDR3", "8 GB DDR4", "12 GB DDR4", "16 GB DDR4", "32 GB DDR4"];
+                let options = memorias.map(m => `<option value="${m}">${m}</option>`).join('');
+                html += `<select id="memoria_gb">
+                            <option value="" selected disabled>SELECCIONE MEMORIA</option>
+                            ${options}
+                         </select>`;
+            }
+            else if (c === 'disco') {
+                const discos = ["120 GB SSD", "240 GB SSD", "320 GB SSD", "500 GB SSD", "1TB SSD"];
+                let options = discos.map(d => `<option value="${d}">${d}</option>`).join('');
+                html += `<select id="disco">
+                            <option value="" selected disabled>SELECCIONE DISCO</option>
+                            ${options}
+                         </select>`;
+            }
             else if (c === 'os') {
                 html += `<select id="os">
                             <option value="" selected disabled>SELECCIONE OS</option>
@@ -260,7 +367,7 @@
             const el = document.getElementById(c);
             if(el) {
                 if (el.tagName === 'SELECT') {
-                    if (['tipo', 'ubicacion', 'sede', 'os'].includes(el.id)) el.value = "";
+                    if (['tipo', 'ubicacion', 'sede', 'departamento', 'os', 'memoria_gb', 'disco'].includes(el.id)) el.value = "";
                     else el.value = 'NO';
                 } else {
                     el.value = "";
@@ -380,6 +487,15 @@
             });
 
             renderizarTable(); 
+            
+            // DISPARO AUTOMÁTICO DE GRÁFICAS TRAS CARGAR DATOS
+            setTimeout(() => {
+                const menu = document.getElementById("chartsMenu");
+                if (!menu.style.maxHeight || menu.style.maxHeight === "0px") {
+                    toggleCharts(document.getElementById("collapsibleBtn"));
+                }
+            }, 500);
+
         } catch(e) { console.error(e); }
         overlay.style.display='none';
     }
@@ -470,8 +586,17 @@
 
     function toggleCharts(btn) {
         const content = document.getElementById("chartsMenu");
-        if (content.style.maxHeight) { content.style.maxHeight = null; btn.innerText = "Ver Gráficos ▼"; }
-        else { content.style.maxHeight = content.scrollHeight + "px"; btn.innerText = "Ocultar Gráficos ▲"; actualizarGraficas(); }
+        if (content.style.maxHeight && content.style.maxHeight !== "0px") { 
+            content.style.maxHeight = "0px"; 
+            content.classList.remove("open");
+            btn.innerText = "Ver Gráficos ▼"; 
+        }
+        else { 
+            content.style.maxHeight = content.scrollHeight + "px"; 
+            content.classList.add("open");
+            btn.innerText = "Ocultar Gráficos ▲"; 
+            actualizarGraficas(); 
+        }
     }
 
     function actualizarGraficas() {
