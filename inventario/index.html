@@ -19,7 +19,7 @@
             --stockit-blue: #3b82f6;
         }
 
-        /* --- OVERLAY DE CARGA MEJORADO --- */
+        /* --- OVERLAY DE CARGA --- */
         #loadingOverlay {
             display: none;
             position: fixed;
@@ -99,7 +99,6 @@
 
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        /* --- RESTO DE ESTILOS MANTENIDOS --- */
         body { font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 5px; background-color: var(--gray-bg); color: #333; }
         header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px 15px; border-radius: 8px; border-bottom: 3px solid var(--blue-fibex); margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .dashboard { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; justify-content: flex-start; }
@@ -246,7 +245,8 @@
         "COJEDES": ["AGROPECUARIA SIERRA MORANA", "OFI SAN CARLOS", "OFI TINAQUILLO"],
         "MARGARITA": ["LA ASUNCION", "RATTAN"],
         "GUARICO": ["SAN JUAN DE LOS MORROS", "CENTRO AUTOMOTRIZ VALLE DE LA PASCUA"],
-        "YARACUY": ["YARITAGUA"]
+        "YARACUY": ["YARITAGUA"],
+        "ANZOATEGUI": ["OFICINA COMERCIAL PUENTE REAL BARCELONA", "OFICINA COMERCIAL REGINA PTO LA CRUZ", "OFICINA COMERCIAL SANTA FE DE PEÑALVER", "OFICINA COMERCIAL BOCA DE UCHIRE", "TORRE FIBEX LECHERIA", "PTO PIRITU"]
     };
 
     const LISTA_DEPARTAMENTOS = [
@@ -264,8 +264,6 @@
         'monitor': ['monitor_modelo', 'f_asig_monitor'],
         'bolsos': ['f_asig_bolsos']
     };
-
-    // --- FUNCIONES DE CARGA Y BARRA DE PROGRESO ---
 
     function updateProgressBar(percent, text) {
         const bar = document.getElementById('progressBar');
@@ -337,21 +335,15 @@
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
             const jsonData = XLSX.utils.sheet_to_json(firstSheet);
             
-            updateProgressBar(70, "Validando registros...");
-            // Aquí podrías añadir lógica para subir los datos si fuera necesario
-            
+            DATA_LOCAL = jsonData; 
             updateProgressBar(100, "¡Importación exitosa!");
             setTimeout(() => {
-                // Si la importación solo carga localmente para visualización:
-                DATA_LOCAL = jsonData; 
                 renderizarTable();
                 overlay.style.display = 'none';
             }, 800);
         };
         reader.readAsArrayBuffer(file);
     }
-
-    // --- RESTO DE LÓGICA MANTENIDA ---
 
     function inicializarEstructuraModal() {
         const container = document.getElementById('modal_fields');
@@ -545,13 +537,49 @@
     function toggleAllChecks(source) { document.querySelectorAll('.rowCheck').forEach(c => c.checked = source.checked); updateUISelection(); }
     function filtrarDesdeCard(t) { FILTRO_TIPO = t; renderizarTable(); }
     function toggleCharts(btn) { const content = document.getElementById("chartsMenu"); if (content.style.maxHeight && content.style.maxHeight !== "0px") { content.style.maxHeight = "0px"; content.classList.remove("open"); btn.innerText = "Ver Gráficos ▼"; } else { content.style.maxHeight = content.scrollHeight + "px"; content.classList.add("open"); btn.innerText = "Ocultar Gráficos ▲"; actualizarGraficas(); } }
+    
+    function generarColores(n) {
+        const colors = [];
+        for (let i = 0; i < n; i++) {
+            const h = Math.floor(Math.random() * 360);
+            colors.push(`hsla(${h}, 70%, 60%, 0.8)`);
+        }
+        return colors;
+    }
+
     function actualizarGraficas() {
         const tCount = {}, sCount = {};
         DATA_LOCAL.forEach(d => { if(d.tipo) tCount[d.tipo] = (tCount[d.tipo] || 0) + 1; if(d.sede) sCount[d.sede] = (sCount[d.sede] || 0) + 1; });
         if(chartT) chartT.destroy(); if(chartS) chartS.destroy();
-        chartT = new Chart(document.getElementById('chartTipo'), { type: 'doughnut', data: { labels: Object.keys(tCount), datasets: [{ data: Object.values(tCount), backgroundColor: ['#22c55e', '#3b82f6', '#6366f1', '#a855f7', '#94a3b8', '#f59e0b'] }] }, options: { maintainAspectRatio: false, plugins: { title: { display: true, text: 'EQUIPOS POR TIPO' } } } });
-        chartS = new Chart(document.getElementById('chartSede'), { type: 'bar', data: { labels: Object.keys(sCount), datasets: [{ label: 'Sedes', data: Object.values(sCount), backgroundColor: '#3b82f6' }] }, options: { maintainAspectRatio: false, plugins: { title: { display: true, text: 'ACTIVOS POR SEDE' } } } });
+        
+        const labelsT = Object.keys(tCount);
+        chartT = new Chart(document.getElementById('chartTipo'), { 
+            type: 'doughnut', 
+            data: { 
+                labels: labelsT, 
+                datasets: [{ 
+                    data: Object.values(tCount), 
+                    backgroundColor: generarColores(labelsT.length) 
+                }] 
+            }, 
+            options: { maintainAspectRatio: false, plugins: { title: { display: true, text: 'EQUIPOS POR TIPO' } } } 
+        });
+        
+        const labelsS = Object.keys(sCount);
+        chartS = new Chart(document.getElementById('chartSede'), { 
+            type: 'bar', 
+            data: { 
+                labels: labelsS, 
+                datasets: [{ 
+                    label: 'Activos', 
+                    data: Object.values(sCount), 
+                    backgroundColor: generarColores(labelsS.length) 
+                }] 
+            }, 
+            options: { maintainAspectRatio: false, plugins: { title: { display: true, text: 'ACTIVOS POR SEDE' }, legend: { display: false } } } 
+        });
     }
+
     async function exportarExcelConImagen() { const workbook = new ExcelJS.Workbook(); const worksheet = workbook.addWorksheet('Inventario IT'); worksheet.columns = COLUMNAS_OFICIALES.map(col => ({ header: col.toUpperCase(), key: col, width: 20 })); DATA_LOCAL.forEach(eq => { worksheet.addRow(eq); }); const buffer = await workbook.xlsx.writeBuffer(); saveAs(new Blob([buffer]), `Inventario_Fibex_${new Date().toLocaleDateString()}.xlsx`); }
     async function eliminarRegistro() { const id = document.getElementById('edit_id').value; if(!id || !confirm("¿Eliminar este registro?")) return; try { await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'delete', id: id }) }); cerrarModal(); cargarDesdeNube(); } catch (e) { alert("Error"); } }
 
