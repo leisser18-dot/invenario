@@ -10,6 +10,168 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
+:root { 
+            --blue-fibex: #014182; 
+            --blue-hover: #002d5a;
+            --blue-light: #eef4ff; 
+            --green-excel: #217346; 
+            --red-alert: #d9534f; 
+            --gray-bg: #f0f2f5;
+            --border-color: #d1d9e0;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 8px 24px rgba(1, 65, 130, 0.12);
+        }
+
+        /* --- MOTOR DE ANIMACIONES --- */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes scaleIn {
+            0% { opacity: 0; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(50px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* --- ESTILOS BASE --- */
+        body { 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            margin: 0; padding: 15px; 
+            background-color: var(--gray-bg); 
+            color: #1a1a1a;
+            animation: fadeInUp 0.7s ease-out;
+        }
+
+        header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: white; padding: 15px 25px; border-radius: 16px; 
+            border-bottom: 5px solid var(--blue-fibex); margin-bottom: 20px; 
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* --- DASHBOARD DINÁMICO --- */
+        .dashboard { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 15px; margin-bottom: 20px; 
+        }
+        
+        .card { 
+            background: white; padding: 15px 20px; border-radius: 16px; 
+            display: flex; align-items: center; gap: 15px; border: 1px solid #eee;
+            cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: var(--shadow-sm);
+            animation: scaleIn 0.5s backwards;
+        }
+
+        .card:hover { 
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--blue-fibex);
+            background: var(--blue-light);
+        }
+
+        .card span { font-size: 24px; }
+        .card h3 { margin: 0; font-size: 11px; text-transform: uppercase; color: #777; letter-spacing: 0.5px; }
+        .card p { margin: 0; font-size: 20px; font-weight: 800; color: var(--blue-fibex); }
+
+        /* --- BOTONES Y BUSCADOR --- */
+        .controls-row {
+            display: flex; gap: 15px; margin-bottom: 20px; align-items: center;
+        }
+
+        .search-box {
+            flex-grow: 1; position: relative;
+        }
+
+        .search-box input {
+            width: 100%; padding: 14px 20px; border-radius: 12px; 
+            border: 1px solid #ddd; outline: none; transition: all 0.3s;
+            font-size: 14px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .search-box input:focus {
+            border-color: var(--blue-fibex);
+            box-shadow: 0 0 0 4px rgba(1, 65, 130, 0.1);
+        }
+
+        .btn { 
+            padding: 12px 22px; border: none; border-radius: 10px; 
+            cursor: pointer; color: white; font-weight: 600; 
+            display: flex; align-items: center; gap: 10px; font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-blue { background: var(--blue-fibex); }
+        .btn-blue:hover { background: var(--blue-hover); transform: scale(1.03); }
+
+        /* --- TABLA CON EFECTO CASCADA --- */
+        .table-wrapper { 
+            background: white; border-radius: 16px; overflow: auto; 
+            max-height: 65vh; box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        table { width: 100%; border-collapse: collapse; min-width: 2500px; }
+        
+        th { 
+            background: #f8fafc; color: var(--blue-fibex); font-weight: 700; 
+            font-size: 12px; padding: 18px 15px; text-align: left;
+            position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #edf2f7;
+        }
+
+        #cuerpo tr { 
+            opacity: 0; animation: slideInRight 0.5s ease forwards;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        #cuerpo tr:hover { 
+            background-color: #f1f7ff;
+            transform: scale(1.002);
+            z-index: 1;
+        }
+
+        td { padding: 15px; font-size: 13px; color: #4a5568; }
+
+        /* --- MODAL DE CRISTAL --- */
+        .modal { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0, 30, 60, 0.4); backdrop-filter: blur(6px);
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+
+        .modal-content { 
+            background: white; border-radius: 24px; width: 90%; max-width: 900px; padding: 35px; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-height: 85vh; overflow-y: auto;
+        }
+
+        .grid-form { 
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; 
+        }
+
+        /* --- LOADER --- */
+        #loadingOverlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.9); z-index: 9999;
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+
+        .loader {
+            width: 60px; height: 60px; border: 6px solid #f3f3f3;
+            border-top: 6px solid var(--blue-fibex); border-radius: 50%;
+            animation: spin 1s cubic-bezier(0.5, 0.1, 0.4, 0.9) infinite;
+        }
+
+
         :root { 
             --blue-fibex: #014182; --blue-light: #eef4ff; --green-excel: #217346; 
             --red-alert: #d9534f; --orange-cell: #f39c12; --gray-bg: #f4f7f6;
@@ -226,6 +388,7 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxczImEZhMnNnRM1wlhJxc3i33MPNLRzhVYn6dCkCMKCO4tzY_zXe0Js5uF9O7cRuzH/exec"; 
     let DATA_LOCAL = [];
     let FILTRO_TIPO = "";
+    let SOLO_REPETIDOS = false; // Nueva variable de control
     let chartT = null, chartS = null;
     let SORT_COL = "";
     let SORT_ASC = true;
@@ -241,7 +404,7 @@
         "CARABOBO": ["TORRE FIBEX", "TORRE CRISTAL", "DISTELNET", "PASEO LAS INDUSTRIAS", "METROPOLIS VALENCIA", "ALIANZA MALL", "CC SAMBIL", "CENTRO DE EXPERIENCIA", "JAC VALENCIA"],
         "CARACAS": ["EL PARAISO", "PROPATRIA", "GALERIAS", "CARICUAO", "LA URBINA", "GUARENAS"],
         "BARQUISIMETO": ["CC LEONALDO DAVINCI", "METROPOLIS BARQUISIMETO"],
-        "CAGUA": ["CENTRO AUTOMOTRIZ CAGUA"],
+        "CAGUA": ["CENTRO AUTOMOTRIATRIZ CAGUA"],
         "COJEDES": ["AGROPECUARIA SIERRA MORANA", "OFI SAN CARLOS", "OFI TINAQUILLO"],
         "MARGARITA": ["LA ASUNCION", "RATTAN"],
         "GUARICO": ["SAN JUAN DE LOS MORROS", "CENTRO AUTOMOTRIZ VALLE DE LA PASCUA"],
@@ -486,6 +649,19 @@
         quitar.forEach(id => { if(document.getElementById(id)) document.getElementById(id).style.display = 'none'; });
     }
 
+    // NUEVAS FUNCIONES PARA LOS BOTONES DEL DASHBOARD
+    function filtrarDesdeCard(t) { 
+        SOLO_REPETIDOS = false; // Desactivamos el modo duplicados
+        FILTRO_TIPO = t; 
+        renderizarTable(); 
+    }
+
+    function filtrarRepetidos() { 
+        SOLO_REPETIDOS = true; 
+        FILTRO_TIPO = ""; 
+        renderizarTable(); 
+    }
+
     function renderizarTable() {
         const tbody = document.getElementById('cuerpo'); const headerRow = document.getElementById('header_cols');
         const buscar = document.getElementById('busqueda').value.toUpperCase();
@@ -502,11 +678,23 @@
         });
         headerRow.innerHTML += '<th class="sticky-action">GESTIÓN</th>';
         document.getElementById('info_span_tech').colSpan = colsVisiblesCount;
+
+        // Lógica para detectar el conjunto de repetidos (por Serial)
+        const seriales = DATA_LOCAL.map(x => String(x.serial || "").trim().toUpperCase()).filter(s => s && s !== "-" && s !== "N/A" && s !== "S/N");
+        const setRepetidos = new Set(seriales.filter((s, index) => seriales.indexOf(s) !== index));
+
         let filtrados = DATA_LOCAL.filter(eq => {
             const cTipo = FILTRO_TIPO === "" || (eq.tipo && eq.tipo.toUpperCase() === FILTRO_TIPO);
             const cBusq = Object.values(eq).some(val => String(val).toUpperCase().includes(buscar));
-            return cTipo && cBusq;
+            
+            let cRep = true;
+            if (SOLO_REPETIDOS) {
+                cRep = setRepetidos.has(String(eq.serial || "").trim().toUpperCase());
+            }
+            
+            return cTipo && cBusq && cRep;
         });
+
         filtrados.forEach(eq => {
             const tr = document.createElement('tr');
             let html = `<td class="sticky-check"><input type="checkbox" class="rowCheck" value="${eq.id}" onchange="updateUISelection()"></td><td class="sticky-type"><span class="badge bg-${(eq.tipo || 'default').toLowerCase()}">${eq.tipo || '-'}</span></td>`;
@@ -524,6 +712,8 @@
         document.getElementById('tC').innerText = DATA_LOCAL.filter(x => x.tipo === 'CELULAR').length;
         document.getElementById('tI').innerText = DATA_LOCAL.filter(x => x.tipo === 'IMPRESORA').length;
         document.getElementById('tA').innerText = DATA_LOCAL.filter(x => x.tipo === 'AUTOPAGO').length;
+        
+        // El conteo se mantiene por Serial como lo tenías definido
         const seriales = DATA_LOCAL.map(x => String(x.serial || "").trim().toUpperCase()).filter(s => s && s !== "-" && s !== "N/A" && s !== "S/N");
         const setRepetidos = new Set(seriales.filter((s, index) => seriales.indexOf(s) !== index));
         document.getElementById('tRep').innerText = DATA_LOCAL.filter(eq => setRepetidos.has(String(eq.serial).trim().toUpperCase())).length;
@@ -535,7 +725,7 @@
     function ordenarPor(col) { SORT_ASC = (SORT_COL === col) ? !SORT_ASC : true; SORT_COL = col; DATA_LOCAL.sort((a, b) => { let vA = String(a[col] || "").toUpperCase(); let vB = String(b[col] || "").toUpperCase(); return SORT_ASC ? vA.localeCompare(vB) : vB.localeCompare(vA); }); renderizarTable(); }
     function updateUISelection() { const sel = document.querySelectorAll('.rowCheck:checked').length; document.getElementById('btnBulkDelete').style.display = sel > 0 ? 'flex' : 'none'; }
     function toggleAllChecks(source) { document.querySelectorAll('.rowCheck').forEach(c => c.checked = source.checked); updateUISelection(); }
-    function filtrarDesdeCard(t) { FILTRO_TIPO = t; renderizarTable(); }
+    
     function toggleCharts(btn) { const content = document.getElementById("chartsMenu"); if (content.style.maxHeight && content.style.maxHeight !== "0px") { content.style.maxHeight = "0px"; content.classList.remove("open"); btn.innerText = "Ver Gráficos ▼"; } else { content.style.maxHeight = content.scrollHeight + "px"; content.classList.add("open"); btn.innerText = "Ocultar Gráficos ▲"; actualizarGraficas(); } }
     
     function generarColores(n) {
