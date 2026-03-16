@@ -8,7 +8,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+    <script src="https://unpkg.com/pizzip@3.1.7/dist/pizzip.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.49.1/docxtemplater.js"></script>
     <style>
 :root { 
             --blue-fibex: #014182; 
@@ -330,6 +331,8 @@
         <button id="btnBulkDelete" class="btn" style="background:var(--red-alert); display:none;" onclick="eliminarSeleccionados()">🗑️ Borrar</button>
         <button class="btn" style="background:var(--green-excel)" onclick="exportarExcelConImagen()">📊 Excel</button>
         <button class="btn" style="background:var(--blue-fibex)" onclick="cargarDesdeNube()">🔄 Refrescar</button>
+        <button type="button" onclick="generarActaWord()" style="background-color: var(--blue-fibex); color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+    📝 Generar Acta</button>
     </div>
 </header>
 
@@ -859,6 +862,58 @@
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         cargarDesdeNube();
     };
+    async function generarActaWord() {
+    const id = document.getElementById('edit_id').value;
+    const registro = DATA_LOCAL.find(r => r.id == id);
+    
+    if (!registro) {
+        alert("Seleccione un registro primero.");
+        return;
+    }
+
+    try {
+        // 1. Cargar la plantilla desde tu repo GitHub
+        const response = await fetch('./plantilla_acta.docx');
+        const content = await response.arrayBuffer();
+        const zip = new PizZip(content);
+        
+        const doc = new window.docxtemplater(zip, {
+            paragraphLoop: true,
+            linebreaks: true,
+        });
+
+        // 2. Preparar los datos (Mapeo de campos)
+        const dataDoc = {
+            ...registro,
+            usuario: (registro.usuario || 'N/A').toUpperCase(),
+            departamento: (registro.sede || 'SISTEMAS').toUpperCase(),
+            tipo: (registro.tipo || '').toUpperCase(),
+            marca: (registro.marca || '').toUpperCase(),
+            modelo: (registro.modelo || '').toUpperCase(),
+            serial: (registro.serial || '').toUpperCase(),
+            cpu: (registro.cpu || '').toUpperCase(),
+            memoria_gb: (registro.memoria_gb || '').toUpperCase(),
+            teclado_modelo: (registro.teclado_modelo || 'ESTÁNDAR').toUpperCase(),
+            mouse_modelo: (registro.mouse_modelo || 'ÓPTICO').toUpperCase(),
+            fecha_hoy: new Date().toLocaleDateString('es-ES')
+        };
+
+        // 3. Reemplazar etiquetas y generar
+        doc.render(dataDoc);
+
+        const out = doc.getZip().generate({
+            type: "blob",
+            mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        });
+
+        // 4. Descargar archivo
+        saveAs(out, `Acta_Entrega_${dataDoc.usuario}_${dataDoc.tipo}.docx`);
+
+    } catch (error) {
+        console.error("Error al generar el acta:", error);
+        alert("No se pudo generar el acta. Verifique que 'plantilla_acta.docx' esté en la raíz del repositorio.");
+    }
+}
 </script>
 </body>
 </html>
