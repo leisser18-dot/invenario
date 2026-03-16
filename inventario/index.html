@@ -770,7 +770,86 @@
         });
     }
 
-    async function exportarExcelConImagen() { const workbook = new ExcelJS.Workbook(); const worksheet = workbook.addWorksheet('Inventario IT'); worksheet.columns = COLUMNAS_OFICIALES.map(col => ({ header: col.toUpperCase(), key: col, width: 20 })); DATA_LOCAL.forEach(eq => { worksheet.addRow(eq); }); const buffer = await workbook.xlsx.writeBuffer(); saveAs(new Blob([buffer]), `Inventario_Fibex_${new Date().toLocaleDateString()}.xlsx`); }
+    async function exportarExcelConImagen() {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Inventario IT');
+
+    // 1. Configuración de Anchos de Columna (ajustado a tus COLUMNAS_OFICIALES)
+    worksheet.columns = COLUMNAS_OFICIALES.map(col => ({
+        header: col.toUpperCase().replace('_', ' '),
+        key: col,
+        width: 18
+    }));
+
+    // 2. Insertar Logo y Encabezado de Reporte
+    try {
+        const logoUrl = 'https://internetenmizona.com/wp-content/uploads/2022/10/Fibex-Modificado.png';
+        const response = await fetch(logoUrl);
+        const buffer = await response.arrayBuffer();
+        const logoId = workbook.addImage({
+            buffer: buffer,
+            extension: 'png',
+        });
+
+        // Crear espacio para el encabezado (5 filas)
+        for(let i=0; i<5; i++) worksheet.insertRow(1, []);
+
+        // Posicionar el logo (Fila 1 a 4)
+        worksheet.addImage(logoId, {
+            tl: { col: 0, row: 0.5 },
+            ext: { width: 130, height: 60 }
+        });
+
+        // Título del Reporte (Lado derecho)
+        worksheet.mergeCells('E2:K2');
+        const titleCell = worksheet.getCell('E2');
+        titleCell.value = 'DEPARTAMENTO DE SISTEMAS - INVENTARIO UNIFICADO';
+        titleCell.font = { name: 'Segoe UI', size: 14, bold: true };
+        titleCell.alignment = { horizontal: 'right' };
+
+        worksheet.mergeCells('E3:K3');
+        const dateCell = worksheet.getCell('E3');
+        dateCell.value = `FECHA DE EXPORTACIÓN: ${new Date().toLocaleDateString()}`;
+        dateCell.font = { name: 'Segoe UI', size: 10 };
+        dateCell.alignment = { horizontal: 'right' };
+
+    } catch (e) {
+        console.warn("No se pudo cargar el logo para el Excel.", e);
+        for(let i=0; i<5; i++) worksheet.insertRow(1, []);
+    }
+
+    // 3. Estilo de Encabezados de Tabla (Fila 6)
+    const headerRow = worksheet.getRow(6);
+    headerRow.eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: 'FF000000' }, size: 10 };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } };
+        cell.border = {
+            top: { style: 'thin' },
+            bottom: { style: 'thick' }, // Línea gruesa inferior como la imagen
+            left: { style: 'thin' },
+            right: { style: 'thin' }
+        };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    });
+
+    // 4. Agregar Datos con formato unificado
+    DATA_LOCAL.forEach((eq) => {
+        const row = worksheet.addRow(eq);
+        row.eachCell((cell) => {
+            cell.value = cell.value ? cell.value.toString().toUpperCase() : '-'; // Todo a MAYÚSCULAS
+            cell.font = { name: 'Segoe UI', size: 9 };
+            cell.border = {
+                bottom: { style: 'hair' },
+                left: { style: 'thin' },
+                right: { style: 'thin' }
+            };
+        });
+    });
+
+    // 5. Descarga del archivo
+    const finalBuffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([finalBuffer]), `Inventario_Sistemas_Fibex_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
     async function eliminarRegistro() { const id = document.getElementById('edit_id').value; if(!id || !confirm("¿Eliminar este registro?")) return; try { await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'delete', id: id }) }); cerrarModal(); cargarDesdeNube(); } catch (e) { alert("Error"); } }
 
     window.onload = () => {
