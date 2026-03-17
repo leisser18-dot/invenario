@@ -581,28 +581,90 @@
     function abrirModal() { inicializarEstructuraModal(); document.getElementById('modal').style.display='flex'; }
 
     function prepararEdicion(id) {
-        const eq = DATA_LOCAL.find(x => x.id == id);
-        if(!eq) return;
-        abrirModal();
-        document.getElementById('edit_id').value = eq.id;
-        document.getElementById('btnDelete').style.display = 'block';
-        if (eq.ubicacion) actualizarSedesPorUbicacion(eq.ubicacion, eq.sede);
-        COLUMNAS_OFICIALES.forEach(c => { 
-            const el = document.getElementById(c);
-            if(el) {
-                if (el.type === 'date') el.value = formatToISO(eq[c]);
-                else el.value = eq[c] || (['diadema','mouse','teclado','monitor','bolsos'].includes(c)?'NO':"");
+    const eq = DATA_LOCAL.find(x => x.id == id);
+    if(!eq) return;
+    
+    abrirModal();
+    document.getElementById('edit_id').value = eq.id;
+    document.getElementById('btnDelete').style.display = 'block';
+    
+    // 1. Normalizar ubicación, sede y tipo
+    const ubicacionNorm = eq.ubicacion ? String(eq.ubicacion).trim().toUpperCase() : "";
+    const sedeNorm = eq.sede ? String(eq.sede).trim().toUpperCase() : "";
+    const tipoNorm = eq.tipo ? String(eq.tipo).trim().toUpperCase() : "";
+
+    if (ubicacionNorm) actualizarSedesPorUbicacion(ubicacionNorm, sedeNorm);
+    
+    // 2. Iterar sobre las columnas y asignar valores
+    COLUMNAS_OFICIALES.forEach(c => { 
+        const el = document.getElementById(c);
+        if(el) {
+            if (el.type === 'date') {
+                el.value = formatToISO(eq[c]);
+            } else {
+                let val = eq[c] ? String(eq[c]).trim().toUpperCase() : "";
+                
+                if (['diadema','mouse','teclado','monitor','bolsos'].includes(c)) {
+                    val = (val === 'SI' || val === 'SÍ') ? 'SI' : 'NO';
+                    el.value = val;
+                } else {
+                    el.value = val;
+                    
+                    if (el.tagName === 'SELECT' && el.value === "" && val !== "") {
+                        const option = document.createElement('option');
+                        option.value = val;
+                        option.text = val;
+                        el.appendChild(option);
+                        el.value = val;
+                    }
+                }
             }
-        });
-        if (eq.tipo === 'IMPRESORA' && eq.modelo && eq.modelo.includes(' - ')) {
-            const p = eq.modelo.split(' - ');
-            if(document.getElementById('modelo')) document.getElementById('modelo').value = p[0] || "";
-            if(document.getElementById('conexion')) document.getElementById('conexion').value = p[1] || "";
-            if(document.getElementById('consumible')) document.getElementById('consumible').value = p[2] || "";
         }
-        toggleCamposDinamicos(eq.tipo);
-        ['diadema', 'mouse', 'teclado', 'monitor', 'bolsos'].forEach(p => togglePeriferico(p, eq[p] || "NO"));
+    });
+
+    // 3. Manejo especial para IMPRESORAS
+    if (tipoNorm === 'IMPRESORA' && eq.modelo && String(eq.modelo).includes(' - ')) {
+        const p = String(eq.modelo).split(' - ');
+        if(document.getElementById('modelo')) document.getElementById('modelo').value = p[0] ? p[0].trim().toUpperCase() : "";
+        if(document.getElementById('conexion')) document.getElementById('conexion').value = p[1] ? p[1].trim().toUpperCase() : "";
+        if(document.getElementById('consumible')) document.getElementById('consumible').value = p[2] ? p[2].trim().toUpperCase() : "";
     }
+    
+    // 4. Mostrar/Ocultar campos según el tipo
+    toggleCamposDinamicos(tipoNorm);
+    
+    // 5. Ajustar bloqueo de los periféricos de forma inteligente
+    ['diadema', 'mouse', 'teclado', 'monitor', 'bolsos'].forEach(p => {
+        let val = eq[p] ? String(eq[p]).trim().toUpperCase() : "NO";
+        if (val === "SÍ") val = "SI";
+        
+        // Auto-detectar si por error dejaron el <select> en "NO" / vacío, pero SÍ registraron un modelo
+        let tieneDatosExtra = false;
+        if (DEP_PERIFERICOS[p]) {
+            DEP_PERIFERICOS[p].forEach(idD => {
+                if (eq[idD] && String(eq[idD]).trim() !== "") tieneDatosExtra = true;
+            });
+        }
+        
+        if (tieneDatosExtra) {
+            val = "SI";
+            if (document.getElementById(p)) document.getElementById(p).value = "SI";
+        }
+        
+        togglePeriferico(p, val);
+        
+        // Restaurar explícitamente el modelo/fecha para que no quede en blanco
+        if (DEP_PERIFERICOS[p] && val === "SI") {
+            DEP_PERIFERICOS[p].forEach(idD => {
+                const elD = document.getElementById(idD);
+                if (elD) {
+                    if (elD.type === 'date') elD.value = formatToISO(eq[idD]);
+                    else elD.value = eq[idD] ? String(eq[idD]).trim().toUpperCase() : "";
+                }
+            });
+        }
+    });
+}
 
     async function guardarRegistro() {
         const overlay = document.getElementById('loadingOverlay');
