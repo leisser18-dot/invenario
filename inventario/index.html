@@ -862,27 +862,22 @@
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         cargarDesdeNube();
     };
-    async function generarActaWord() {
-    const id = document.getElementById('edit_id').value;
-    const registro = DATA_LOCAL.find(r => r.id == id);
-    
-    if (!registro) {
-        alert("Seleccione un registro primero.");
-        return;
-    }
+   async function generarActaWord(registro) {
+    if (!registro) return;
 
     try {
-        // 1. Cargar la plantilla desde tu repo GitHub
+        // 1. Cargar plantilla desde la raíz del repositorio
         const response = await fetch('./plantilla_acta.docx');
+        if (!response.ok) throw new Error("No se encontró la plantilla");
+        
         const content = await response.arrayBuffer();
         const zip = new PizZip(content);
-        
         const doc = new window.docxtemplater(zip, {
             paragraphLoop: true,
             linebreaks: true,
         });
 
-        // 2. Preparar los datos (Mapeo de campos)
+        // 2. Preparar los datos (Mapeo de etiquetas {usuario}, {tipo}, etc.)
         const dataDoc = {
             ...registro,
             usuario: (registro.usuario || 'N/A').toUpperCase(),
@@ -893,27 +888,64 @@
             serial: (registro.serial || '').toUpperCase(),
             cpu: (registro.cpu || '').toUpperCase(),
             memoria_gb: (registro.memoria_gb || '').toUpperCase(),
+            // Etiquetas adicionales para periféricos si existen
             teclado_modelo: (registro.teclado_modelo || 'ESTÁNDAR').toUpperCase(),
             mouse_modelo: (registro.mouse_modelo || 'ÓPTICO').toUpperCase(),
             fecha_hoy: new Date().toLocaleDateString('es-ES')
         };
 
-        // 3. Reemplazar etiquetas y generar
+        // 3. Renderizar y Descargar
         doc.render(dataDoc);
-
         const out = doc.getZip().generate({
             type: "blob",
             mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         });
 
-        // 4. Descargar archivo
-        saveAs(out, `Acta_Entrega_${dataDoc.usuario}_${dataDoc.tipo}.docx`);
+        saveAs(out, `Acta_Entrega_${dataDoc.usuario}.docx`);
 
     } catch (error) {
-        console.error("Error al generar el acta:", error);
-        alert("No se pudo generar el acta. Verifique que 'plantilla_acta.docx' esté en la raíz del repositorio.");
+        console.error("Error:", error);
+        alert("Asegúrate de que 'plantilla_acta.docx' esté en la raíz de tu GitHub.");
     }
 }
+function actualizarTabla(data) {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+
+    data.forEach(eq => {
+        const tr = document.createElement('tr');
+        
+        // ... (tus columnas de Usuario, Sede, etc.) ...
+
+        // Columna de ACCIONES
+        const tdAcciones = document.createElement('td');
+        tdAcciones.style.display = 'flex';
+        tdAcciones.style.gap = '10px';
+        tdAcciones.style.justifyContent = 'center';
+
+        // Botón Editar (Lápiz)
+        const btnEdit = document.createElement('button');
+        btnEdit.innerHTML = '✏️';
+        btnEdit.className = 'btn-action';
+        btnEdit.onclick = () => abrirModal(eq);
+
+        // NUEVO: Botón Acta (Hoja)
+        const btnActa = document.createElement('button');
+        btnActa.innerHTML = '📝';
+        btnActa.className = 'btn-action';
+        btnActa.title = "Generar Acta de Entrega";
+        btnActa.onclick = (e) => {
+            e.stopPropagation(); // Evita que se abra el modal si la fila tiene evento
+            generarActaWord(eq); 
+        };
+
+        tdAcciones.appendChild(btnEdit);
+        tdAcciones.appendChild(btnActa);
+        tr.appendChild(tdAcciones);
+        tbody.appendChild(tr);
+    });
+}
+
 </script>
 </body>
 </html>
