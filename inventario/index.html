@@ -8,7 +8,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+    <script src="https://unpkg.com/pizzip@3.1.7/dist/pizzip.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.49.1/docxtemplater.js"></script>
     <style>
 :root { 
             --blue-fibex: #014182; 
@@ -330,6 +331,7 @@
         <button id="btnBulkDelete" class="btn" style="background:var(--red-alert); display:none;" onclick="eliminarSeleccionados()">🗑️ Borrar</button>
         <button class="btn" style="background:var(--green-excel)" onclick="exportarExcelConImagen()">📊 Excel</button>
         <button class="btn" style="background:var(--blue-fibex)" onclick="cargarDesdeNube()">🔄 Refrescar</button>
+        
     </div>
 </header>
 
@@ -380,6 +382,7 @@
             <button class="btn" style="background:#888;" onclick="cerrarModal()">Cerrar</button>
             <button id="btnDelete" class="btn" style="background:var(--red-alert); display:none;" onclick="eliminarRegistro()">Eliminar</button>
             <button class="btn" style="background:var(--blue-fibex);" onclick="guardarRegistro()">💾 Guardar</button>
+	    <button type="button" onclick="generarActaWord()" style="background-color: var(--blue-fibex); color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">📝 Generar Acta</button>
         </div>
     </div>
 </div>
@@ -406,7 +409,7 @@
         "BARQUISIMETO": ["CC LEONALDO DAVINCI", "METROPOLIS BARQUISIMETO"],
         "CAGUA": ["CENTRO AUTOMOTRIATRIZ CAGUA"],
         "COJEDES": ["AGROPECUARIA SIERRA MORANA", "OFI SAN CARLOS", "OFI TINAQUILLO"],
-        "MARGARITA": ["LA ASUNCION", "RATTAN"],
+        "MARGARITA": ["LA ASUNCION", "RATTAN", "FIBEX PRO"],
         "GUARICO": ["SAN JUAN DE LOS MORROS", "CENTRO AUTOMOTRIZ VALLE DE LA PASCUA"],
         "YARACUY": ["YARITAGUA"],
         "ANZOATEGUI": ["OFICINA COMERCIAL PUENTE REAL BARCELONA", "OFICINA COMERCIAL REGINA PTO LA CRUZ", "OFICINA COMERCIAL SANTA FE DE PEÑALVER", "OFICINA COMERCIAL BOCA DE UCHIRE", "TORRE FIBEX LECHERIA", "PTO PIRITU"]
@@ -416,7 +419,7 @@
         "ADMINISTRACION", "ALMACEN", "ATENCION AL CLIENTE", "AUDITORIA", "BIENVENIDA Y FIDELIZACION", 
         "CALL CENTER", "CDR", "CECOM", "CLUB FIBEX", "COBRANZA", "COMERCIALIZA", "COMPRAS", 
         "CONCILIACION", "CONTABILIDAD", "FINANZAS", "GESTION DEL CAMBIO", "GPS", "LA INTERNACIONAL", "MERCADEO", 
-        "MESA DE APOYO", "NOC", "O&M", "OPERACIONES", "POR ASIGNA", "RRRHH", 
+        "MESA DE APOYO", "NOC", "O&M", "OPERACIONES", "POR ASIGNA", "POSTVENTAS", "RRRHH", 
         "TECNOLOGIA Y SISTEMA", "TELEVENTAS", "VGT"
     ];
 
@@ -518,11 +521,7 @@
             if(c === 'last_update' || c === 'tipo') return;
             if (c === 'ubicacion') {
                 let options = Object.keys(RELACION_UBICACION_SEDE).map(u => `<option value="${u}">${u}</option>`).join('');
-                html += `<select id="ubicacion" onchange="actualizarSedesPorUbicacion(this.value)"><option value="" selected disabled>SELECCIONE UBICACIÓN</option>${options}
-
-
-
-</select>`;
+                html += `<select id="ubicacion" onchange="actualizarSedesPorUbicacion(this.value)"><option value="" selected disabled>SELECCIONE UBICACIÓN</option>${options}</select>`;
             } else if (c === 'sede') {
                 html += `<select id="sede"><option value="" selected disabled>SELECCIONE SEDE</option></select>`;
             } else if (c === 'departamento') {
@@ -774,13 +773,147 @@
         });
     }
 
-    async function exportarExcelConImagen() { const workbook = new ExcelJS.Workbook(); const worksheet = workbook.addWorksheet('Inventario IT'); worksheet.columns = COLUMNAS_OFICIALES.map(col => ({ header: col.toUpperCase(), key: col, width: 20 })); DATA_LOCAL.forEach(eq => { worksheet.addRow(eq); }); const buffer = await workbook.xlsx.writeBuffer(); saveAs(new Blob([buffer]), `Inventario_Fibex_${new Date().toLocaleDateString()}.xlsx`); }
+    async function exportarExcelConImagen() {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Inventario Unificado');
+
+    // 1. Configuración de columnas según COLUMNAS_OFICIALES
+    worksheet.columns = COLUMNAS_OFICIALES.map(col => ({
+        header: col.toUpperCase().replace('_', ' '),
+        key: col,
+        width: 20
+    }));
+
+    // 2. Integración del Logo y Encabezado
+    try {
+        // Intentamos cargar el logo desde la raíz de tu repositorio
+        const response = await fetch('./logo.png');
+        if (!response.ok) throw new Error('Logo no encontrado');
+        
+        const buffer = await response.arrayBuffer();
+        const logoId = workbook.addImage({
+            buffer: buffer,
+            extension: 'png',
+        });
+
+        // Crear espacio para el encabezado (6 filas)
+        for(let i=0; i<6; i++) worksheet.insertRow(1, []);
+
+        // Insertar Logo (Ajustado a la esquina superior izquierda)
+        worksheet.addImage(logoId, {
+            tl: { col: 0, row: 0.2 },
+            ext: { width: 250, height: 110 }
+        });
+
+        // Título del reporte alineado a la derecha
+        worksheet.mergeCells('E2:K2');
+        const titleCell = worksheet.getCell('E2');
+        titleCell.value = 'DEPARTAMENTO DE SISTEMAS - REPORTE DE INVENTARIO';
+        titleCell.font = { name: 'Segoe UI', size: 14, bold: true };
+        titleCell.alignment = { horizontal: 'right' };
+
+        worksheet.mergeCells('E3:K3');
+        const infoCell = worksheet.getCell('E3');
+        infoCell.value = `FIBEX TELECOM - GENERADO EL: ${new Date().toLocaleDateString()}`;
+        infoCell.font = { name: 'Segoe UI', size: 10 };
+        infoCell.alignment = { horizontal: 'right' };
+
+    } catch (e) {
+        console.warn("No se pudo cargar 'logo.png'. Asegúrate de que esté en la raíz de tu repo GitHub.", e);
+        for(let i=0; i<6; i++) worksheet.insertRow(1, []);
+    }
+
+    // 3. Estilo de Encabezados (Fila 7)
+    const headerRow = worksheet.getRow(7);
+    headerRow.eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: 'FF000000' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = {
+            top: { style: 'thin' },
+            bottom: { style: 'thick' }, // Línea gruesa para separar de los datos
+            left: { style: 'thin' },
+            right: { style: 'thin' }
+        };
+    });
+
+    // 4. Carga de todos los registros unificados
+    DATA_LOCAL.forEach((eq) => {
+        const row = worksheet.addRow(eq);
+        row.eachCell((cell) => {
+            // Convertimos a MAYÚSCULAS para mantener la estética profesional
+            cell.value = cell.value ? cell.value.toString().toUpperCase() : '-';
+            cell.font = { name: 'Segoe UI', size: 9 };
+            cell.border = {
+                bottom: { style: 'hair' },
+                left: { style: 'thin' },
+                right: { style: 'thin' }
+            };
+        });
+    });
+
+    // 5. Generación del archivo
+    const finalBuffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([finalBuffer]), `Inventario_Unificado_Fibex_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
     async function eliminarRegistro() { const id = document.getElementById('edit_id').value; if(!id || !confirm("¿Eliminar este registro?")) return; try { await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'delete', id: id }) }); cerrarModal(); cargarDesdeNube(); } catch (e) { alert("Error"); } }
 
     window.onload = () => {
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         cargarDesdeNube();
     };
+    async function generarActaWord() {
+    const id = document.getElementById('edit_id').value;
+    const registro = DATA_LOCAL.find(r => r.id == id);
+    
+    if (!registro) {
+        alert("Seleccione un registro primero.");
+        return;
+    }
+
+    try {
+        // 1. Cargar la plantilla desde tu repo GitHub
+        const response = await fetch('./plantilla_acta.docx');
+        const content = await response.arrayBuffer();
+        const zip = new PizZip(content);
+        
+        const doc = new window.docxtemplater(zip, {
+            paragraphLoop: true,
+            linebreaks: true,
+        });
+
+        // 2. Preparar los datos (Mapeo de campos)
+        const dataDoc = {
+            ...registro,
+            usuario: (registro.usuario || 'N/A').toUpperCase(),
+            departamento: (registro.sede || 'SISTEMAS').toUpperCase(),
+            tipo: (registro.tipo || '').toUpperCase(),
+            marca: (registro.marca || '').toUpperCase(),
+            modelo: (registro.modelo || '').toUpperCase(),
+            serial: (registro.serial || '').toUpperCase(),
+            cpu: (registro.cpu || '').toUpperCase(),
+            memoria_gb: (registro.memoria_gb || '').toUpperCase(),
+            teclado_modelo: (registro.teclado_modelo || 'ESTÁNDAR').toUpperCase(),
+            mouse_modelo: (registro.mouse_modelo || 'ÓPTICO').toUpperCase(),
+            fecha_hoy: new Date().toLocaleDateString('es-ES')
+        };
+
+        // 3. Reemplazar etiquetas y generar
+        doc.render(dataDoc);
+
+        const out = doc.getZip().generate({
+            type: "blob",
+            mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        });
+
+        // 4. Descargar archivo
+        saveAs(out, `Acta_Entrega_${dataDoc.usuario}_${dataDoc.tipo}.docx`);
+
+    } catch (error) {
+        console.error("Error al generar el acta:", error);
+        alert("No se pudo generar el acta. Verifique que 'plantilla_acta.docx' esté en la raíz del repositorio.");
+    }
+}
 </script>
 </body>
 </html>
