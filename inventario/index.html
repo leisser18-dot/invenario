@@ -281,7 +281,7 @@
 
 <div id="modal" class="modal">
     <div class="modal-content">
-        <h3 id="modalTitle">Ficha de Activo</h3>
+        <h3 id="modalTitle">📝 Ficha de Activo</h3>
         <input type="hidden" id="edit_id">
         <div class="input-grid" id="modal_fields"></div>
         <div style="margin-top:20px; text-align:right; display: flex; justify-content: flex-end; gap: 8px;">
@@ -431,13 +431,12 @@
                         <option value="AUTOPAGO">AUTOPAGO</option>
                     </select>`;
         html += `<select id="conexion" style="display:none;"><option value="">CONEXIÓN: (IP, USB, RED)</option><option value="IP">IP</option><option value="USB">USB</option><option value="RED">RED</option></select>`;
-        html += `<select id="consumible" style="display:none;"><option value="">CONSUMIBLE: (TONER, TINTA)</option><option value="TONER">TONER</option><option value="TINTA">TINTA</option></select>`;
-        
+        html += `<select id="consumible" style="display:none;"><option value="">CONSUMIBLE: (TONER, TINTA)</option><option value="TONER">TONER</option><option value="TINTA">TINTA</option></select>`;        
         COLUMNAS_OFICIALES.forEach(c => { 
             if(c === 'last_update' || c === 'tipo') return;
             if (c === 'ubicacion') {
                 let options = Object.keys(RELACION_UBICACION_SEDE).map(u => `<option value="${u}">${u}</option>`).join('');
-                html += `<select id="ubicacion" onchange="actualizarSedesPorUbicacion(this.value)"><option value="" selected disabled>SELECCIONE UBICACIÓN</option>${options}</select>`;
+                html += `<select id="ubicacion" onchange="actualizarSedesPorUbicacion(this.value)"><option value="" selected disabled>📍 Ubicación / Estado</option>${options}</select>`;
             } else if (c === 'sede') {
                 html += `<select id="sede"><option value="" selected disabled>SELECCIONE SEDE</option></select>`;
             } else if (c === 'departamento') {
