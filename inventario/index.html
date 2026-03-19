@@ -11,7 +11,7 @@
     <script src="https://unpkg.com/pizzip@3.1.7/dist/pizzip.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.49.1/docxtemplater.js"></script>
     <style>
-:root { 
+        :root { 
             --blue-fibex: #014182; 
             --blue-hover: #002d5a;
             --blue-light: #eef4ff; 
@@ -21,6 +21,10 @@
             --border-color: #d1d9e0;
             --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
             --shadow-md: 0 8px 24px rgba(1, 65, 130, 0.12);
+            --orange-cell: #f39c12; 
+            --cyan-import: #00a8cc;
+            --stockit-green: #22c55e;
+            --stockit-blue: #3b82f6;
         }
 
         /* --- MOTOR DE ANIMACIONES --- */
@@ -59,29 +63,28 @@
 
         /* --- DASHBOARD DINÁMICO --- */
         .dashboard { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
-            gap: 15px; margin-bottom: 20px; 
+            display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; justify-content: flex-start;
         }
         
         .card { 
-            background: white; padding: 15px 20px; border-radius: 16px; 
-            display: flex; align-items: center; gap: 15px; border: 1px solid #eee;
+            background: white; padding: 6px 12px; border-radius: 20px; 
+            display: flex; align-items: center; gap: 8px; border: 1px solid #ddd;
             cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             box-shadow: var(--shadow-sm);
             animation: scaleIn 0.5s backwards;
         }
 
         .card:hover { 
-            transform: translateY(-10px);
+            transform: translateY(-5px);
             box-shadow: var(--shadow-md);
             border-color: var(--blue-fibex);
             background: var(--blue-light);
         }
 
         .card span { font-size: 24px; }
-        .card h3 { margin: 0; font-size: 11px; text-transform: uppercase; color: #777; letter-spacing: 0.5px; }
-        .card p { margin: 0; font-size: 20px; font-weight: 800; color: var(--blue-fibex); }
+        .card h3 { margin: 0; font-size: 11px; text-transform: uppercase; color: #777; font-weight: 700; letter-spacing: 0.5px; }
+        .card p { margin: 0; font-size: 18px; font-weight: 800; color: var(--blue-fibex); }
+        .card.alert { border-left: 4px solid var(--red-alert); }
 
         /* --- BOTONES Y BUSCADOR --- */
         .controls-row {
@@ -104,198 +107,101 @@
         }
 
         .btn { 
-            padding: 12px 22px; border: none; border-radius: 10px; 
+            padding: 8px 15px; border: none; border-radius: 6px; 
             cursor: pointer; color: white; font-weight: 600; 
-            display: flex; align-items: center; gap: 10px; font-size: 14px;
+            display: flex; align-items: center; gap: 6px; font-size: 12px;
             transition: all 0.3s ease;
         }
 
         .btn-blue { background: var(--blue-fibex); }
         .btn-blue:hover { background: var(--blue-hover); transform: scale(1.03); }
 
-        /* --- TABLA CON EFECTO CASCADA --- */
+        /* --- TABLA --- */
         .table-wrapper { 
-            background: white; border-radius: 16px; overflow: auto; 
-            max-height: 65vh; box-shadow: var(--shadow-sm);
-            border: 1px solid var(--border-color);
+            background: white; border-radius: 8px; overflow: auto; 
+            max-height: 75vh; box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            border: 1px solid var(--border-color); width: 100%;
         }
 
-        table { width: 100%; border-collapse: collapse; min-width: 2500px; }
+        table { width: 100%; border-collapse: collapse; min-width: 4200px; table-layout: fixed; }
         
         th { 
-            background: #f8fafc; color: var(--blue-fibex); font-weight: 700; 
-            font-size: 12px; padding: 18px 15px; text-align: left;
-            position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #edf2f7;
+            background: #f8f9fc; color: var(--blue-fibex); font-weight: 700; 
+            text-transform: uppercase; font-size: 10px; padding: 10px 8px;
+            border-bottom: 2px solid var(--border-color);
+            position: sticky; top: 0; z-index: 10; cursor: pointer; user-select: none;
         }
+
+        th:hover { background: #edf2f7; }
 
         #cuerpo tr { 
             opacity: 0; animation: slideInRight 0.5s ease forwards;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid var(--border-color);
         }
 
-        #cuerpo tr:hover { 
-            background-color: #f1f7ff;
-            transform: scale(1.002);
-            z-index: 1;
+        #cuerpo tr:hover td { 
+            background-color: #f1f5f9;
         }
 
-        td { padding: 15px; font-size: 13px; color: #4a5568; }
+        td { padding: 6px 8px; font-size: 11px; color: #4a5568; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .sticky-check { position: sticky; left: 0; background: #f8f9fc !important; z-index: 30; width: 35px; border-right: 1px solid var(--border-color); text-align: center; }
+        .sticky-type { position: sticky; left: 35px; background: white; z-index: 29; width: 110px; border-right: 1px solid var(--border-color); font-weight: bold; }
+        .sticky-action { position: sticky; right: 0; background: #f8f9fc !important; z-index: 25; width: 100px; text-align: center; border-left: 2px solid var(--border-color); }
+        
+        .badge { padding: 3px 7px; border-radius: 4px; font-size: 9px; font-weight: 800; color: white; text-transform: uppercase; }
+        .bg-desktop { background: #4e73df; }
+        .bg-laptop { background: #1cc88a; }
+        .bg-celular { background: #f6c23e; }
+        .bg-tablet { background: #9c27b0; }
+        .bg-impresora { background: #36b9cc; }
+        .bg-autopago { background: #858796; }
+
+        .btn-edit { background: var(--blue-fibex); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; margin-right: 2px; }
 
         /* --- MODAL DE CRISTAL --- */
         .modal { 
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0, 30, 60, 0.4); backdrop-filter: blur(6px);
+            background: rgba(0, 30, 60, 0.6); backdrop-filter: blur(4px);
             justify-content: center; align-items: center; z-index: 1000;
         }
 
         .modal-content { 
-            background: white; border-radius: 24px; width: 90%; max-width: 900px; padding: 35px; 
+            background: white; border-radius: 15px; width: 900px; padding: 25px; 
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            max-height: 85vh; overflow-y: auto;
+            max-height: 90vh; overflow-y: auto;
         }
 
-        .grid-form { 
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; 
+        .input-grid { 
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; 
         }
 
-        /* --- LOADER --- */
-        #loadingOverlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 255, 255, 0.9); z-index: 9999;
-            flex-direction: column; justify-content: center; align-items: center;
-        }
+        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; text-transform: uppercase; width: 100%; box-sizing: border-box; }
 
-        .loader {
-            width: 60px; height: 60px; border: 6px solid #f3f3f3;
-            border-top: 6px solid var(--blue-fibex); border-radius: 50%;
-            animation: spin 1s cubic-bezier(0.5, 0.1, 0.4, 0.9) infinite;
-        }
-
-
-        :root { 
-            --blue-fibex: #014182; --blue-light: #eef4ff; --green-excel: #217346; 
-            --red-alert: #d9534f; --orange-cell: #f39c12; --gray-bg: #f4f7f6;
-            --cyan-import: #00a8cc;
-            --border-color: #e0e6ed;
-            --stockit-green: #22c55e;
-            --stockit-blue: #3b82f6;
-        }
-
-        /* --- OVERLAY DE CARGA --- */
-        #loadingOverlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            z-index: 9999;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .loader-container {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 25px;
-        }
-
-        .pulse-circle {
-            width: 70px; height: 70px;
-            background-color: var(--blue-fibex);
-            border-radius: 50%;
-            opacity: 0.4;
-            animation: pulse-wave 2s infinite ease-in-out;
-        }
-
-        .pulse-circle-inner {
-            position: absolute;
-            width: 35px; height: 35px;
-            background-color: var(--blue-fibex);
-            border-radius: 50%;
-            box-shadow: 0 0 20px rgba(1, 65, 130, 0.4);
-        }
-
-        @keyframes pulse-wave {
-            0% { transform: scale(0.6); opacity: 0.8; }
-            100% { transform: scale(2.2); opacity: 0; }
-        }
-
-        .progress-wrapper {
-            width: 300px;
-            text-align: center;
-        }
-
-        .progress-container {
-            width: 100%;
-            height: 10px;
-            background: rgba(0, 0, 0, 0.08);
-            border-radius: 20px;
-            overflow: hidden;
-            margin: 10px 0;
-            border: 1px solid rgba(255,255,255,0.5);
-        }
-
-        .progress-bar {
-            width: 0%; 
-            height: 100%;
-            background: linear-gradient(90deg, var(--blue-fibex), var(--cyan-import));
-            transition: width 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);
-            box-shadow: 0 0 8px rgba(1, 65, 130, 0.3);
-        }
-
-        #loadingText {
-            font-size: 11px;
-            font-weight: 800;
-            color: var(--blue-fibex);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin: 0;
-            animation: blink 1.5s infinite;
-        }
-
-        #progressPercent { font-size: 10px; font-weight: bold; color: #555; }
-
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
-        body { font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 5px; background-color: var(--gray-bg); color: #333; }
-        header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px 15px; border-radius: 8px; border-bottom: 3px solid var(--blue-fibex); margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .dashboard { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; justify-content: flex-start; }
-        .card { background: white; padding: 6px 12px; border-radius: 20px; display: flex; align-items: center; gap: 8px; border: 1px solid #ddd; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
-        .card:hover { border-color: var(--blue-fibex); background: var(--blue-light); }
-        .card h3 { margin: 0; font-size: 11px; text-transform: uppercase; color: #666; font-weight: 700; }
-        .card p { margin: 0; font-size: 13px; font-weight: 800; color: var(--blue-fibex); }
-        .card.alert { border-left: 4px solid var(--red-alert); }
+        /* --- GRÁFICOS --- */
         .collapsible-btn { background: #fff; color: #666; cursor: pointer; padding: 6px; width: 100%; border: 1px dashed #ccc; text-align: center; font-size: 11px; border-radius: 8px; margin-bottom: 8px; font-weight: bold; }
         .charts-wrapper { max-height: 0; overflow: hidden; transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1); margin-bottom: 10px; }
         .charts-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
         .chart-card { background: white; padding: 15px; border-radius: 12px; height: 240px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid var(--border-color); opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease, transform 0.5s ease; }
         .charts-wrapper.open .chart-card { opacity: 1; transform: translateY(0); }
-        .table-wrapper { background: white; border-radius: 8px; overflow: auto; max-height: 75vh; box-shadow: 0 4px 15px rgba(0,0,0,0.06); border: 1px solid var(--border-color); width: 100%; }
-        table { width: 100%; border-collapse: collapse; min-width: 4200px; table-layout: fixed; }
-        th { background: #f8f9fc; color: var(--blue-fibex); font-weight: 700; text-transform: uppercase; font-size: 10px; padding: 10px 8px; border-bottom: 2px solid var(--border-color); position: sticky; top: 0; z-index: 10; cursor: pointer; user-select: none; }
-        th:hover { background: #edf2f7; }
-        td { padding: 6px 8px; border-bottom: 1px solid var(--border-color); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        tr:hover td { background-color: #f1f5f9; }
-        .sticky-check { position: sticky; left: 0; background: #f8f9fc !important; z-index: 30; width: 35px; border-right: 1px solid var(--border-color); text-align: center; }
-        .sticky-type { position: sticky; left: 35px; background: white; z-index: 29; width: 110px; border-right: 1px solid var(--border-color); font-weight: bold; }
-        .sticky-action { position: sticky; right: 0; background: #f8f9fc !important; z-index: 25; width: 100px; text-align: center; border-left: 2px solid var(--border-color); }
-        .badge { padding: 3px 7px; border-radius: 4px; font-size: 9px; font-weight: 800; color: white; text-transform: uppercase; }
-        .bg-desktop { background: #4e73df; }
-        .bg-laptop { background: #1cc88a; }
-        .bg-celular { background: #f6c23e; }
-        .bg-impresora { background: #36b9cc; }
-        .bg-autopago { background: #858796; }
-        .btn-edit { background: var(--blue-fibex); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; margin-right: 2px; }
-        .btn { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: 600; display: flex; align-items: center; gap: 6px; font-size: 12px; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; border-radius: 15px; width: 900px; padding: 25px; max-height: 90vh; overflow-y: auto; }
-        .input-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; text-transform: uppercase; width: 100%; box-sizing: border-box; }
+
+        /* --- LOADER --- */
+        #loadingOverlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            z-index: 9999; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .loader-container { position: relative; display: flex; justify-content: center; align-items: center; margin-bottom: 25px; }
+        .pulse-circle { width: 70px; height: 70px; background-color: var(--blue-fibex); border-radius: 50%; opacity: 0.4; animation: pulse-wave 2s infinite ease-in-out; }
+        .pulse-circle-inner { position: absolute; width: 35px; height: 35px; background-color: var(--blue-fibex); border-radius: 50%; box-shadow: 0 0 20px rgba(1, 65, 130, 0.4); }
+        @keyframes pulse-wave { 0% { transform: scale(0.6); opacity: 0.8; } 100% { transform: scale(2.2); opacity: 0; } }
+        .progress-wrapper { width: 300px; text-align: center; }
+        .progress-container { width: 100%; height: 10px; background: rgba(0, 0, 0, 0.08); border-radius: 20px; overflow: hidden; margin: 10px 0; border: 1px solid rgba(255,255,255,0.5); }
+        .progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, var(--blue-fibex), var(--cyan-import)); transition: width 0.4s cubic-bezier(0.1, 0.7, 0.1, 1); box-shadow: 0 0 8px rgba(1, 65, 130, 0.3); }
+        #loadingText { font-size: 11px; font-weight: 800; color: var(--blue-fibex); text-transform: uppercase; letter-spacing: 1.5px; margin: 0; animation: blink 1.5s infinite; }
+        #progressPercent { font-size: 10px; font-weight: bold; color: #555; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
@@ -331,7 +237,6 @@
         <button id="btnBulkDelete" class="btn" style="background:var(--red-alert); display:none;" onclick="eliminarSeleccionados()">🗑️ Borrar</button>
         <button class="btn" style="background:var(--green-excel)" onclick="exportarExcelConImagen()">📊 Excel</button>
         <button class="btn" style="background:var(--blue-fibex)" onclick="cargarDesdeNube()">🔄 Refrescar</button>
-        
     </div>
 </header>
 
@@ -340,6 +245,7 @@
         <div class="card" onclick="filtrarDesdeCard('DESKTOP')"><span>🖥️</span><h3>Desktop</h3><p id="tD">0</p></div>
         <div class="card" onclick="filtrarDesdeCard('LAPTOP')"><span>💻</span><h3>Laptop</h3><p id="tL">0</p></div>
         <div class="card" onclick="filtrarDesdeCard('CELULAR')"><span>📱</span><h3>Móvil</h3><p id="tC">0</p></div>
+        <div class="card" onclick="filtrarDesdeCard('TABLET')"><span>📲</span><h3>Tablet</h3><p id="tTab">0</p></div>
         <div class="card" onclick="filtrarDesdeCard('IMPRESORA')"><span>🖨️</span><h3>Impresoras</h3><p id="tI">0</p></div>
         <div class="card" onclick="filtrarDesdeCard('AUTOPAGO')"><span>🏧</span><h3>AutoPago</h3><p id="tA">0</p></div>
         <div class="card alert" onclick="filtrarRepetidos()"><span>⚠️</span><h3>Duplicados</h3><p id="tRep">0</p></div>
@@ -391,7 +297,7 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxczImEZhMnNnRM1wlhJxc3i33MPNLRzhVYn6dCkCMKCO4tzY_zXe0Js5uF9O7cRuzH/exec"; 
     let DATA_LOCAL = [];
     let FILTRO_TIPO = "";
-    let SOLO_REPETIDOS = false; // Nueva variable de control
+    let SOLO_REPETIDOS = false;
     let chartT = null, chartS = null;
     let SORT_COL = "";
     let SORT_ASC = true;
@@ -514,9 +420,19 @@
     function inicializarEstructuraModal() {
         const container = document.getElementById('modal_fields');
         if (container.innerHTML !== "") return;
-        let html = `<select id="tipo" onchange="toggleCamposDinamicos(this.value)"><option value="">TIPO: SELECCIONE</option><option value="DESKTOP">DESKTOP</option><option value="LAPTOP">LAPTOP</option><option value="CELULAR">CELULAR</option><option value="IMPRESORA">IMPRESORA</option><option value="AUTOPAGO">AUTOPAGO</option></select>`;
+        
+        let html = `<select id="tipo" onchange="toggleCamposDinamicos(this.value)">
+                        <option value="">TIPO: SELECCIONE</option>
+                        <option value="DESKTOP">DESKTOP</option>
+                        <option value="LAPTOP">LAPTOP</option>
+                        <option value="CELULAR">CELULAR</option>
+                        <option value="TABLET">TABLET</option>
+                        <option value="IMPRESORA">IMPRESORA</option>
+                        <option value="AUTOPAGO">AUTOPAGO</option>
+                    </select>`;
         html += `<select id="conexion" style="display:none;"><option value="">CONEXIÓN: (IP, USB, RED)</option><option value="IP">IP</option><option value="USB">USB</option><option value="RED">RED</option></select>`;
         html += `<select id="consumible" style="display:none;"><option value="">CONSUMIBLE: (TONER, TINTA)</option><option value="TONER">TONER</option><option value="TINTA">TINTA</option></select>`;
+        
         COLUMNAS_OFICIALES.forEach(c => { 
             if(c === 'last_update' || c === 'tipo') return;
             if (c === 'ubicacion') {
@@ -581,90 +497,92 @@
     function abrirModal() { inicializarEstructuraModal(); document.getElementById('modal').style.display='flex'; }
 
     function prepararEdicion(id) {
-    const eq = DATA_LOCAL.find(x => x.id == id);
-    if(!eq) return;
-    
-    abrirModal();
-    document.getElementById('edit_id').value = eq.id;
-    document.getElementById('btnDelete').style.display = 'block';
-    
-    // 1. Normalizar ubicación, sede y tipo
-    const ubicacionNorm = eq.ubicacion ? String(eq.ubicacion).trim().toUpperCase() : "";
-    const sedeNorm = eq.sede ? String(eq.sede).trim().toUpperCase() : "";
-    const tipoNorm = eq.tipo ? String(eq.tipo).trim().toUpperCase() : "";
+        const eq = DATA_LOCAL.find(x => x.id == id);
+        if(!eq) return;
+        
+        abrirModal();
+        document.getElementById('edit_id').value = eq.id;
+        document.getElementById('btnDelete').style.display = 'block';
+        
+        const ubicacionNorm = eq.ubicacion ? String(eq.ubicacion).trim().toUpperCase() : "";
+        const sedeNorm = eq.sede ? String(eq.sede).trim().toUpperCase() : "";
+        const tipoNorm = eq.tipo ? String(eq.tipo).trim().toUpperCase() : "";
 
-    if (ubicacionNorm) actualizarSedesPorUbicacion(ubicacionNorm, sedeNorm);
-    
-    // 2. Iterar sobre las columnas y asignar valores
-    COLUMNAS_OFICIALES.forEach(c => { 
-        const el = document.getElementById(c);
-        if(el) {
-            if (el.type === 'date') {
-                el.value = formatToISO(eq[c]);
-            } else {
-                let val = eq[c] ? String(eq[c]).trim().toUpperCase() : "";
-                
-                if (['diadema','mouse','teclado','monitor','bolsos'].includes(c)) {
-                    val = (val === 'SI' || val === 'SÍ') ? 'SI' : 'NO';
-                    el.value = val;
+        if (ubicacionNorm) actualizarSedesPorUbicacion(ubicacionNorm, sedeNorm);
+        
+        COLUMNAS_OFICIALES.forEach(c => { 
+            const el = document.getElementById(c);
+            if(el) {
+                if (el.type === 'date') {
+                    el.value = formatToISO(eq[c]);
                 } else {
-                    el.value = val;
+                    let val = eq[c] ? String(eq[c]).trim().toUpperCase() : "";
                     
-                    if (el.tagName === 'SELECT' && el.value === "" && val !== "") {
-                        const option = document.createElement('option');
-                        option.value = val;
-                        option.text = val;
-                        el.appendChild(option);
+                    if (['diadema','mouse','teclado','monitor','bolsos'].includes(c)) {
+                        val = (val === 'SI' || val === 'SÍ') ? 'SI' : 'NO';
                         el.value = val;
+                    } else {
+                        el.value = val;
+                        if (el.tagName === 'SELECT' && el.value === "" && val !== "") {
+                            const option = document.createElement('option');
+                            option.value = val;
+                            option.text = val;
+                            el.appendChild(option);
+                            el.value = val;
+                        }
                     }
                 }
             }
-        }
-    });
+        });
 
-    // 3. Manejo especial para IMPRESORAS
-    if (tipoNorm === 'IMPRESORA' && eq.modelo && String(eq.modelo).includes(' - ')) {
-        const p = String(eq.modelo).split(' - ');
-        if(document.getElementById('modelo')) document.getElementById('modelo').value = p[0] ? p[0].trim().toUpperCase() : "";
-        if(document.getElementById('conexion')) document.getElementById('conexion').value = p[1] ? p[1].trim().toUpperCase() : "";
-        if(document.getElementById('consumible')) document.getElementById('consumible').value = p[2] ? p[2].trim().toUpperCase() : "";
+        if (tipoNorm === 'IMPRESORA' && eq.modelo && String(eq.modelo).includes(' - ')) {
+            const p = String(eq.modelo).split(' - ');
+            if(document.getElementById('modelo')) document.getElementById('modelo').value = p[0] ? p[0].trim().toUpperCase() : "";
+            if(document.getElementById('conexion')) document.getElementById('conexion').value = p[1] ? p[1].trim().toUpperCase() : "";
+            if(document.getElementById('consumible')) document.getElementById('consumible').value = p[2] ? p[2].trim().toUpperCase() : "";
+        }
+        
+        // Aplica el ocultamiento por defecto según el tipo
+        toggleCamposDinamicos(tipoNorm);
+        
+        // REGLA CLAVE: Forzamos a mostrar y habilitar CUALQUIER campo que contenga datos reales registrados
+        COLUMNAS_OFICIALES.forEach(c => {
+            const el = document.getElementById(c);
+            if (el && eq[c] && String(eq[c]).trim() !== "" && String(eq[c]).trim() !== "NO") {
+                el.style.display = 'block';
+                el.disabled = false;
+            }
+        });
+        
+        ['diadema', 'mouse', 'teclado', 'monitor', 'bolsos'].forEach(p => {
+            let val = eq[p] ? String(eq[p]).trim().toUpperCase() : "NO";
+            if (val === "SÍ") val = "SI";
+            
+            let tieneDatosExtra = false;
+            if (DEP_PERIFERICOS[p]) {
+                DEP_PERIFERICOS[p].forEach(idD => {
+                    if (eq[idD] && String(eq[idD]).trim() !== "") tieneDatosExtra = true;
+                });
+            }
+            
+            if (tieneDatosExtra) {
+                val = "SI";
+                if (document.getElementById(p)) document.getElementById(p).value = "SI";
+            }
+            
+            togglePeriferico(p, val);
+            
+            if (DEP_PERIFERICOS[p] && val === "SI") {
+                DEP_PERIFERICOS[p].forEach(idD => {
+                    const elD = document.getElementById(idD);
+                    if (elD) {
+                        if (elD.type === 'date') elD.value = formatToISO(eq[idD]);
+                        else elD.value = eq[idD] ? String(eq[idD]).trim().toUpperCase() : "";
+                    }
+                });
+            }
+        });
     }
-    
-    // 4. Mostrar/Ocultar campos según el tipo
-    toggleCamposDinamicos(tipoNorm);
-    
-    // 5. Ajustar bloqueo de los periféricos de forma inteligente
-    ['diadema', 'mouse', 'teclado', 'monitor', 'bolsos'].forEach(p => {
-        let val = eq[p] ? String(eq[p]).trim().toUpperCase() : "NO";
-        if (val === "SÍ") val = "SI";
-        
-        // Auto-detectar si por error dejaron el <select> en "NO" / vacío, pero SÍ registraron un modelo
-        let tieneDatosExtra = false;
-        if (DEP_PERIFERICOS[p]) {
-            DEP_PERIFERICOS[p].forEach(idD => {
-                if (eq[idD] && String(eq[idD]).trim() !== "") tieneDatosExtra = true;
-            });
-        }
-        
-        if (tieneDatosExtra) {
-            val = "SI";
-            if (document.getElementById(p)) document.getElementById(p).value = "SI";
-        }
-        
-        togglePeriferico(p, val);
-        
-        // Restaurar explícitamente el modelo/fecha para que no quede en blanco
-        if (DEP_PERIFERICOS[p] && val === "SI") {
-            DEP_PERIFERICOS[p].forEach(idD => {
-                const elD = document.getElementById(idD);
-                if (elD) {
-                    if (elD.type === 'date') elD.value = formatToISO(eq[idD]);
-                    else elD.value = eq[idD] ? String(eq[idD]).trim().toUpperCase() : "";
-                }
-            });
-        }
-    });
-}
 
     async function guardarRegistro() {
         const overlay = document.getElementById('loadingOverlay');
@@ -697,26 +615,37 @@
         if(!DEP_PERIFERICOS[p]) return;
         DEP_PERIFERICOS[p].forEach(id => {
             const el = document.getElementById(id);
-            if (el) { el.disabled = (v !== "SI"); if (v !== "SI") el.value = ""; }
+            if (el) { 
+                el.style.display = 'block'; // Siempre visible para poder editarlo
+                el.disabled = false;        // Evita bloqueos que borren datos
+            }
         });
     }
 
     function toggleCamposDinamicos(tipo) {
-        COLUMNAS_OFICIALES.forEach(c => { if(document.getElementById(c)) document.getElementById(c).style.display = 'block'; });
+        COLUMNAS_OFICIALES.forEach(c => { 
+            if(document.getElementById(c)) {
+                document.getElementById(c).style.display = 'block'; 
+            }
+        });
+        
         const con = document.getElementById('conexion'); const cns = document.getElementById('consumible');
         if(con) con.style.display = (tipo === 'IMPRESORA') ? 'block' : 'none';
         if(cns) cns.style.display = (tipo === 'IMPRESORA') ? 'block' : 'none';
+        
         let quitar = [];
         if (tipo === 'IMPRESORA') quitar = ['usuario', 'nombre_pc', 'os', 'cpu', 'memoria_gb', 'disco', 'v_android', 'diadema', 'f_asig_diadema', 'mouse', 'mouse_modelo', 'f_asig_mouse', 'teclado', 'teclado_modelo', 'f_asig_teclado', 'monitor', 'monitor_modelo', 'f_asig_monitor', 'bolsos', 'f_asig_bolsos'];
-        else if (tipo === 'CELULAR' || tipo === 'AUTOPAGO') quitar = ['diadema', 'f_asig_diadema', 'mouse', 'mouse_modelo', 'f_asig_mouse', 'teclado', 'teclado_modelo', 'f_asig_teclado', 'monitor', 'monitor_modelo', 'f_asig_monitor', 'bolsos', 'f_asig_bolsos'];
+        else if (tipo === 'CELULAR' || tipo === 'AUTOPAGO' || tipo === 'TABLET') quitar = ['diadema', 'f_asig_diadema', 'mouse', 'mouse_modelo', 'f_asig_mouse', 'teclado', 'teclado_modelo', 'f_asig_teclado', 'monitor', 'monitor_modelo', 'f_asig_monitor', 'bolsos', 'f_asig_bolsos'];
         else if (tipo === 'DESKTOP') quitar = ['v_android', 'bolsos', 'f_asig_bolsos'];
         else if (tipo === 'LAPTOP') quitar = ['v_android', 'teclado', 'teclado_modelo', 'f_asig_teclado'];
-        quitar.forEach(id => { if(document.getElementById(id)) document.getElementById(id).style.display = 'none'; });
+        
+        quitar.forEach(id => { 
+            if(document.getElementById(id)) document.getElementById(id).style.display = 'none'; 
+        });
     }
 
-    // NUEVAS FUNCIONES PARA LOS BOTONES DEL DASHBOARD
     function filtrarDesdeCard(t) { 
-        SOLO_REPETIDOS = false; // Desactivamos el modo duplicados
+        SOLO_REPETIDOS = false; 
         FILTRO_TIPO = t; 
         renderizarTable(); 
     }
@@ -744,7 +673,6 @@
         headerRow.innerHTML += '<th class="sticky-action">GESTIÓN</th>';
         document.getElementById('info_span_tech').colSpan = colsVisiblesCount;
 
-        // Lógica para detectar el conjunto de repetidos (por Serial)
         const seriales = DATA_LOCAL.map(x => String(x.serial || "").trim().toUpperCase()).filter(s => s && s !== "-" && s !== "N/A" && s !== "S/N");
         const setRepetidos = new Set(seriales.filter((s, index) => seriales.indexOf(s) !== index));
 
@@ -775,10 +703,10 @@
         document.getElementById('tD').innerText = DATA_LOCAL.filter(x => x.tipo === 'DESKTOP').length;
         document.getElementById('tL').innerText = DATA_LOCAL.filter(x => x.tipo === 'LAPTOP').length;
         document.getElementById('tC').innerText = DATA_LOCAL.filter(x => x.tipo === 'CELULAR').length;
+        if(document.getElementById('tTab')) document.getElementById('tTab').innerText = DATA_LOCAL.filter(x => x.tipo === 'TABLET').length;
         document.getElementById('tI').innerText = DATA_LOCAL.filter(x => x.tipo === 'IMPRESORA').length;
         document.getElementById('tA').innerText = DATA_LOCAL.filter(x => x.tipo === 'AUTOPAGO').length;
         
-        // El conteo se mantiene por Serial como lo tenías definido
         const seriales = DATA_LOCAL.map(x => String(x.serial || "").trim().toUpperCase()).filter(s => s && s !== "-" && s !== "N/A" && s !== "S/N");
         const setRepetidos = new Set(seriales.filter((s, index) => seriales.indexOf(s) !== index));
         document.getElementById('tRep').innerText = DATA_LOCAL.filter(eq => setRepetidos.has(String(eq.serial).trim().toUpperCase())).length;
@@ -836,146 +764,134 @@
     }
 
     async function exportarExcelConImagen() {
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Inventario Unificado');
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Inventario Unificado');
 
-    // 1. Configuración de columnas según COLUMNAS_OFICIALES
-    worksheet.columns = COLUMNAS_OFICIALES.map(col => ({
-        header: col.toUpperCase().replace('_', ' '),
-        key: col,
-        width: 20
-    }));
+        worksheet.columns = COLUMNAS_OFICIALES.map(col => ({
+            header: col.toUpperCase().replace('_', ' '),
+            key: col,
+            width: 20
+        }));
 
-    // 2. Integración del Logo y Encabezado
-    try {
-        // Intentamos cargar el logo desde la raíz de tu repositorio
-        const response = await fetch('./logo.png');
-        if (!response.ok) throw new Error('Logo no encontrado');
-        
-        const buffer = await response.arrayBuffer();
-        const logoId = workbook.addImage({
-            buffer: buffer,
-            extension: 'png',
-        });
+        try {
+            const response = await fetch('./logo.png');
+            if (!response.ok) throw new Error('Logo no encontrado');
+            
+            const buffer = await response.arrayBuffer();
+            const logoId = workbook.addImage({
+                buffer: buffer,
+                extension: 'png',
+            });
 
-        // Crear espacio para el encabezado (6 filas)
-        for(let i=0; i<6; i++) worksheet.insertRow(1, []);
+            for(let i=0; i<6; i++) worksheet.insertRow(1, []);
 
-        // Insertar Logo (Ajustado a la esquina superior izquierda)
-        worksheet.addImage(logoId, {
-            tl: { col: 0, row: 0.2 },
-            ext: { width: 250, height: 110 }
-        });
+            worksheet.addImage(logoId, {
+                tl: { col: 0, row: 0.2 },
+                ext: { width: 250, height: 110 }
+            });
 
-        // Título del reporte alineado a la derecha
-        worksheet.mergeCells('E2:K2');
-        const titleCell = worksheet.getCell('E2');
-        titleCell.value = 'DEPARTAMENTO DE SISTEMAS - REPORTE DE INVENTARIO';
-        titleCell.font = { name: 'Segoe UI', size: 14, bold: true };
-        titleCell.alignment = { horizontal: 'right' };
+            worksheet.mergeCells('E2:K2');
+            const titleCell = worksheet.getCell('E2');
+            titleCell.value = 'DEPARTAMENTO DE SISTEMAS - REPORTE DE INVENTARIO';
+            titleCell.font = { name: 'Segoe UI', size: 14, bold: true };
+            titleCell.alignment = { horizontal: 'right' };
 
-        worksheet.mergeCells('E3:K3');
-        const infoCell = worksheet.getCell('E3');
-        infoCell.value = `FIBEX TELECOM - GENERADO EL: ${new Date().toLocaleDateString()}`;
-        infoCell.font = { name: 'Segoe UI', size: 10 };
-        infoCell.alignment = { horizontal: 'right' };
+            worksheet.mergeCells('E3:K3');
+            const infoCell = worksheet.getCell('E3');
+            infoCell.value = `FIBEX TELECOM - GENERADO EL: ${new Date().toLocaleDateString()}`;
+            infoCell.font = { name: 'Segoe UI', size: 10 };
+            infoCell.alignment = { horizontal: 'right' };
 
-    } catch (e) {
-        console.warn("No se pudo cargar 'logo.png'. Asegúrate de que esté en la raíz de tu repo GitHub.", e);
-        for(let i=0; i<6; i++) worksheet.insertRow(1, []);
-    }
+        } catch (e) {
+            console.warn("No se pudo cargar 'logo.png'.", e);
+            for(let i=0; i<6; i++) worksheet.insertRow(1, []);
+        }
 
-    // 3. Estilo de Encabezados (Fila 7)
-    const headerRow = worksheet.getRow(7);
-    headerRow.eachCell((cell) => {
-        cell.font = { bold: true, color: { argb: 'FF000000' } };
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } };
-        cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        cell.border = {
-            top: { style: 'thin' },
-            bottom: { style: 'thick' }, // Línea gruesa para separar de los datos
-            left: { style: 'thin' },
-            right: { style: 'thin' }
-        };
-    });
-
-    // 4. Carga de todos los registros unificados
-    DATA_LOCAL.forEach((eq) => {
-        const row = worksheet.addRow(eq);
-        row.eachCell((cell) => {
-            // Convertimos a MAYÚSCULAS para mantener la estética profesional
-            cell.value = cell.value ? cell.value.toString().toUpperCase() : '-';
-            cell.font = { name: 'Segoe UI', size: 9 };
+        const headerRow = worksheet.getRow(7);
+        headerRow.eachCell((cell) => {
+            cell.font = { bold: true, color: { argb: 'FF000000' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } };
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
             cell.border = {
-                bottom: { style: 'hair' },
+                top: { style: 'thin' },
+                bottom: { style: 'thick' },
                 left: { style: 'thin' },
                 right: { style: 'thin' }
             };
         });
-    });
 
-    // 5. Generación del archivo
-    const finalBuffer = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([finalBuffer]), `Inventario_Unificado_Fibex_${new Date().toISOString().slice(0,10)}.xlsx`);
-}
+        DATA_LOCAL.forEach((eq) => {
+            const row = worksheet.addRow(eq);
+            row.eachCell((cell) => {
+                cell.value = cell.value ? cell.value.toString().toUpperCase() : '-';
+                cell.font = { name: 'Segoe UI', size: 9 };
+                cell.border = {
+                    bottom: { style: 'hair' },
+                    left: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+            });
+        });
+
+        const finalBuffer = await workbook.xlsx.writeBuffer();
+        saveAs(new Blob([finalBuffer]), `Inventario_Unificado_Fibex_${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
     async function eliminarRegistro() { const id = document.getElementById('edit_id').value; if(!id || !confirm("¿Eliminar este registro?")) return; try { await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'delete', id: id }) }); cerrarModal(); cargarDesdeNube(); } catch (e) { alert("Error"); } }
 
     window.onload = () => {
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         cargarDesdeNube();
     };
+
     async function generarActaWord() {
-    const id = document.getElementById('edit_id').value;
-    const registro = DATA_LOCAL.find(r => r.id == id);
-    
-    if (!registro) {
-        alert("Seleccione un registro primero.");
-        return;
-    }
-
-    try {
-        // 1. Cargar la plantilla desde tu repo GitHub
-        const response = await fetch('./plantilla_acta.docx');
-        const content = await response.arrayBuffer();
-        const zip = new PizZip(content);
+        const id = document.getElementById('edit_id').value;
+        const registro = DATA_LOCAL.find(r => r.id == id);
         
-        const doc = new window.docxtemplater(zip, {
-            paragraphLoop: true,
-            linebreaks: true,
-        });
+        if (!registro) {
+            alert("Seleccione un registro primero.");
+            return;
+        }
 
-        // 2. Preparar los datos (Mapeo de campos)
-        const dataDoc = {
-            ...registro,
-            usuario: (registro.usuario || 'N/A').toUpperCase(),
-            departamento: (registro.sede || 'SISTEMAS').toUpperCase(),
-            tipo: (registro.tipo || '').toUpperCase(),
-            marca: (registro.marca || '').toUpperCase(),
-            modelo: (registro.modelo || '').toUpperCase(),
-            serial: (registro.serial || '').toUpperCase(),
-            cpu: (registro.cpu || '').toUpperCase(),
-            memoria_gb: (registro.memoria_gb || '').toUpperCase(),
-            teclado_modelo: (registro.teclado_modelo || 'ESTÁNDAR').toUpperCase(),
-            mouse_modelo: (registro.mouse_modelo || 'ÓPTICO').toUpperCase(),
-            fecha_hoy: new Date().toLocaleDateString('es-ES')
-        };
+        try {
+            const response = await fetch('./plantilla_acta.docx');
+            const content = await response.arrayBuffer();
+            const zip = new PizZip(content);
+            
+            const doc = new window.docxtemplater(zip, {
+                paragraphLoop: true,
+                linebreaks: true,
+            });
 
-        // 3. Reemplazar etiquetas y generar
-        doc.render(dataDoc);
+            const dataDoc = {
+                ...registro,
+                usuario: (registro.usuario || 'N/A').toUpperCase(),
+                departamento: (registro.sede || 'SISTEMAS').toUpperCase(),
+                tipo: (registro.tipo || '').toUpperCase(),
+                marca: (registro.marca || '').toUpperCase(),
+                modelo: (registro.modelo || '').toUpperCase(),
+                serial: (registro.serial || '').toUpperCase(),
+                cpu: (registro.cpu || '').toUpperCase(),
+                memoria_gb: (registro.memoria_gb || '').toUpperCase(),
+                teclado_modelo: (registro.teclado_modelo || 'ESTÁNDAR').toUpperCase(),
+                mouse_modelo: (registro.mouse_modelo || 'ÓPTICO').toUpperCase(),
+                fecha_hoy: new Date().toLocaleDateString('es-ES')
+            };
 
-        const out = doc.getZip().generate({
-            type: "blob",
-            mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        });
+            doc.render(dataDoc);
 
-        // 4. Descargar archivo
-        saveAs(out, `Acta_Entrega_${dataDoc.usuario}_${dataDoc.tipo}.docx`);
+            const out = doc.getZip().generate({
+                type: "blob",
+                mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            });
 
-    } catch (error) {
-        console.error("Error al generar el acta:", error);
-        alert("No se pudo generar el acta. Verifique que 'plantilla_acta.docx' esté en la raíz del repositorio.");
+            saveAs(out, `Acta_Entrega_${dataDoc.usuario}_${dataDoc.tipo}.docx`);
+
+        } catch (error) {
+            console.error("Error al generar el acta:", error);
+            alert("No se pudo generar el acta. Verifique que 'plantilla_acta.docx' esté en la raíz del repositorio.");
+        }
     }
-}
 </script>
 </body>
 </html>
