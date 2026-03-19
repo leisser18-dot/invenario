@@ -422,7 +422,7 @@
         if (container.innerHTML !== "") return;
         
         let html = `<select id="tipo" onchange="toggleCamposDinamicos(this.value)">
-                        <option value="">TIPO: SELECCIONE</option>
+                        <option value="">💻TIPO: SELECCIONE</option>
                         <option value="DESKTOP">DESKTOP</option>
                         <option value="LAPTOP">LAPTOP</option>
                         <option value="CELULAR">CELULAR</option>
@@ -436,9 +436,9 @@
             if(c === 'last_update' || c === 'tipo') return;
             if (c === 'ubicacion') {
                 let options = Object.keys(RELACION_UBICACION_SEDE).map(u => `<option value="${u}">${u}</option>`).join('');
-                html += `<select id="ubicacion" onchange="actualizarSedesPorUbicacion(this.value)"><option value="" selected disabled>📍 Ubicación / Estado</option>${options}</select>`;
+                html += `<select id="ubicacion" onchange="actualizarSedesPorUbicacion(this.value)"><option value="" selected disabled>📍Ubicación / Estado</option>${options}</select>`;
             } else if (c === 'sede') {
-                html += `<select id="sede"><option value="" selected disabled>SELECCIONE SEDE</option></select>`;
+                html += `<select id="sede"><option value="" selected disabled>📍SELECCIONE SEDE</option></select>`;
             } else if (c === 'departamento') {
                 let options = LISTA_DEPARTAMENTOS.map(d => `<option value="${d}">${d}</option>`).join('');
                 html += `<select id="departamento"><option value="" selected disabled>🏢 SELECCIONE DEPARTAMENTO</option>${options}</select>`;
@@ -449,15 +449,15 @@
             } else if (c === 'disco') {
                 const discos = ["120 GB SSD", "240 GB SSD", "320 GB SSD", "500 GB SSD", "1TB SSD"];
                 let options = discos.map(d => `<option value="${d}">${d}</option>`).join('');
-                html += `<select id="disco"><option value="" selected disabled>SELECCIONE DISCO</option>${options}</select>`;
+                html += `<select id="disco"><option value="" selected disabled>💾SELECCIONE DISCO</option>${options}</select>`;
             } else if (c === 'os') {
-                html += `<select id="os"><option value="" selected disabled>SELECCIONE OS</option><option value="WINDOWS 10 PRO">WINDOWS 10 PRO</option><option value="WINDOWS 11 PRO">WINDOWS 11 PRO</option></select>`;
+                html += `<select id="os"><option value="" selected disabled>🪟SELECCIONE SISTEMA OPERATIVO</option><option value="WINDOWS 10 PRO">WINDOWS 10 PRO</option><option value="WINDOWS 11 PRO">WINDOWS 11 PRO</option></select>`;
             } else if(['diadema', 'mouse', 'teclado', 'monitor', 'bolsos'].includes(c)) {
                 html += `<select id="${c}" onchange="togglePeriferico('${c}', this.value)"><option value="NO">${c.toUpperCase()}: NO</option><option value="SI">${c.toUpperCase()}: SI</option></select>`;
             } else if(c.startsWith('f_asig_')) {
                 html += `<input type="date" id="${c}" title="${c.toUpperCase()}" disabled>`;
             } else {
-                html += `<input type="text" id="${c}" placeholder="${c==='cpu'?'PROCESADOR':c.toUpperCase()}">`;
+                html += `<input type="text" id="${c}" placeholder="${c==='cpu'?'⚙️ PROCESADOR':c.toUpperCase()}">`;
             }
         });
         container.innerHTML = html;
