@@ -655,7 +655,7 @@
         renderizarTable(); 
     }
 
-    function renderizarTable() {
+function renderizarTable() {
         const tbody = document.getElementById('cuerpo'); const headerRow = document.getElementById('header_cols');
         const buscar = document.getElementById('busqueda').value.toUpperCase();
         const ignorarEnTabla = ['diadema', 'mouse', 'teclado', 'monitor'];
@@ -672,8 +672,16 @@
         headerRow.innerHTML += '<th class="sticky-action">GESTIÓN</th>';
         document.getElementById('info_span_tech').colSpan = colsVisiblesCount;
 
-        const seriales = DATA_LOCAL.map(x => String(x.serial || "").trim().toUpperCase()).filter(s => s && s !== "-" && s !== "N/A" && s !== "S/N");
+        // Lista de valores que el sistema NO debe tomar en cuenta como duplicados
+        const exclusionesDuplicados = ["-", "N/A", "S/N", "AUTO-PAGO", "TECNO SPARK 20C", "TECNO SPARK 30C", "USUARIO", "BLACKVIEW", "GALAXY TAB", "TAB 15", "TAB 70"];
+
+        // Búsqueda de Seriales duplicados (ignorando las exclusiones)
+        const seriales = DATA_LOCAL.map(x => String(x.serial || "").trim().toUpperCase()).filter(s => s && !exclusionesDuplicados.includes(s));
         const setRepetidos = new Set(seriales.filter((s, index) => seriales.indexOf(s) !== index));
+
+        // Búsqueda de Nombres de PC duplicados (ignorando las exclusiones)
+        const nombresPC = DATA_LOCAL.map(x => String(x.nombre_pc || "").trim().toUpperCase()).filter(n => n && !exclusionesDuplicados.includes(n));
+        const setRepetidosNombres = new Set(nombresPC.filter((n, index) => nombresPC.indexOf(n) !== index));
 
         let filtrados = DATA_LOCAL.filter(eq => {
             const cTipo = FILTRO_TIPO === "" || (eq.tipo && eq.tipo.toUpperCase() === FILTRO_TIPO);
@@ -681,7 +689,9 @@
             
             let cRep = true;
             if (SOLO_REPETIDOS) {
-                cRep = setRepetidos.has(String(eq.serial || "").trim().toUpperCase());
+                const serialVal = String(eq.serial || "").trim().toUpperCase();
+                const nombreVal = String(eq.nombre_pc || "").trim().toUpperCase();
+                cRep = setRepetidos.has(serialVal) || setRepetidosNombres.has(nombreVal);
             }
             
             return cTipo && cBusq && cRep;
@@ -697,7 +707,7 @@
         actualizarDashboardGlobal();
     }
 
-    function actualizarDashboardGlobal() {
+function actualizarDashboardGlobal() {
         document.getElementById('tEq').innerText = DATA_LOCAL.length;
         document.getElementById('tD').innerText = DATA_LOCAL.filter(x => x.tipo === 'DESKTOP').length;
         document.getElementById('tL').innerText = DATA_LOCAL.filter(x => x.tipo === 'LAPTOP').length;
@@ -706,9 +716,22 @@
         document.getElementById('tI').innerText = DATA_LOCAL.filter(x => x.tipo === 'IMPRESORA').length;
         document.getElementById('tA').innerText = DATA_LOCAL.filter(x => x.tipo === 'AUTOPAGO').length;
         
-        const seriales = DATA_LOCAL.map(x => String(x.serial || "").trim().toUpperCase()).filter(s => s && s !== "-" && s !== "N/A" && s !== "S/N");
+        // Lista de valores que el sistema NO debe tomar en cuenta como duplicados
+        const exclusionesDuplicados = ["-", "N/A", "S/N", "AUTO-PAGO", "TECNO SPARK 20C", "TECNO SPARK 30C", "USUARIO", "BLACKVIEW", "GALAXY TAB", "TAB 15", "TAB 70"];
+
+        // Conteo de Seriales duplicados (ignorando exclusiones)
+        const seriales = DATA_LOCAL.map(x => String(x.serial || "").trim().toUpperCase()).filter(s => s && !exclusionesDuplicados.includes(s));
         const setRepetidos = new Set(seriales.filter((s, index) => seriales.indexOf(s) !== index));
-        document.getElementById('tRep').innerText = DATA_LOCAL.filter(eq => setRepetidos.has(String(eq.serial).trim().toUpperCase())).length;
+        
+        // Conteo de Nombres de PC duplicados (ignorando exclusiones)
+        const nombresPC = DATA_LOCAL.map(x => String(x.nombre_pc || "").trim().toUpperCase()).filter(n => n && !exclusionesDuplicados.includes(n));
+        const setRepetidosNombres = new Set(nombresPC.filter((n, index) => nombresPC.indexOf(n) !== index));
+
+        document.getElementById('tRep').innerText = DATA_LOCAL.filter(eq => {
+            const serialVal = String(eq.serial || "").trim().toUpperCase();
+            const nombreVal = String(eq.nombre_pc || "").trim().toUpperCase();
+            return setRepetidos.has(serialVal) || setRepetidosNombres.has(nombreVal);
+        }).length;
     }
 
     function cerrarModal() { document.getElementById('modal').style.display='none'; }
