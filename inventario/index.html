@@ -166,12 +166,17 @@
             justify-content: center; align-items: center; z-index: 1000;
         }
 
-        .modal-content { 
-            background: white; border-radius: 15px; width: 900px; padding: 25px; 
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            max-height: 90vh; overflow-y: auto;
-        }
+       .modal-content { 
+    background: white; 
+    border-radius: 15px; 
+    width: 95%; /* <-- Cambiado para adaptarse */
+    max-width: 900px; /* <-- Límite máximo para PC */
+    padding: 25px; 
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-height: 90vh; 
+    overflow-y: auto;
+}
 
         .input-grid { 
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; 
@@ -202,6 +207,71 @@
         #loadingText { font-size: 11px; font-weight: 800; color: var(--blue-fibex); text-transform: uppercase; letter-spacing: 1.5px; margin: 0; animation: blink 1.5s infinite; }
         #progressPercent { font-size: 10px; font-weight: bold; color: #555; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+/* --- ADAPTACIÓN PARA DISPOSITIVOS MÓVILES --- */
+@media (max-width: 768px) {
+    /* Reorganizar el encabezado en columnas */
+    header {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+        padding: 15px;
+    }
+
+    /* Centrar textos del encabezado */
+    header > div {
+        text-align: center !important;
+        width: 100%;
+    }
+
+    /* Permitir que los botones superiores bajen a una segunda línea si no caben */
+    header div:last-child {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    /* El buscador y el botón de nuevo activo se apilan */
+    div[style*="display: flex; gap: 10px; margin-bottom: 8px; align-items: center;"] {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+
+    /* La grilla del formulario pasa de 3 columnas a 1 columna */
+    .input-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Las gráficas pasan de 2 columnas a 1 columna */
+    .charts-container {
+        grid-template-columns: 1fr;
+    }
+
+    /* Ajustar las tarjetas del dashboard para que ocupen la mitad o el ancho completo */
+    .dashboard {
+        justify-content: center;
+    }
+    
+    .card {
+        flex: 1 1 45%; /* Ocupan casi la mitad de la pantalla */
+        justify-content: center;
+    }
+
+    /* Ajustar el padding de la tabla para aprovechar el espacio */
+    .table-wrapper {
+        border-radius: 4px;
+    }
+
+    /* Botones del modal ocupan todo el ancho */
+    .modal-content div[style*="justify-content: flex-end"] {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .modal-content div[style*="justify-content: flex-end"] button {
+        width: 100%;
+        padding: 12px;
+    }
+}
     </style>
 </head>
 <body>
