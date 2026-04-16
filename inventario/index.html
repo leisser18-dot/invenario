@@ -499,11 +499,11 @@
                 let options = LISTA_DEPARTAMENTOS.map(d => `<option value="${d}">${d}</option>`).join('');
                 html += `<select id="departamento"><option value="" selected disabled>🏢 SELECCIONE DEPARTAMENTO</option>${options}</select>`;
             } else if (c === 'memoria_gb') {
-                const memorias = ["4 GB DDR3", "6 GB DDR3", "8 GB DDR3", "12 GB DDR3", "16 GB DDR3", "64 GB", "8 GB DDR4", "12 GB DDR4", "16 GB DDR4", "32 GB DDR4"];
+                const memorias = ["4 GB DDR3", "6 GB DDR3", "8 GB DDR3", "12 GB DDR3", "16 GB DDR3", "8 GB DDR4", "12 GB DDR4", "16 GB DDR4", "32 GB DDR4"];
                 let options = memorias.map(m => `<option value="${m}">${m}</option>`).join('');
                 html += `<select id="memoria_gb"><option value="" selected disabled>⚡SELECCIONE MEMORIA</option>${options}</select>`;
             } else if (c === 'disco') {
-                const discos = ["120 GB SSD", "240 GB SSD", "320 GB SSD", "500 GB SSD", "1TB SSD"];
+                const discos = ["64 GB SSD", "120 GB SSD", "240 GB SSD", "320 GB SSD", "500 GB SSD", "1TB SSD"];
                 let options = discos.map(d => `<option value="${d}">${d}</option>`).join('');
                 html += `<select id="disco"><option value="" selected disabled>💾SELECCIONE DISCO</option>${options}</select>`;
             } else if (c === 'os') {
