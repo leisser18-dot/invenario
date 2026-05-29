@@ -364,7 +364,7 @@
 
     const RELACION_UBICACION_SEDE = {
 		"APURE": ["BIRUACA"],
-        "CARABOBO": ["TORRE FIBEX", "TORRE CRISTAL", "BARINAS", "DISTELNET", "PASEO LAS INDUSTRIAS", "METROPOLIS VALENCIA", "ALIANZA MALL", "CC SAMBIL", "CENTRO DE EXPERIENCIA", "JAC VALENCIA"],
+        "CARABOBO": ["TORRE FIBEX", "TORRE CRISTAL", "DISTELNET", "PASEO LAS INDUSTRIAS", "METROPOLIS VALENCIA", "ALIANZA MALL", "CC SAMBIL", "CENTRO DE EXPERIENCIA", "JAC VALENCIA"],
         "CARACAS": ["EL PARAISO", "PROPATRIA", "GALERIAS", "CARICUAO", "LA URBINA", "GUARENAS"],
         "BARQUISIMETO": ["CC LEONALDO DAVINCI", "METROPOLIS BARQUISIMETO"],
         "CAGUA": ["CENTRO AUTOMOTRIATRIZ CAGUA"],
@@ -378,8 +378,8 @@
     const LISTA_DEPARTAMENTOS = [
         "ADMINISTRACION", "ALMACEN", "ATENCION AL CLIENTE", "AUDITORIA", "ALIADOS INTEGRALES", "BIENVENIDA Y FIDELIZACION", 
         "CALL CENTER", "CDR", "CECOM", "CLUB FIBEX", "COBRANZA", "COMERCIALIZA", "COMPRAS", 
-        "CONCILIACION", "CONTABILIDAD", "CREDIX", "DESARROLLO", "FINANZAS", "GESTION DEL CAMBIO", "INGENIERIA", "GPS", "LA INTERNACIONAL", "MERCADEO", 
-        "MESA DE APOYO", "NOC", "O&M", "IMPLEMENTACION", "OPERACIONES", "POSTVENTAS", "NEGOCIOS CORPORATIVOS", "PROCESOS", "RRHH", "SALA DE REUNIONES", "NUEVOS PROYECTOS", "SMARTBUY", "SEGURIDAD LABORAL",
+        "CONCILIACION", "CONTABILIDAD", "DESARROLLO", "FINANZAS", "GESTION DEL CAMBIO", "INGENIERIA", "GPS", "LA INTERNACIONAL", "MERCADEO", 
+        "MESA DE APOYO", "NOC", "O&M", "OPERACIONES", "POSTVENTAS", "NEGOCIOS CORPORATIVOS", "PROCESOS", "RRHH", "SALA DE REUNIONES", "SEGURIDAD LABORAL",
         "TECNOLOGIA Y SISTEMA", "TELEVENTAS", "TALLER MECANICO", "VGT", "VENTAS HOGAR"
     ];
 
@@ -846,76 +846,107 @@
         });
     }
 
-    async function exportarExcelConImagen() {
+async function exportarExcelConImagen() {
         const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet('Inventario Unificado');
+        
+        // 1. Agrupar los datos por Ubicación
+        const gruposUbicacion = { "Total Equipos": DATA_LOCAL };
+        
+        DATA_LOCAL.forEach(eq => {
+            // Si no tiene ubicación, lo agrupamos como "SIN UBICACIÓN"
+            let ubi = (eq.ubicacion || 'SIN UBICACIÓN').toUpperCase().trim();
+            
+            // Excel tiene un límite de 31 caracteres para los nombres de las hojas 
+            // y prohíbe ciertos caracteres especiales. Los limpiamos:
+            ubi = ubi.replace(/[?*\/\[\]\\]/g, '').substring(0, 31);
+            
+            if (!gruposUbicacion[ubi]) {
+                gruposUbicacion[ubi] = [];
+            }
+            gruposUbicacion[ubi].push(eq);
+        });
 
-        worksheet.columns = COLUMNAS_OFICIALES.map(col => ({
-            header: col.toUpperCase().replace('_', ' '),
-            key: col,
-            width: 20
-        }));
-
+        // 2. Cargar el logo una sola vez para reutilizarlo en todas las hojas
+        let logoId = null;
         try {
             const response = await fetch('./logo.png');
-            if (!response.ok) throw new Error('Logo no encontrado');
-            
-            const buffer = await response.arrayBuffer();
-            const logoId = workbook.addImage({
-                buffer: buffer,
-                extension: 'png',
-            });
+            if (response.ok) {
+                const buffer = await response.arrayBuffer();
+                logoId = workbook.addImage({
+                    buffer: buffer,
+                    extension: 'png',
+                });
+            }
+        } catch (e) {
+            console.warn("No se pudo cargar 'logo.png'.", e);
+        }
 
+        // 3. Crear una hoja por cada ubicación (y la del Total de Equipos)
+        for (const [nombreHoja, datosHoja] of Object.entries(gruposUbicacion)) {
+            const worksheet = workbook.addWorksheet(nombreHoja);
+
+            // Definir columnas
+            worksheet.columns = COLUMNAS_OFICIALES.map(col => ({
+                header: col.toUpperCase().replace('_', ' '),
+                key: col,
+                width: 20
+            }));
+
+            // Insertar filas en blanco para el encabezado
             for(let i=0; i<6; i++) worksheet.insertRow(1, []);
 
-            worksheet.addImage(logoId, {
-                tl: { col: 0, row: 0.2 },
-                ext: { width: 250, height: 110 }
-            });
+            // Insertar logo si se cargó correctamente
+            if (logoId !== null) {
+                worksheet.addImage(logoId, {
+                    tl: { col: 0, row: 0.2 },
+                    ext: { width: 250, height: 110 }
+                });
+            }
 
+            // Título principal del reporte
             worksheet.mergeCells('E2:K2');
             const titleCell = worksheet.getCell('E2');
             titleCell.value = 'DEPARTAMENTO DE SISTEMAS - REPORTE DE INVENTARIO';
             titleCell.font = { name: 'Segoe UI', size: 14, bold: true };
             titleCell.alignment = { horizontal: 'right' };
 
+            // Subtítulo con fecha y el nombre de la ubicación de esta hoja
             worksheet.mergeCells('E3:K3');
             const infoCell = worksheet.getCell('E3');
-            infoCell.value = `FIBEX TELECOM - GENERADO EL: ${new Date().toLocaleDateString()}`;
+            infoCell.value = `FIBEX TELECOM - GENERADO EL: ${new Date().toLocaleDateString()} - ${nombreHoja}`;
             infoCell.font = { name: 'Segoe UI', size: 10 };
             infoCell.alignment = { horizontal: 'right' };
 
-        } catch (e) {
-            console.warn("No se pudo cargar 'logo.png'.", e);
-            for(let i=0; i<6; i++) worksheet.insertRow(1, []);
-        }
-
-        const headerRow = worksheet.getRow(7);
-        headerRow.eachCell((cell) => {
-            cell.font = { bold: true, color: { argb: 'FF000000' } };
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } };
-            cell.alignment = { horizontal: 'center', vertical: 'middle' };
-            cell.border = {
-                top: { style: 'thin' },
-                bottom: { style: 'thick' },
-                left: { style: 'thin' },
-                right: { style: 'thin' }
-            };
-        });
-
-        DATA_LOCAL.forEach((eq) => {
-            const row = worksheet.addRow(eq);
-            row.eachCell((cell) => {
-                cell.value = cell.value ? cell.value.toString().toUpperCase() : '-';
-                cell.font = { name: 'Segoe UI', size: 9 };
+            // Dar estilo a la fila de las cabeceras de la tabla (fila 7)
+            const headerRow = worksheet.getRow(7);
+            headerRow.eachCell((cell) => {
+                cell.font = { bold: true, color: { argb: 'FF000000' } };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } };
+                cell.alignment = { horizontal: 'center', vertical: 'middle' };
                 cell.border = {
-                    bottom: { style: 'hair' },
+                    top: { style: 'thin' },
+                    bottom: { style: 'thick' },
                     left: { style: 'thin' },
                     right: { style: 'thin' }
                 };
             });
-        });
 
+            // Llenar los datos correspondientes a esta hoja
+            datosHoja.forEach((eq) => {
+                const row = worksheet.addRow(eq);
+                row.eachCell((cell) => {
+                    cell.value = cell.value ? cell.value.toString().toUpperCase() : '-';
+                    cell.font = { name: 'Segoe UI', size: 9 };
+                    cell.border = {
+                        bottom: { style: 'hair' },
+                        left: { style: 'thin' },
+                        right: { style: 'thin' }
+                    };
+                });
+            });
+        }
+
+        // 4. Generar y descargar el archivo Excel final
         const finalBuffer = await workbook.xlsx.writeBuffer();
         saveAs(new Blob([finalBuffer]), `Inventario_Unificado_Fibex_${new Date().toISOString().slice(0,10)}.xlsx`);
     }
