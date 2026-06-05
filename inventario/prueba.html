@@ -241,7 +241,6 @@
 
         .visor-icons img {
             height: 30px;
-            /* placeholders para iconos: file_pdf_icon.png, file_img_icon.png, file_text_icon.png, upload_arrow.png */
         }
 
         .visor-instructions {
@@ -274,72 +273,197 @@
             text-transform: uppercase;
         }
 
-        /* --- Contenedor de Vista Previa (Rediseñado) --- */
+        /* --- Historial de Archivos Guardados en Sesión --- */
+        #history-container {
+            margin-top: 25px;
+            display: none;
+            text-align: left;
+            border-top: 1px solid var(--border-color);
+            padding-top: 15px;
+            cursor: default;
+        }
+
+        .history-title {
+            margin: 0 0 10px 0;
+            color: var(--primary-purple);
+            font-size: 0.95rem;
+            font-weight: bold;
+        }
+
+        #history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 130px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            border: 1px solid #e9ecef;
+            transition: background 0.2s;
+        }
+
+        .history-item:hover {
+            background: #f1f1f1;
+        }
+
+        .history-item-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+        }
+
+        .history-item-info:hover {
+            color: var(--primary-purple);
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .history-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 4px;
+            border-radius: 4px;
+            transition: transform 0.1s;
+        }
+
+        .history-btn:hover {
+            transform: scale(1.15);
+        }
+
+        /* --- Contenedor de Vista Previa (Rediseñado con Controles) --- */
         #preview-container {
             width: 100%;
             min-height: 400px;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             overflow: hidden;
             background-color: #f8f9fa;
             border-radius: 8px;
             border: 1px solid #e9ecef;
             display: none; /* Oculto por defecto */
+            position: relative;
         }
 
         .preview-visible {
             display: flex !important;
         }
 
-        .preview-content {
-            width: 100%;
+        .preview-header-bar {
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
             align-items: center;
+            width: 100%;
+            padding: 10px 15px;
+            background-color: #f1f1f1;
+            border-bottom: 1px solid var(--border-color);
+            position: absolute;
+            top: 0;
+            left: 0;
+            box-sizing: border-box;
+            z-index: 10;
         }
 
-        .close-preview-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: rgba(255,255,255,0.7);
-            color: #333;
+        #preview-filename {
+            font-weight: bold;
+            color: var(--text-color);
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 60%;
+            text-align: left;
+        }
+
+        .preview-buttons-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .save-preview-btn {
+            background-color: var(--primary-purple);
+            color: var(--white);
             border: none;
-            padding: 5px 10px;
+            padding: 6px 12px;
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        .close-preview-btn {
+            background-color: #666;
+            color: var(--white);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        .preview-content {
+            width: 100%;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            box-sizing: border-box;
+            margin-top: 45px; /* Margen para no chocar con la barra superior */
         }
 
         /* Adaptación de los elementos renderizados */
-        #preview-container img, 
-        #preview-container video, 
-        #preview-container iframe {
+        .preview-content img, 
+        .preview-content video, 
+        .preview-content iframe {
             max-width: 100%;
-            max-height: 70vh;
+            max-height: 65vh;
             border-radius: 4px;
         }
 
-        #preview-container iframe {
+        .preview-content iframe {
             width: 100%;
-            height: 70vh;
+            height: 65vh;
             border: none;
         }
 
-        #preview-container pre {
+        .preview-content pre {
             width: 100%;
-            max-height: 70vh;
+            max-height: 65vh;
             overflow-y: auto;
             text-align: left;
             white-space: pre-wrap;
             word-wrap: break-word;
             padding: 15px;
             box-sizing: border-box;
+            background: #fff;
+            border-radius: 4px;
+            margin: 0;
         }
 
-        /* Placeholders para las imágenes que no tengo */
-        /* Reemplaza 'URL_DE_TU_IMAGEN' con la ruta real a tus archivos */
+        /* Placeholders CSS */
         .logo img { content: url('URL_DE_TU_IMAGEN/elibro_logo.png'); }
         .visor-icons .pdf-icon { content: url('URL_DE_TU_IMAGEN/file_pdf_icon.png'); }
         .visor-icons .img-icon { content: url('URL_DE_TU_IMAGEN/file_img_icon.png'); }
@@ -347,7 +471,6 @@
         .visor-icons .upload-arrow { content: url('URL_DE_TU_IMAGEN/upload_arrow.png'); }
         .mouse-icon img { content: url('URL_DE_TU_IMAGEN/mouse_icon.png'); }
         .hero-image { content: url('URL_DE_TU_IMAGEN/woman_working.jpg'); }
-
     </style>
 </head>
 <body>
@@ -413,9 +536,21 @@
                         <button>&lt;/&gt;</button>
                     </div>
                     <input type="file" id="file-input" style="display: none;">
+
+                    <div id="history-container">
+                        <h4 class="history-title">Archivos en Sesión:</h4>
+                        <div id="history-list"></div>
+                    </div>
                 </div>
+
                 <div id="preview-container">
-                    <button class="close-preview-btn" onclick="closePreview()">Cerrar</button>
+                    <div class="preview-header-bar">
+                        <span id="preview-filename">Nombre_del_archivo.pdf</span>
+                        <div class="preview-buttons-group">
+                            <button class="save-preview-btn" onclick="descargarArchivoActivo(event)">Descargar</button>
+                            <button class="close-preview-btn" onclick="closePreview(event)">Cerrar</button>
+                        </div>
+                    </div>
                     <div class="preview-content">
                         </div>
                 </div>
@@ -430,12 +565,22 @@
         const visorContent = document.querySelector('.visor-content');
         const previewContent = document.querySelector('.preview-content');
 
-        // Eventos para abrir el selector de archivos al hacer clic
+        // Variables globales para la persistencia en sesión
+        let fileHistory = [];
+        let currentFile = null;
+
+        // Eventos para abrir el selector de archivos al hacer clic en la zona vacía
         dropZone.addEventListener('click', (e) => {
-            // Evitar que el clic en botones de vista previa abra el selector
-            if (e.target.tagName !== 'BUTTON' && e.target.closest('.preview-hidden') === null) {
-                fileInput.click();
+            // Impedir que se abra el selector nativo si se hace clic en botones, lista de historial, etc.
+            if (
+                e.target.tagName === 'BUTTON' || 
+                e.target.closest('#preview-container') || 
+                e.target.closest('#history-container') ||
+                e.target.closest('.visor-format-buttons')
+            ) {
+                return;
             }
+            fileInput.click();
         });
 
         // Eventos para la funcionalidad de "Arrastrar y Soltar"
@@ -462,17 +607,27 @@
             }
         });
 
-        // Función principal para visualizar el archivo
+        // Función principal para visualizar el archivo y guardarlo en el historial
         function renderizarArchivo(file) {
-            // Ocultar contenido de carga, mostrar previsualización
+            currentFile = file; // Guardar el archivo activo en memoria
+
+            // Guardar en el historial de la sesión si no está duplicado
+            const yaExiste = fileHistory.some(f => f.name === file.name && f.size === file.size);
+            if (!yaExiste) {
+                fileHistory.push(file);
+            }
+            actualizarHistorialUI();
+
+            // Ocultar panel de carga y mostrar previsualización
             visorContent.style.display = 'none';
             previewContainer.classList.add('preview-visible');
-            previewContent.innerHTML = ''; // Limpiar vista previa anterior
+            previewContent.innerHTML = ''; 
+
+            // Asignar el nombre en la barra de control
+            document.getElementById('preview-filename').textContent = file.name;
 
             const fileType = file.type;
             const fileName = file.name.toLowerCase();
-            
-            // Crear una URL local temporal para el archivo
             const fileUrl = URL.createObjectURL(file);
 
             if (fileType.startsWith('image/')) {
@@ -483,7 +638,12 @@
             } else if (fileType === 'application/pdf') {
                 const iframe = document.createElement('iframe');
                 iframe.src = fileUrl;
-                previewContent.appendChild(iframe);
+                previewContainer.appendChild(iframe); // Adjuntar directo para layouts fijos de PDF
+                
+                // Corrección estructural rápida si se usa iframe en vez de un div hijo
+                previewContent.style.display = 'none'; 
+                iframe.style.marginTop = '45px';
+                iframe.style.width = '100%';
 
             } else if (fileType.startsWith('video/')) {
                 const video = document.createElement('video');
@@ -507,23 +667,109 @@
                 reader.readAsText(file);
 
             } else {
-                // Archivo no soportado nativamente
                 previewContent.innerHTML = `
                     <div style="text-align: center; padding: 20px;">
                         <p>⚠️ <b>Formato no soportado nativamente.</b></p>
                         <p>Nombre: ${file.name}</p>
-                        <p>No podemos generar una vista previa de este tipo de archivo en el navegador.</p>
+                        <p>No obstante, puedes guardarlo/descargarlo usando el botón superior.</p>
                     </div>`;
             }
         }
 
-        // Función para cerrar la vista previa y volver al visor de carga
-        function closePreview() {
+        // Función para actualizar visualmente la lista de historial
+        function actualizarHistorialUI() {
+            const container = document.getElementById('history-container');
+            const list = document.getElementById('history-list');
+
+            if (fileHistory.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+            list.innerHTML = '';
+
+            fileHistory.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+
+                let icon = '📄';
+                if (file.type.startsWith('image/')) icon = '🖼️';
+                else if (file.type === 'application/pdf') icon = '📕';
+                else if (file.type.startsWith('video/')) icon = '🎥';
+                else if (file.type.startsWith('audio/')) icon = '🎵';
+
+                item.innerHTML = `
+                    <div class="history-item-info" onclick="cargarDesdeHistorial(${index}, event)" title="Haga clic para ver de nuevo">
+                        <span>${icon}</span>
+                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${file.name}</span>
+                    </div>
+                    <div class="history-actions">
+                        <button class="history-btn" onclick="descargarDesdeHistorial(${index}, event)" title="Descargar archivo">💾</button>
+                        <button class="history-btn" onclick="eliminarDelHistorial(${index}, event)" title="Quitar de la lista">❌</button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Acciones del Historial
+        function cargarDesdeHistorial(index, e) {
+            if(e) e.stopPropagation();
+            renderizarArchivo(fileHistory[index]);
+        }
+
+        function descargarDesdeHistorial(index, e) {
+            if(e) e.stopPropagation();
+            ejecutarDescarga(fileHistory[index]);
+        }
+
+        function eliminarDelHistorial(index, e) {
+            if(e) e.stopPropagation();
+            const archivoEliminado = fileHistory[index];
+            fileHistory.splice(index, 1);
+            actualizarHistorialUI();
+            
+            // Si el archivo eliminado era el que se estaba viendo, cerrar la vista previa
+            if (currentFile && currentFile.name === archivoEliminado.name && currentFile.size === archivoEliminado.size) {
+                closePreview();
+            }
+        }
+
+        // Acciones de la barra de control superior
+        function descargarArchivoActivo(e) {
+            if(e) e.stopPropagation();
+            if (currentFile) {
+                ejecutarDescarga(currentFile);
+            }
+        }
+
+        // Función utilitaria para gatillar la descarga nativa del navegador
+        function ejecutarDescarga(file) {
+            const url = URL.createObjectURL(file);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = file.name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+        }
+
+        function closePreview(e) {
+            if(e) e.stopPropagation();
             previewContainer.classList.remove('preview-visible');
+            
+            // Remover iframes residuales que se inyectaron directamente
+            const activeIframe = previewContainer.querySelector('iframe');
+            if(activeIframe) activeIframe.remove();
+
+            previewContent.style.display = 'flex';
             visorContent.style.display = 'block';
             previewContent.innerHTML = '';
+            currentFile = null;
+            actualizarHistorialUI();
         }
     </script>
-
 </body>
 </html>
