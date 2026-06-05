@@ -1,1 +1,207 @@
-<h1>Hola Mundo</h1>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor de Archivos Online</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --bg-color: #f4f7f6;
+            --border-color: #ccc;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #2c3e50;
+        }
+
+        /* Estilos de la zona de carga */
+        #drop-zone {
+            width: 100%;
+            max-width: 600px;
+            border: 3px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+
+        #drop-zone.dragover {
+            border-color: var(--primary-color);
+            background-color: #e9f2ff;
+        }
+
+        #drop-zone p {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #555;
+        }
+
+        #drop-zone span {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        /* Estilos del contenedor de vista previa */
+        #preview-container {
+            width: 100%;
+            max-width: 800px;
+            min-height: 400px;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        /* Adaptación de los elementos renderizados */
+        img, video, iframe {
+            max-width: 100%;
+            max-height: 70vh;
+            border-radius: 4px;
+        }
+
+        iframe {
+            width: 100%;
+            height: 70vh;
+            border: none;
+        }
+
+        pre {
+            width: 100%;
+            max-height: 70vh;
+            overflow-y: auto;
+            text-align: left;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Visor Universal de Archivos</h1>
+    
+    <div id="drop-zone">
+        <p>Arrastra un archivo aquí o <span>haz clic para seleccionar</span></p>
+        <input type="file" id="file-input" style="display: none;">
+    </div>
+
+    <div id="preview-container">
+        <p style="color: #888;">La vista previa aparecerá aquí.</p>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const previewContainer = document.getElementById('preview-container');
+
+        // Eventos para abrir el selector de archivos al hacer clic
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        // Eventos para la funcionalidad de "Arrastrar y Soltar"
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                renderizarArchivo(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                renderizarArchivo(e.target.files[0]);
+            }
+        });
+
+        // Función principal para visualizar el archivo
+        function renderizarArchivo(file) {
+            previewContainer.innerHTML = ''; // Limpiar vista previa anterior
+            const fileType = file.type;
+            const fileName = file.name.toLowerCase();
+            
+            // Crear una URL local temporal para el archivo
+            const fileUrl = URL.createObjectURL(file);
+
+            if (fileType.startsWith('image/')) {
+                // Renderizar Imagen
+                const img = document.createElement('img');
+                img.src = fileUrl;
+                previewContainer.appendChild(img);
+
+            } else if (fileType === 'application/pdf') {
+                // Renderizar PDF
+                const iframe = document.createElement('iframe');
+                iframe.src = fileUrl;
+                previewContainer.appendChild(iframe);
+
+            } else if (fileType.startsWith('video/')) {
+                // Renderizar Video
+                const video = document.createElement('video');
+                video.src = fileUrl;
+                video.controls = true;
+                previewContainer.appendChild(video);
+
+            } else if (fileType.startsWith('audio/')) {
+                // Renderizar Audio
+                const audio = document.createElement('audio');
+                audio.src = fileUrl;
+                audio.controls = true;
+                previewContainer.appendChild(audio);
+
+            } else if (fileType.startsWith('text/') || fileName.endsWith('.json') || fileName.endsWith('.md') || fileName.endsWith('.csv')) {
+                // Renderizar Texto Plano usando FileReader
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const pre = document.createElement('pre');
+                    pre.textContent = e.target.result;
+                    previewContainer.appendChild(pre);
+                };
+                reader.readAsText(file);
+
+            } else {
+                // Archivo no soportado nativamente
+                previewContainer.innerHTML = `
+                    <div style="text-align: center;">
+                        <p>⚠️ <b>Formato no soportado nativamente.</b></p>
+                        <p>Nombre: ${file.name}</p>
+                        <p>No podemos generar una vista previa de este tipo de archivo en el navegador.</p>
+                    </div>`;
+            }
+        }
+    </script>
+
+</body>
+</html>
