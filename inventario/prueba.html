@@ -3,124 +3,440 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visor de Archivos Online</title>
+    <title>eLibro - Visor de Archivos Online</title>
     <style>
         :root {
-            --primary-color: #007bff;
+            /* Paleta de colores de eLibro */
+            --primary-purple: #7d3c98;
+            --primary-red: #c0392b;
+            --secondary-blue: #007bff; /* Usado para los iconos de formato */
+            --header-blue: #a3d9f4; /* Azul claro para la barra superior */
             --bg-color: #f4f7f6;
+            --white: #ffffff;
+            --text-color: #333;
             --border-color: #ccc;
+            --overlay-bg: rgba(0,0,0,0.5); /* Fondo del visor superpuesto */
         }
 
         body {
             font-family: system-ui, -apple-system, sans-serif;
             background-color: var(--bg-color);
-            color: #333;
+            color: var(--text-color);
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* --- Encabezado --- */
+        header {
+            width: 100%;
+            background-color: var(--white);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        .top-bar {
+            background-color: var(--header-blue);
+            padding: 5px 20px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #2c3e50;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 40px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo img {
+            height: 35px;
+            /* Placeholder para el logo de eLibro (elibro_logo.png) */
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 20px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-links li {
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .theme-toggle, .lang-toggle {
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .header-subscribe-btn {
+            background-color: var(--primary-red);
+            color: var(--white);
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* --- Contenido Principal --- */
+        main {
+            display: flex;
+            flex: 1;
+            padding: 40px;
+            gap: 40px;
+            position: relative; /* Para el overlay */
+        }
+
+        .content-left {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            max-width: 600px;
+        }
+
+        .subtitle {
+            color: var(--secondary-blue);
+            font-size: 1rem;
+            font-weight: bold;
+            margin: 0 0 10px 0;
+        }
+
+        .main-title {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 0 0 20px 0;
+            line-height: 1.1;
+        }
+
+        .description {
+            font-size: 1.1rem;
+            line-height: 1.5;
+            margin: 0 0 30px 0;
+            color: #555;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .main-subscribe-btn {
+            background-color: var(--primary-red);
+            color: var(--white);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .try-btn {
+            background-color: transparent;
+            color: var(--primary-purple);
+            border: 1px solid var(--border-color);
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .mouse-icon {
+            display: flex;
+            justify-content: center;
+            margin-top: auto;
+        }
+
+        .mouse-icon img {
+            height: 30px;
+            /* Placeholder para el icono del ratón (mouse_icon.png) */
+        }
+
+        .content-right {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hero-image {
+            max-width: 100%;
+            border-radius: 12px;
+            object-fit: cover;
+            /* Placeholder para la imagen de la mujer (woman_working.jpg) */
+        }
+
+        /* --- Visor de Archivos (Overlay) --- */
+        #file-viewer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--overlay-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #drop-zone {
+            background-color: var(--white);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative; /* Para la vista previa */
+        }
+
+        #drop-zone.dragover {
+            border: 3px dashed var(--primary-purple);
+            background-color: #f7e6ff;
+        }
+
+        .visor-title {
+            color: var(--primary-purple);
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 0 0 20px 0;
+        }
+
+        .visor-icons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .visor-icons img {
+            height: 30px;
+            /* placeholders para iconos: file_pdf_icon.png, file_img_icon.png, file_text_icon.png, upload_arrow.png */
+        }
+
+        .visor-instructions {
+            font-size: 1rem;
+            line-height: 1.4;
+            margin: 0 0 25px 0;
+            color: #555;
+        }
+
+        .click-text {
+            color: var(--secondary-blue);
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .visor-format-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .visor-format-buttons button {
+            background-color: transparent;
+            color: var(--border-color);
+            border: 1px solid var(--border-color);
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        /* --- Contenedor de Vista Previa (Rediseñado) --- */
+        #preview-container {
+            width: 100%;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            display: none; /* Oculto por defecto */
+        }
+
+        .preview-visible {
+            display: flex !important;
+        }
+
+        .preview-content {
+            width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        h1 {
-            color: #2c3e50;
-        }
-
-        /* Estilos de la zona de carga */
-        #drop-zone {
-            width: 100%;
-            max-width: 600px;
-            border: 3px dashed var(--border-color);
-            border-radius: 12px;
-            padding: 40px 20px;
-            text-align: center;
-            background-color: white;
+        .close-preview-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(255,255,255,0.7);
+            color: #333;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-sizing: border-box;
-            margin-bottom: 20px;
-        }
-
-        #drop-zone.dragover {
-            border-color: var(--primary-color);
-            background-color: #e9f2ff;
-        }
-
-        #drop-zone p {
-            margin: 0;
-            font-size: 1.1rem;
-            color: #555;
-        }
-
-        #drop-zone span {
-            color: var(--primary-color);
             font-weight: bold;
         }
 
-        /* Estilos del contenedor de vista previa */
-        #preview-container {
-            width: 100%;
-            max-width: 800px;
-            min-height: 400px;
-            background-color: white;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 20px;
-            box-sizing: border-box;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-
         /* Adaptación de los elementos renderizados */
-        img, video, iframe {
+        #preview-container img, 
+        #preview-container video, 
+        #preview-container iframe {
             max-width: 100%;
             max-height: 70vh;
             border-radius: 4px;
         }
 
-        iframe {
+        #preview-container iframe {
             width: 100%;
             height: 70vh;
             border: none;
         }
 
-        pre {
+        #preview-container pre {
             width: 100%;
             max-height: 70vh;
             overflow-y: auto;
             text-align: left;
             white-space: pre-wrap;
             word-wrap: break-word;
-            background-color: #f8f9fa;
             padding: 15px;
-            border-radius: 4px;
-            border: 1px solid #e9ecef;
+            box-sizing: border-box;
         }
+
+        /* Placeholders para las imágenes que no tengo */
+        /* Reemplaza 'URL_DE_TU_IMAGEN' con la ruta real a tus archivos */
+        .logo img { content: url('URL_DE_TU_IMAGEN/elibro_logo.png'); }
+        .visor-icons .pdf-icon { content: url('URL_DE_TU_IMAGEN/file_pdf_icon.png'); }
+        .visor-icons .img-icon { content: url('URL_DE_TU_IMAGEN/file_img_icon.png'); }
+        .visor-icons .text-icon { content: url('URL_DE_TU_IMAGEN/file_text_icon.png'); }
+        .visor-icons .upload-arrow { content: url('URL_DE_TU_IMAGEN/upload_arrow.png'); }
+        .mouse-icon img { content: url('URL_DE_TU_IMAGEN/mouse_icon.png'); }
+        .hero-image { content: url('URL_DE_TU_IMAGEN/woman_working.jpg'); }
+
     </style>
 </head>
 <body>
 
-    <h1>Visor Universal de Archivos</h1>
-    
-    <div id="drop-zone">
-        <p>Arrastra un archivo aquí o <span>haz clic para seleccionar</span></p>
-        <input type="file" id="file-input" style="display: none;">
-    </div>
+    <header>
+        <div class="top-bar">
+            <span>el libro en la Conferencia Anual REBIUN →</span>
+        </div>
+        <nav>
+            <div class="logo">
+                <img src="" alt="eLibro Logo">
+                <span class="logo-text">
+                    <span style="color: var(--primary-purple);">e</span><span style="color: var(--primary-red);">Libro</span>
+                </span>
+            </div>
+            <ul class="nav-links">
+                <li>La Empresa</li>
+                <li>Representantes</li>
+                <li>Productos</li>
+                <li>Unidad iA</li>
+                <li>Ayuda</li>
+            </ul>
+            <div class="nav-actions">
+                <span class="theme-toggle">🌙</span>
+                <span class="lang-toggle">EN</span>
+                <button class="header-subscribe-btn">Suscríbase</button>
+            </div>
+        </nav>
+    </header>
 
-    <div id="preview-container">
-        <p style="color: #888;">La vista previa aparecerá aquí.</p>
-    </div>
+    <main>
+        <div class="content-left">
+            <p class="subtitle">LA MAYOR BIBLIOTECA DIGITAL</p>
+            <h1 class="main-title">El conocimiento académico en español, sin fronteras.</h1>
+            <p class="description">Más de 220,000 títulos de 570+ editoriales académicas, disponibles para su institución en cualquier dispositivo, en cualquier momento.</p>
+            <div class="cta-buttons">
+                <button class="main-subscribe-btn">Suscríbase</button>
+                <button class="try-btn">Pruebe eLibro</button>
+            </div>
+            <div class="mouse-icon">
+                <img src="" alt="Icono Ratón">
+            </div>
+        </div>
+        <div class="content-right">
+            <img src="" alt="Mujer trabajando" class="hero-image">
+        </div>
+
+        <div id="file-viewer-overlay">
+            <div id="drop-zone">
+                <div class="visor-content">
+                    <h2 class="visor-title">VISOR UNIVERSAL DE ARCHIVOS ONLINE</h2>
+                    <div class="visor-icons">
+                        <img src="" alt="PDF" class="pdf-icon">
+                        <img src="" alt="Imagen" class="img-icon">
+                        <img src="" alt="Texto" class="text-icon">
+                        <img src="" alt="Cargar" class="upload-arrow">
+                    </div>
+                    <p class="visor-instructions">Arrastra un archivo aquí o <span class="click-text">haz clic para seleccionar</span> para previsualizarlo. Soportamos PDF, Imágenes (JPG, PNG), Texto (TXT, JSON, CSV), Video y Audio.</p>
+                    <div class="visor-format-buttons">
+                        <button>PDF</button>
+                        <button>img</button>
+                        <button>text</button>
+                        <button>&lt;/&gt;</button>
+                    </div>
+                    <input type="file" id="file-input" style="display: none;">
+                </div>
+                <div id="preview-container">
+                    <button class="close-preview-btn" onclick="closePreview()">Cerrar</button>
+                    <div class="preview-content">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </main>
 
     <script>
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
         const previewContainer = document.getElementById('preview-container');
+        const visorContent = document.querySelector('.visor-content');
+        const previewContent = document.querySelector('.preview-content');
 
         // Eventos para abrir el selector de archivos al hacer clic
-        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('click', (e) => {
+            // Evitar que el clic en botones de vista previa abra el selector
+            if (e.target.tagName !== 'BUTTON' && e.target.closest('.preview-hidden') === null) {
+                fileInput.click();
+            }
+        });
 
         // Eventos para la funcionalidad de "Arrastrar y Soltar"
         dropZone.addEventListener('dragover', (e) => {
@@ -148,7 +464,11 @@
 
         // Función principal para visualizar el archivo
         function renderizarArchivo(file) {
-            previewContainer.innerHTML = ''; // Limpiar vista previa anterior
+            // Ocultar contenido de carga, mostrar previsualización
+            visorContent.style.display = 'none';
+            previewContainer.classList.add('preview-visible');
+            previewContent.innerHTML = ''; // Limpiar vista previa anterior
+
             const fileType = file.type;
             const fileName = file.name.toLowerCase();
             
@@ -156,50 +476,52 @@
             const fileUrl = URL.createObjectURL(file);
 
             if (fileType.startsWith('image/')) {
-                // Renderizar Imagen
                 const img = document.createElement('img');
                 img.src = fileUrl;
-                previewContainer.appendChild(img);
+                previewContent.appendChild(img);
 
             } else if (fileType === 'application/pdf') {
-                // Renderizar PDF
                 const iframe = document.createElement('iframe');
                 iframe.src = fileUrl;
-                previewContainer.appendChild(iframe);
+                previewContent.appendChild(iframe);
 
             } else if (fileType.startsWith('video/')) {
-                // Renderizar Video
                 const video = document.createElement('video');
                 video.src = fileUrl;
                 video.controls = true;
-                previewContainer.appendChild(video);
+                previewContent.appendChild(video);
 
             } else if (fileType.startsWith('audio/')) {
-                // Renderizar Audio
                 const audio = document.createElement('audio');
                 audio.src = fileUrl;
                 audio.controls = true;
-                previewContainer.appendChild(audio);
+                previewContent.appendChild(audio);
 
             } else if (fileType.startsWith('text/') || fileName.endsWith('.json') || fileName.endsWith('.md') || fileName.endsWith('.csv')) {
-                // Renderizar Texto Plano usando FileReader
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const pre = document.createElement('pre');
                     pre.textContent = e.target.result;
-                    previewContainer.appendChild(pre);
+                    previewContent.appendChild(pre);
                 };
                 reader.readAsText(file);
 
             } else {
                 // Archivo no soportado nativamente
-                previewContainer.innerHTML = `
-                    <div style="text-align: center;">
+                previewContent.innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
                         <p>⚠️ <b>Formato no soportado nativamente.</b></p>
                         <p>Nombre: ${file.name}</p>
                         <p>No podemos generar una vista previa de este tipo de archivo en el navegador.</p>
                     </div>`;
             }
+        }
+
+        // Función para cerrar la vista previa y volver al visor de carga
+        function closePreview() {
+            previewContainer.classList.remove('preview-visible');
+            visorContent.style.display = 'block';
+            previewContent.innerHTML = '';
         }
     </script>
 
