@@ -200,8 +200,7 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
     border-radius: var(--radius-lg); padding: 34px 30px; text-align: center;
     box-shadow: 0 0 24px rgba(59,130,246,0.15), 0 0 60px rgba(6,182,212,0.08), 0 8px 32px rgba(0,0,0,0.5);
 }
-.login-box img { height: 46px; margin-bottom: 6px; filter: drop-shadow(0 0 10px rgba(59,130,246,0.5)); }
-.login-box h2 { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.login-box img { height: 90px; margin-bottom: 8px; filter: drop-shadow(0 0 10px rgba(59,130,246,0.5)); }
 .login-box .login-sub { font-size: 11px; color: var(--text-3); margin: 2px 0 22px; }
 .login-box input {
     width: 100%; padding: 12px 14px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px;
@@ -270,7 +269,6 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
 <div id="loginScreen">
     <div class="login-box">
         <img src="./logo.png" onerror="this.style.display='none'" alt="">
-        <h2>Fibex</h2>
         <p class="login-sub">Inventario de Sistemas</p>
         <input type="email" id="loginEmail" placeholder="Correo electronico" autocomplete="username" onkeydown="if(event.key==='Enter')iniciarSesion()">
         <input type="password" id="loginPass" placeholder="Contrasena" autocomplete="current-password" onkeydown="if(event.key==='Enter')iniciarSesion()">
