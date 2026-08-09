@@ -1,0 +1,21 @@
+﻿{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "invenario",
+  "compatibility_date": "2026-07-22",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "inventario"
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "main": "src/worker.js",
+  "kv_namespaces": [
+    {
+      "binding": "USUARIOS",
+      "id": "PON_AQUI_EL_ID_DEL_KV"
+    }
+  ]
+}
