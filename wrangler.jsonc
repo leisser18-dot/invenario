@@ -1,4 +1,4 @@
-{
+﻿{
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "invenario",
   "compatibility_date": "2026-07-22",
@@ -15,7 +15,7 @@
   "kv_namespaces": [
     {
       "binding": "USUARIOS",
-      "id": "PON_AQUI_EL_ID_DEL_KV"
+      "id": "a6fb1df5db88462da512ac56bc19ec95"
     }
   ]
 }
