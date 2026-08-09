@@ -309,7 +309,7 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
     <div class="nav-item" data-page="cat-autopago" onclick="filtrarCategoria('AUTOPAGO')"><span class="ico">🏧</span> AutoPago <span class="badge" id="catAuto">0</span></div>
     <div class="nav-section">Herramientas</div>
     <div class="nav-item" data-page="graficos" onclick="showPage('graficos')"><span class="ico">📈</span> Estadisticas</div>
-    <div class="nav-item" onclick="document.getElementById('importFile').click()"><span class="ico">📥</span> Importar</div>
+    <div class="nav-item" id="navImportar" onclick="document.getElementById('importFile').click()"><span class="ico">📥</span> Importar</div>
     <div class="nav-item" onclick="exportarExcelConImagen()"><span class="ico">📊</span> Exportar Excel</div>
     <div class="nav-item" onclick="abrirCambiarPass()"><span class="ico">🔑</span> Cambiar Contrasena</div>
     <div class="nav-item" onclick="cerrarSesion()"><span class="ico">🚪</span> Cerrar Sesion</div>
@@ -372,7 +372,7 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
             <table>
                 <thead>
                     <tr id="header_main">
-                        <th class="sticky-check"><input type="checkbox" id="selectAll" onchange="toggleAllChecks(this)" style="accent-color:var(--primary);"></th>
+                        <th class="sticky-check" id="thSel"><input type="checkbox" id="selectAll" onchange="toggleAllChecks(this)" style="accent-color:var(--primary);"></th>
                         <th class="sticky-type" onclick="ordenarPor('tipo')">TIPO ↕</th>
                         <th colspan="24" id="info_span_tech" style="text-align:center;background:var(--surface-2);font-size:9px;color:var(--text-3);">INFORMACION TECNICA Y LOCALIZACION</th>
                         <th class="sticky-action">GESTION</th>
@@ -621,7 +621,8 @@ function renderizarTable() {
     var buscar = document.getElementById('busqueda').value.toUpperCase();
     var cols = columnasVisibles();
     tbody.innerHTML = '';
-    headerRow.innerHTML = '<th class="sticky-check">Sel</th><th class="sticky-type" onclick="ordenarPor(\'tipo\')">TIPO ↕</th>';
+    var adm = esAdmin();
+    headerRow.innerHTML = (adm ? '<th class="sticky-check">Sel</th>' : '') + '<th class="sticky-type" onclick="ordenarPor(\'tipo\')">TIPO ↕</th>';
     var sortables = ['usuario','ubicacion','sede','departamento','nombre_pc'];
     cols.forEach(function(c) {
         var click = sortables.includes(c) ? 'onclick="ordenarPor(\''+c+'\')"' : '';
@@ -648,7 +649,7 @@ function renderizarTable() {
     });
 
     var rows = filtrados.map(function(eq) {
-        var html = '<td class="sticky-check"><input type="checkbox" class="rowCheck" value="'+eq.id+'" onchange="updateUISelection()" style="accent-color:var(--primary);"></td>';
+        var html = (esAdmin() ? '<td class="sticky-check"><input type="checkbox" class="rowCheck" value="'+eq.id+'" onchange="updateUISelection()" style="accent-color:var(--primary);"></td>' : '');
         html += '<td class="sticky-type"><span class="badge bg-'+(eq.tipo||'default').toLowerCase().replace(/\s+/g,'-')+'">'+(eq.tipo||'-')+'</span></td>';
         cols.forEach(function(c) { html += '<td>'+(eq[c]||'-')+'</td>'; });
         html += '<td class="sticky-action"><button class="btn-edit" onclick="prepararEdicion(\''+eq.id+'\')">EDITAR</button></td>';
@@ -685,7 +686,7 @@ function abrirModal() { inicializarEstructuraModal(); document.getElementById('m
 
 function prepararEdicion(id) {
     var eq = DATA_LOCAL.find(function(x){return x.id==id}); if(!eq) return;
-    abrirModal(); document.getElementById('edit_id').value=eq.id; document.getElementById('btnDelete').style.display='block';
+    abrirModal(); document.getElementById('edit_id').value=eq.id; document.getElementById('btnDelete').style.display = esAdmin() ? 'block' : 'none';
     var un = eq.ubicacion?String(eq.ubicacion).trim().toUpperCase():""; var sn = eq.sede?String(eq.sede).trim().toUpperCase():""; var tn = eq.tipo?String(eq.tipo).trim().toUpperCase():"";
     if(un) actualizarSedesPorUbicacion(un, sn);
     COLUMNAS_OFICIALES.forEach(function(c){var el=document.getElementById(c);if(el){if(el.type==='date')el.value=formatToISO(eq[c]);else{var val=eq[c]?String(eq[c]).trim().toUpperCase():"";if(['diadema','mouse','teclado','monitor','bolsos'].includes(c)){val=(val==='SI'||val==='SÍ')?'SI':'NO';el.value=val}else{el.value=val;if(el.tagName==='SELECT'&&el.value===""&&val!==""){var o=document.createElement('option');o.value=val;o.text=val;el.appendChild(o);el.value=val}}}}});
@@ -728,7 +729,7 @@ function fmtFecha(d){if(!d)return'-';var t=String(d).replace(',',' ').trim();if(
 function formatToMMDDYY(d){if(!d)return'';var p=d.split('-');return p[1]+'/'+p[2]+'/'+p[0].slice(-2)}
 function formatToISO(d){if(!d||!d.includes('/'))return'';var p=d.split('/');return'20'+p[2]+'-'+p[0].padStart(2,'0')+'-'+p[1].padStart(2,'0')}
 function ordenarPor(col){SORT_ASC=(SORT_COL===col)?!SORT_ASC:true;SORT_COL=col;DATA_LOCAL.sort(function(a,b){var vA=String(a[col]||"").toUpperCase();var vB=String(b[col]||"").toUpperCase();return SORT_ASC?vA.localeCompare(vB):vB.localeCompare(vA)});renderizarTable()}
-function updateUISelection(){var sel=document.querySelectorAll('.rowCheck:checked').length;document.getElementById('btnBulkDelete').style.display=sel>0?'inline-flex':'none'}
+function updateUISelection(){var sel=document.querySelectorAll('.rowCheck:checked').length;document.getElementById('btnBulkDelete').style.display=(sel>0&&esAdmin())?'inline-flex':'none'}
 function toggleAllChecks(src){document.querySelectorAll('.rowCheck').forEach(function(c){c.checked=src.checked});updateUISelection()}
 
 // ===== CHARTS =====
@@ -789,9 +790,9 @@ async function exportarExcelConImagen() {
 }
 
 // ===== BULK / DELETE / IMPORT =====
-async function eliminarRegistro(){var id=document.getElementById('edit_id').value;if(!id||!confirm("Eliminar este registro?"))return;try{await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'delete',id:id})});cerrarModal();toast('Registro eliminado','success');cargarDesdeNube()}catch(e){toast('Error','error')}}
-async function eliminarSeleccionados(){var ch=document.querySelectorAll('.rowCheck:checked');if(!ch.length||!confirm("Eliminar "+ch.length+" registros?"))return;for(var i=0;i<ch.length;i++){try{await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'delete',id:ch[i].value})})}catch(e){}}toast(ch.length+' eliminados','success');cargarDesdeNube()}
-async function importarExcel(input){var f=input.files[0];if(!f)return;var ov=document.getElementById('loadingOverlay');ov.style.display='flex';updateProgressBar(10,"Leyendo archivo...");var r=new FileReader();r.onload=async function(e){updateProgressBar(40,"Procesando...");var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});var sh=wb.Sheets[wb.SheetNames[0]];DATA_LOCAL=XLSX.utils.sheet_to_json(sh);updateProgressBar(100,"Listo");setTimeout(function(){renderizarTable();renderDashboard();ov.style.display='none';toast(DATA_LOCAL.length+' registros importados','success')},800)};r.readAsArrayBuffer(f)}
+async function eliminarRegistro(){if(!esAdmin()){toast('No autorizado','error');return}var id=document.getElementById('edit_id').value;if(!id||!confirm("Eliminar este registro?"))return;try{await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'delete',id:id})});cerrarModal();toast('Registro eliminado','success');cargarDesdeNube()}catch(e){toast('Error','error')}}
+async function eliminarSeleccionados(){if(!esAdmin()){toast('No autorizado','error');return}var ch=document.querySelectorAll('.rowCheck:checked');if(!ch.length||!confirm("Eliminar "+ch.length+" registros?"))return;for(var i=0;i<ch.length;i++){try{await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'delete',id:ch[i].value})})}catch(e){}}toast(ch.length+' eliminados','success');cargarDesdeNube()}
+async function importarExcel(input){if(!esAdmin()){toast('No autorizado','error');input.value='';return}var f=input.files[0];if(!f)return;var ov=document.getElementById('loadingOverlay');ov.style.display='flex';updateProgressBar(10,"Leyendo archivo...");var r=new FileReader();r.onload=async function(e){updateProgressBar(40,"Procesando...");var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});var sh=wb.Sheets[wb.SheetNames[0]];DATA_LOCAL=XLSX.utils.sheet_to_json(sh);updateProgressBar(100,"Listo");setTimeout(function(){renderizarTable();renderDashboard();ov.style.display='none';toast(DATA_LOCAL.length+' registros importados','success')},800)};r.readAsArrayBuffer(f)}
 
 // ===== WORD =====
 async function generarActaWord(){var id=document.getElementById('edit_id').value;var reg=DATA_LOCAL.find(function(r){return r.id==id});if(!reg){toast('Seleccione un registro','error');return}
@@ -802,7 +803,19 @@ function haySesion() { try { return !!localStorage.getItem('fibex_sesion'); } ca
 function entrar(em) {
     try { localStorage.setItem('fibex_sesion', em); } catch(e) {}
     document.getElementById('loginScreen').classList.remove('show');
+    aplicarPermisos();
     cargarDesdeNube();
+}
+function esAdmin() {
+    var em = ''; try { em = localStorage.getItem('fibex_sesion') || ''; } catch(e) {}
+    return em === 'lcsanchez@fibextelecom.net' || em === 'paalvarado@fibextelecom.net';
+}
+function aplicarPermisos() {
+    var adm = esAdmin();
+    var imp = document.getElementById('navImportar');
+    if (imp) imp.style.display = adm ? '' : 'none';
+    var th = document.getElementById('thSel');
+    if (th) th.style.display = adm ? '' : 'none';
 }
 function iniciarSesion() {
     var em = document.getElementById('loginEmail').value.trim().toLowerCase();
@@ -885,6 +898,7 @@ window.onload = function() {
     if (window.innerWidth <= 768) { document.getElementById('mobileTopBar').style.display = 'flex'; }
     if (haySesion()) {
         document.getElementById('loginScreen').classList.remove('show');
+        aplicarPermisos();
         cargarDesdeNube();
     } else {
         document.getElementById('loginScreen').classList.add('show');
