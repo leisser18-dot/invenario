@@ -35,6 +35,11 @@ function doPost(e) {
 }
 
 function limpiarFecha(v) {
+  if (v instanceof Date) {
+    if (isNaN(v.getTime())) return '';
+    var d = v.getDate(), mo = v.getMonth() + 1, y = v.getFullYear();
+    return String(mo).padStart(2, '0') + '/' + String(d).padStart(2, '0') + '/' + String(y).slice(-2);
+  }
   var s = String(v || '').trim();
   if (!s || s === 'SI' || s === 'NO' || s === '-') return '';
   var t = s.split('T')[0].trim();
@@ -66,7 +71,8 @@ function migrarFAsig() {
   if (cMouse < 0 || cTecl < 0 || cMon < 0 || cLu < 0) return 0;
   var lastRow = sheet.getLastRow();
   if (lastRow < 2) return 0;
-  var values = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+  var lastCol = sheet.getLastColumn();
+  var values = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
   var updated = 0;
   for (var i = 0; i < values.length; i++) {
     var row = values[i];
@@ -82,11 +88,7 @@ function migrarFAsig() {
       }
     }
     if (changed) {
-      for (var k2 = 0; k2 < cols.length; k2++) {
-        if (String(row[cols[k2]] || '').trim() !== '') {
-          sheet.getRange(i + 2, cols[k2] + 1).setValue(row[cols[k2]]);
-        }
-      }
+      sheet.getRange(i + 2, 1, 1, lastCol).setValues([row]);
       updated++;
     }
   }
