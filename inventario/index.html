@@ -570,7 +570,20 @@ async function cargarDesdeNube() {
     if (!ok) { clearInterval(interval); console.error(err); updateProgressBar(0, "Error de conexion"); setTimeout(function() { overlay.style.display='none'; toast('No se pudieron cargar los datos. Verifique su conexion a internet y use el boton de recargar.', 'error'); }, 200); return; }
     clearInterval(interval); updateProgressBar(100, "Sincronizacion finalizada");
     DATA_LOCAL.sort(function(a,b) { var pd = function(d) { if (!d||typeof d!=='string') return 0; var t=d.replace(',',' ').trim(); if(t.indexOf('T')>0){var dt=new Date(t);return isNaN(dt.getTime())?0:dt.getTime()} var m=t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/); if(m){var y=parseInt(m[3],10);if(y<100)y+=2000;return new Date(y,parseInt(m[2],10)-1,parseInt(m[1],10)).getTime()} return 0; }; return pd(b.last_update)-pd(a.last_update); });
-    setTimeout(function() { try { renderDashboard(); renderizarTable(); } catch(e) { console.error('Error al renderizar:', e); } overlay.style.display='none'; toast('Datos sincronizados', 'success'); }, 600);
+    setTimeout(function() { try { renderDashboard(); renderizarTable(); } catch(e) { console.error('Error al renderizar:', e); } overlay.style.display='none'; toast('Datos sincronizados', 'success'); }, 200);
+}
+
+function calcularRepetidos() {
+    var excl = ["-","N/A","S/N","AUTO-PAGO","TECNO SPARK 20C","TECNO SPARK 30C","USUARIO","BLACKVIEW","GALAXY TAB","TAB 15","TAB 70"];
+    var repSet = new Set(), seenS = new Set(), repNom = new Set(), seenN = new Set();
+    for (var i = 0; i < DATA_LOCAL.length; i++) {
+        var x = DATA_LOCAL[i];
+        var s = String(x.serial||"").trim().toUpperCase();
+        if (s && !excl.includes(s)) { if (seenS.has(s)) repSet.add(s); else seenS.add(s); }
+        var n = String(x.nombre_pc||"").trim().toUpperCase();
+        if (n && !excl.includes(n)) { if (seenN.has(n)) repNom.add(n); else seenN.add(n); }
+    }
+    return { repSet: repSet, repNom: repNom };
 }
 
 // ===== DASHBOARD =====
@@ -586,11 +599,12 @@ function renderDashboard() {
     var pants = DATA_LOCAL.filter(function(x){return x.tipo==='PANTALLA PUBLICITARIA'}).length;
 
     var excl = ["-","N/A","S/N","AUTO-PAGO","TECNO SPARK 20C","TECNO SPARK 30C","USUARIO","BLACKVIEW","GALAXY TAB","TAB 15","TAB 70"];
-    var sers = DATA_LOCAL.map(function(x){return String(x.serial||"").trim().toUpperCase()}).filter(function(s){return s&&!excl.includes(s)});
-    var repSet = new Set(sers.filter(function(s,i){return sers.indexOf(s)!==i}));
-    var noms = DATA_LOCAL.map(function(x){return String(x.nombre_pc||"").trim().toUpperCase()}).filter(function(n){return n&&!excl.includes(n)});
-    var repNom = new Set(noms.filter(function(n,i){return noms.indexOf(n)!==i}));
-    var reps = DATA_LOCAL.filter(function(eq){var sv=String(eq.serial||"").trim().toUpperCase();var nv=String(eq.nombre_pc||"").trim().toUpperCase();return repSet.has(sv)||repNom.has(nv)}).length;
+    var rp = calcularRepetidos();
+    var reps = 0;
+    for (var i = 0; i < DATA_LOCAL.length; i++) {
+        var e = DATA_LOCAL[i];
+        if (rp.repSet.has(String(e.serial||"").trim().toUpperCase()) || rp.repNom.has(String(e.nombre_pc||"").trim().toUpperCase())) reps++;
+    }
 
     grid.innerHTML = '';
     var TIPO_MAP = {'Desktop':'DESKTOP','Laptop':'LAPTOP','Movil':'CELULAR','Tablet':'TABLET','Impresora':'IMPRESORA','Autopago':'AUTOPAGO','Pantalla':'PANTALLA PUBLICITARIA'};
@@ -656,11 +670,7 @@ function renderizarTable() {
     headerRow.innerHTML += '<th class="sticky-action">GESTION</th>';
     document.getElementById('info_span_tech').colSpan = cols.length;
 
-    var excl = ["-","N/A","S/N","AUTO-PAGO","TECNO SPARK 20C","TECNO SPARK 30C","USUARIO","BLACKVIEW","GALAXY TAB","TAB 15","TAB 70"];
-    var sers = DATA_LOCAL.map(function(x){return String(x.serial||"").trim().toUpperCase()}).filter(function(s){return s&&!excl.includes(s)});
-    var repSet = new Set(sers.filter(function(s,i){return sers.indexOf(s)!==i}));
-    var noms = DATA_LOCAL.map(function(x){return String(x.nombre_pc||"").trim().toUpperCase()}).filter(function(n){return n&&!excl.includes(n)});
-    var repNom = new Set(noms.filter(function(n,i){return noms.indexOf(n)!==i}));
+    var rp = calcularRepetidos();
 
     var filtrados = DATA_LOCAL.filter(function(eq) {
         if (CATEGORIA_FILTER && MAPA_CATEGORIAS[CATEGORIA_FILTER]) {
@@ -669,7 +679,7 @@ function renderizarTable() {
         var cTipo = FILTRO_TIPO === "" || (eq.tipo && eq.tipo.toUpperCase() === FILTRO_TIPO);
         var cBusq = Object.values(eq).some(function(val) { return String(val).toUpperCase().includes(buscar); });
         var cRep = true;
-        if (SOLO_REPETIDOS) { var sv=String(eq.serial||"").trim().toUpperCase(); var nv=String(eq.nombre_pc||"").trim().toUpperCase(); cRep = repSet.has(sv)||repNom.has(nv); }
+        if (SOLO_REPETIDOS) { var sv=String(eq.serial||"").trim().toUpperCase(); var nv=String(eq.nombre_pc||"").trim().toUpperCase(); cRep = rp.repSet.has(sv)||rp.repNom.has(nv); }
         return cTipo && cBusq && cRep;
     });
 
@@ -730,7 +740,7 @@ async function guardarRegistro() {
     if(sv!==""&&sv!=="S/N"&&sv!=="N/A"&&sv!=="-"){var dup=DATA_LOCAL.find(function(it){return it.id!==eq.id&&String(it.serial||"").trim().toUpperCase()===sv});if(dup){toast('El serial "'+sv+'" ya existe','error');overlay.style.display='none';return}}
     if(document.getElementById('tipo').value==='IMPRESORA')eq['modelo']=document.getElementById('modelo').value+' - '+document.getElementById('conexion').value+' - '+document.getElementById('consumible').value;
     updateProgressBar(60,"Guardando...");
-    try{await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'save',eq:eq})});updateProgressBar(100,"Guardado");cerrarModal();toast('Registro guardado','success');setTimeout(cargarDesdeNube,800)}catch(e){toast('Error al guardar','error');overlay.style.display='none'}
+    try{await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'save',eq:eq})});for(var i=0;i<DATA_LOCAL.length;i++){if(DATA_LOCAL[i].id===eq.id){DATA_LOCAL.splice(i,1);break}}DATA_LOCAL.unshift(eq);updateProgressBar(100,"Guardado");overlay.style.display='none';cerrarModal();toast('Registro guardado','success');renderDashboard();renderizarTable()}catch(e){toast('Error al guardar','error');overlay.style.display='none'}
 }
 
 function togglePeriferico(p,v){if(!DEP_PERIFERICOS[p])return;DEP_PERIFERICOS[p].forEach(function(id){var el=document.getElementById(id);if(el){el.style.display='block';el.disabled=false}})}
@@ -815,9 +825,9 @@ async function exportarExcelConImagen() {
 }
 
 // ===== BULK / DELETE / IMPORT =====
-async function eliminarRegistro(){if(!esAdmin()){toast('No autorizado','error');return}var id=document.getElementById('edit_id').value;if(!id||!confirm("Eliminar este registro?"))return;try{await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'delete',id:id})});cerrarModal();toast('Registro eliminado','success');cargarDesdeNube()}catch(e){toast('Error','error')}}
-async function eliminarSeleccionados(){if(!esAdmin()){toast('No autorizado','error');return}var ch=document.querySelectorAll('.rowCheck:checked');if(!ch.length||!confirm("Eliminar "+ch.length+" registros?"))return;for(var i=0;i<ch.length;i++){try{await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'delete',id:ch[i].value})})}catch(e){}}toast(ch.length+' eliminados','success');cargarDesdeNube()}
-async function importarExcel(input){if(!esAdmin()){toast('No autorizado','error');input.value='';return}var f=input.files[0];if(!f)return;var ov=document.getElementById('loadingOverlay');ov.style.display='flex';updateProgressBar(10,"Leyendo archivo...");var r=new FileReader();r.onload=async function(e){updateProgressBar(40,"Procesando...");var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});var sh=wb.Sheets[wb.SheetNames[0]];DATA_LOCAL=XLSX.utils.sheet_to_json(sh);updateProgressBar(100,"Listo");setTimeout(function(){renderizarTable();renderDashboard();ov.style.display='none';toast(DATA_LOCAL.length+' registros importados','success')},800)};r.readAsArrayBuffer(f)}
+async function eliminarRegistro(){if(!esAdmin()){toast('No autorizado','error');return}var id=document.getElementById('edit_id').value;if(!id||!confirm("Eliminar este registro?"))return;try{await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'delete',id:id})});for(var i=0;i<DATA_LOCAL.length;i++){if(DATA_LOCAL[i].id===id){DATA_LOCAL.splice(i,1);break}}cerrarModal();toast('Registro eliminado','success');renderDashboard();renderizarTable()}catch(e){toast('Error','error')}}
+async function eliminarSeleccionados(){if(!esAdmin()){toast('No autorizado','error');return}var ch=document.querySelectorAll('.rowCheck:checked');if(!ch.length||!confirm("Eliminar "+ch.length+" registros?"))return;var ids={};for(var i=0;i<ch.length;i++){ids[ch[i].value]=1;try{await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'delete',id:ch[i].value})})}catch(e){}}DATA_LOCAL=DATA_LOCAL.filter(function(e){return !ids[e.id]});toast(ch.length+' eliminados','success');renderDashboard();renderizarTable()}
+async function importarExcel(input){if(!esAdmin()){toast('No autorizado','error');input.value='';return}var f=input.files[0];if(!f)return;var ov=document.getElementById('loadingOverlay');ov.style.display='flex';updateProgressBar(10,"Leyendo archivo...");var r=new FileReader();r.onload=async function(e){updateProgressBar(40,"Procesando...");var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});var sh=wb.Sheets[wb.SheetNames[0]];DATA_LOCAL=XLSX.utils.sheet_to_json(sh);updateProgressBar(100,"Listo");setTimeout(function(){renderizarTable();renderDashboard();ov.style.display='none';toast(DATA_LOCAL.length+' registros importados','success')},100)};r.readAsArrayBuffer(f)}
 
 // ===== WORD =====
 async function generarActaWord(){var id=document.getElementById('edit_id').value;var reg=DATA_LOCAL.find(function(r){return r.id==id});if(!reg){toast('Seleccione un registro','error');return}
