@@ -10,6 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/pizzip@3.1.7/dist/pizzip.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.49.1/docxtemplater.js"></script>
+    <script src="usuarios.js"></script>
 <style>
 :root {
     --bg: #080c14; --surface: #0f1629; --surface-2: #1a2340; --surface-3: #243056;
@@ -50,7 +51,7 @@ body {
 }
 .sidebar .nav-item:hover { background: var(--surface-2); color: var(--text); }
 .sidebar .nav-item.active { background: var(--primary); color: white; box-shadow: 0 4px 16px rgba(59,130,246,0.25); }
-.sidebar .nav-item .ico { font-size: 16px; width: 20px; text-align: center; }
+.sidebar .nav-item .ico { font-size: 16px; width: 20px; text-align: center; animation: iconNeon 2.6s ease-in-out infinite; }
 .sidebar .nav-item .badge { margin-left: auto; background: var(--surface-3); color: var(--text-2); font-size: 10px; padding: 1px 8px; border-radius: 10px; }
 .sidebar .nav-item.active .badge { background: rgba(255,255,255,0.2); color: white; }
 .sidebar .spacer { flex: 1; }
@@ -66,11 +67,20 @@ body {
     border: 1px solid var(--border); cursor: pointer; transition: var(--transition);
 }
 .stat-card:hover { transform: translateY(-2px); border-color: var(--primary); box-shadow: 0 4px 16px rgba(59,130,246,0.15); }
-.stat-card .sc-icon { font-size: 20px; margin-bottom: 4px; }
+.stat-card .sc-icon { font-size: 20px; margin-bottom: 4px; animation: iconNeon 2.6s ease-in-out infinite; }
 .stat-card .sc-label { font-size: 10px; color: var(--text-3); text-transform: uppercase; font-weight: 600; letter-spacing: 0.3px; }
 .stat-card .sc-value { font-size: 22px; font-weight: 800; color: var(--primary); margin-top: 2px; }
 .stat-card.alert { border-color: var(--orange); }
 .stat-card.alert .sc-value { color: var(--orange); }
+
+/* ICONO NEON TITILANTE */
+@keyframes iconNeon {
+    0%, 100% { text-shadow: 0 0 5px rgba(59,130,246,0.75), 0 0 14px rgba(59,130,246,0.45); }
+    42% { text-shadow: 0 0 3px rgba(59,130,246,0.35), 0 0 8px rgba(59,130,246,0.2); }
+    48% { text-shadow: 0 0 7px rgba(59,130,246,0.9), 0 0 20px rgba(59,130,246,0.6), 0 0 30px rgba(6,182,212,0.4); }
+    60% { text-shadow: 0 0 4px rgba(59,130,246,0.5), 0 0 10px rgba(59,130,246,0.3); }
+    80% { text-shadow: 0 0 6px rgba(59,130,246,0.8), 0 0 16px rgba(59,130,246,0.5), 0 0 24px rgba(6,182,212,0.3); }
+}
 
 /* TOOLBAR */
 .toolbar { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
@@ -88,14 +98,14 @@ body {
     font-weight: 600; font-size: 12px; display: inline-flex; align-items: center;
     gap: 5px; transition: var(--transition); white-space: nowrap;
 }
-.btn-primary { background: var(--primary); color: white; }
-.btn-primary:hover { background: #2563eb; box-shadow: 0 4px 16px rgba(59,130,246,0.3); }
-.btn-accent { background: var(--accent); color: #080c14; }
-.btn-accent:hover { background: #0891b2; }
-.btn-green { background: var(--green); color: white; }
-.btn-green:hover { background: #059669; }
-.btn-red { background: var(--red); color: white; }
-.btn-red:hover { background: #dc2626; }
+.btn-primary { background: var(--primary); color: white; text-shadow: 0 0 6px rgba(255,255,255,0.5); box-shadow: 0 0 10px rgba(59,130,246,0.45), inset 0 0 6px rgba(255,255,255,0.18); }
+.btn-primary:hover { background: #2563eb; box-shadow: 0 0 18px rgba(59,130,246,0.75), inset 0 0 10px rgba(255,255,255,0.25); }
+.btn-accent { background: var(--accent); color: #080c14; text-shadow: 0 0 6px rgba(8,12,20,0.3); box-shadow: 0 0 10px rgba(6,182,212,0.5), inset 0 0 6px rgba(255,255,255,0.3); }
+.btn-accent:hover { background: #0891b2; box-shadow: 0 0 18px rgba(6,182,212,0.8), inset 0 0 10px rgba(255,255,255,0.35); }
+.btn-green { background: var(--green); color: white; text-shadow: 0 0 6px rgba(255,255,255,0.5); box-shadow: 0 0 10px rgba(16,185,129,0.5), inset 0 0 6px rgba(255,255,255,0.18); }
+.btn-green:hover { background: #059669; box-shadow: 0 0 18px rgba(16,185,129,0.8), inset 0 0 10px rgba(255,255,255,0.25); }
+.btn-red { background: var(--red); color: white; text-shadow: 0 0 6px rgba(255,255,255,0.5); box-shadow: 0 0 10px rgba(239,68,68,0.5), inset 0 0 6px rgba(255,255,255,0.18); }
+.btn-red:hover { background: #dc2626; box-shadow: 0 0 18px rgba(239,68,68,0.8), inset 0 0 10px rgba(255,255,255,0.25); }
 .btn-ghost { background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border); }
 .btn-ghost:hover { background: var(--surface-3); color: var(--text); }
 .btn-sm { padding: 5px 10px; font-size: 11px; }
@@ -107,7 +117,7 @@ body {
     font-size: 11px; font-weight: 600; color: var(--text-2); background: transparent; transition: var(--transition);
 }
 .cat-tab:hover { border-color: var(--primary); color: var(--text); background: var(--surface-2); }
-.cat-tab.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 2px 8px rgba(59,130,246,0.2); }
+.cat-tab.active { background: var(--primary); color: white; border-color: var(--primary); text-shadow: 0 0 6px rgba(255,255,255,0.5); box-shadow: 0 0 12px rgba(59,130,246,0.5), inset 0 0 5px rgba(255,255,255,0.2); }
 
 /* TABLE */
 .table-wrap {
@@ -137,8 +147,8 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
 .bg-impresora { background: linear-gradient(135deg,#06b6d4,#0e7490); }
 .bg-autopago { background: linear-gradient(135deg,#6b7280,#374151); }
 .bg-pantalla-publicitaria { background: linear-gradient(135deg,#ec4899,#be185d); }
-.btn-edit { background: var(--primary); color: white; border: none; padding: 4px 9px; border-radius: 5px; cursor: pointer; font-size: 10px; font-weight: 600; transition: var(--transition); }
-.btn-edit:hover { background: #2563eb; }
+.btn-edit { background: var(--primary); color: white; border: none; padding: 4px 9px; border-radius: 5px; cursor: pointer; font-size: 10px; font-weight: 600; transition: var(--transition); text-shadow: 0 0 4px rgba(255,255,255,0.4); box-shadow: 0 0 8px rgba(59,130,246,0.45), inset 0 0 4px rgba(255,255,255,0.15); }
+.btn-edit:hover { background: #2563eb; box-shadow: 0 0 14px rgba(59,130,246,0.75), inset 0 0 6px rgba(255,255,255,0.2); }
 
 /* CHART SECTION */
 .chart-bar {
@@ -177,6 +187,30 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
     outline: none; transition: var(--transition); width: 100%;
 }
 .input-grid select:focus, .input-grid input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+
+/* LOGIN */
+#loginScreen {
+    display: none; position: fixed; inset: 0; z-index: 10000;
+    justify-content: center; align-items: center; padding: 16px;
+    background: radial-gradient(1200px 800px at 50% -10%, var(--surface) 0%, var(--bg) 60%);
+}
+#loginScreen.show { display: flex; }
+.login-box {
+    width: min(380px, 100%); background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 34px 30px; text-align: center;
+    box-shadow: 0 0 24px rgba(59,130,246,0.15), 0 0 60px rgba(6,182,212,0.08), 0 8px 32px rgba(0,0,0,0.5);
+}
+.login-box img { height: 46px; margin-bottom: 6px; filter: drop-shadow(0 0 10px rgba(59,130,246,0.5)); }
+.login-box h2 { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.login-box .login-sub { font-size: 11px; color: var(--text-3); margin: 2px 0 22px; }
+.login-box input {
+    width: 100%; padding: 12px 14px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface-2); color: var(--text); font-size: 13px; outline: none; transition: var(--transition);
+}
+.login-box input::placeholder { color: var(--text-3); }
+.login-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.15), 0 0 14px rgba(59,130,246,0.4); }
+.login-error { min-height: 18px; font-size: 12px; color: var(--red); font-weight: 600; margin-bottom: 8px; }
+.login-btn { width: 100%; justify-content: center; padding: 12px; font-size: 14px; }
 
 /* LOADER */
 #loadingOverlay {
@@ -223,6 +257,19 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
 </head>
 <body>
 
+<!-- LOGIN -->
+<div id="loginScreen">
+    <div class="login-box">
+        <img src="https://internetenmizona.com/wp-content/uploads/2022/10/Fibex-Modificado.png" onerror="this.style.display='none'" alt="">
+        <h2>Fibex</h2>
+        <p class="login-sub">Inventario de Sistemas</p>
+        <input type="email" id="loginEmail" placeholder="Correo electronico" autocomplete="username" onkeydown="if(event.key==='Enter')iniciarSesion()">
+        <input type="password" id="loginPass" placeholder="Contrasena" autocomplete="current-password" onkeydown="if(event.key==='Enter')iniciarSesion()">
+        <div class="login-error" id="loginError"></div>
+        <button class="btn btn-primary login-btn" onclick="iniciarSesion()">Iniciar sesion</button>
+    </div>
+</div>
+
 <div id="loadingOverlay">
     <div class="loader-spin"></div>
     <div class="pbar-wrap">
@@ -255,6 +302,7 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
     <div class="nav-item" data-page="graficos" onclick="showPage('graficos')"><span class="ico">📈</span> Estadisticas</div>
     <div class="nav-item" onclick="document.getElementById('importFile').click()"><span class="ico">📥</span> Importar</div>
     <div class="nav-item" onclick="exportarExcelConImagen()"><span class="ico">📊</span> Exportar Excel</div>
+    <div class="nav-item" onclick="cerrarSesion()"><span class="ico">🚪</span> Cerrar Sesion</div>
     <div class="spacer"></div>
     <div class="footer-info" id="currentDate"></div>
 </aside>
@@ -709,12 +757,48 @@ async function importarExcel(input){var f=input.files[0];if(!f)return;var ov=doc
 async function generarActaWord(){var id=document.getElementById('edit_id').value;var reg=DATA_LOCAL.find(function(r){return r.id==id});if(!reg){toast('Seleccione un registro','error');return}
 try{var r=await fetch('./plantilla_acta.docx');var c=await r.arrayBuffer();var zip=new PizZip(c);var doc=new window.docxtemplater(zip,{paragraphLoop:true,linebreaks:true});var dd={...reg,usuario:(reg.usuario||'N/A').toUpperCase(),departamento:(reg.sede||'SISTEMAS').toUpperCase(),tipo:(reg.tipo||'').toUpperCase(),marca:(reg.marca||'').toUpperCase(),modelo:(reg.modelo||'').toUpperCase(),serial:(reg.serial||'').toUpperCase(),cpu:(reg.cpu||'').toUpperCase(),memoria_gb:(reg.memoria_gb||'').toUpperCase(),teclado_modelo:(reg.teclado_modelo||'ESTANDAR').toUpperCase(),mouse_modelo:(reg.mouse_modelo||'OPTICO').toUpperCase(),fecha_hoy:new Date().toLocaleDateString('es-ES')};doc.render(dd);var out=doc.getZip().generate({type:"blob",mimeType:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});saveAs(out,'Acta_Entrega_'+dd.usuario+'_'+dd.tipo+'.docx');toast('Acta generada','success')}catch(e){console.error(e);toast('Error al generar acta. Verifica plantilla_acta.docx','error')}}
 
+// ===== LOGIN =====
+function haySesion() { try { return !!localStorage.getItem('fibex_sesion'); } catch(e) { return true; } }
+function entrar(em) {
+    try { localStorage.setItem('fibex_sesion', em); } catch(e) {}
+    document.getElementById('loginScreen').classList.remove('show');
+    cargarDesdeNube();
+}
+function iniciarSesion() {
+    var em = document.getElementById('loginEmail').value.trim().toLowerCase();
+    var pw = document.getElementById('loginPass').value;
+    var err = document.getElementById('loginError');
+    var usuarios = (typeof USUARIOS !== 'undefined') ? USUARIOS : {};
+    if (!em || !pw) { err.innerText = 'Ingrese correo y contrasena'; return; }
+    if (!(em in usuarios)) { err.innerText = 'Usuario no encontrado'; document.getElementById('loginPass').value=''; return; }
+    var stored = null; try { stored = localStorage.getItem('fibex_pas_' + em); } catch(e) {}
+    var base = usuarios[em];
+    if (stored) {
+        if (stored === pw) { entrar(em); } else { err.innerText = 'Correo o contrasena incorrectos'; document.getElementById('loginPass').value = ''; }
+    } else if (base === null || base === '' || typeof base === 'undefined') {
+        try { localStorage.setItem('fibex_pas_' + em, pw); } catch(e) {}
+        entrar(em);
+    } else {
+        if (base === pw) { entrar(em); } else { err.innerText = 'Correo o contrasena incorrectos'; document.getElementById('loginPass').value = ''; }
+    }
+}
+function cerrarSesion() {
+    try { localStorage.removeItem('fibex_sesion'); } catch(e) {}
+    location.reload();
+}
+
 // ===== INIT =====
 window.onload = function() {
     document.getElementById('currentDate').innerText = new Date().toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
     // show mobile top bar on small screens
     if (window.innerWidth <= 768) { document.getElementById('mobileTopBar').style.display = 'flex'; }
-    cargarDesdeNube();
+    if (haySesion()) {
+        document.getElementById('loginScreen').classList.remove('show');
+        cargarDesdeNube();
+    } else {
+        document.getElementById('loginScreen').classList.add('show');
+        var le = document.getElementById('loginEmail'); if (le) le.focus();
+    }
 };
 </script>
 </body>
