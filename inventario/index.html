@@ -897,6 +897,26 @@ function cerrarSesion() {
     location.reload();
 }
 
+// ===== CIERRE POR INACTIVIDAD =====
+var TIEMPO_INACTIVIDAD = 30 * 60 * 1000;
+var temporizadorInactividad = null;
+function reiniciarTemporizador() {
+    if (temporizadorInactividad) clearTimeout(temporizadorInactividad);
+    temporizadorInactividad = setTimeout(function() {
+        if (haySesion()) {
+            toast('Sesion cerrada por inactividad', 'info');
+            cerrarSesion();
+        }
+    }, TIEMPO_INACTIVIDAD);
+}
+function iniciarInactividad() {
+    var evs = ['mousemove','keydown','click','mousedown','scroll','touchstart'];
+    for (var i = 0; i < evs.length; i++) {
+        window.addEventListener(evs[i], reiniciarTemporizador, { passive: true });
+    }
+    reiniciarTemporizador();
+}
+
 // ===== CAMBIAR CONTRASENA =====
 function verificarContrasena(em, pw) {
     var stored = null; try { stored = localStorage.getItem('fibex_pas_' + em); } catch(e) {}
@@ -945,6 +965,7 @@ async function guardarContrasena() {
 window.onload = function() {
     document.getElementById('currentDate').innerText = new Date().toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
     iniciarFechaHora();
+    iniciarInactividad();
     // show mobile top bar on small screens
     if (window.innerWidth <= 768) { document.getElementById('mobileTopBar').style.display = 'flex'; }
     if (haySesion()) {
