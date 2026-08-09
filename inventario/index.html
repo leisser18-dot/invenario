@@ -195,11 +195,25 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
     background: linear-gradient(135deg, #0E4A52 0%, #171A21 48%, #3A2130 100%);
 }
 #loginScreen.show { display: flex; }
+#loginFechaHora {
+    position: absolute; top: 28px; left: 34px; text-align: left;
+}
+#loginFechaHora .fh-fecha {
+    font-size: 14px; color: rgba(255,255,255,0.72); letter-spacing: 0.3px;
+}
+#loginFechaHora .fh-hora {
+    display: block; margin-top: 3px; font-size: 34px; font-weight: 800;
+    color: #00F2FE; letter-spacing: 2px; line-height: 1;
+    text-shadow: 0 0 16px rgba(0,242,254,0.55);
+}
 .login-box {
-    width: min(400px, 100%); text-align: center; padding: 0 8px;
+    width: min(380px, 100%); text-align: center; padding: 42px 34px;
+    background: rgba(10,14,20,0.55); border: 1px solid rgba(0,242,254,0.5);
+    border-radius: 16px;
+    box-shadow: 0 0 16px rgba(0,242,254,0.3), 0 0 50px rgba(0,242,254,0.15), inset 0 0 24px rgba(0,242,254,0.07);
 }
 .login-box img {
-    height: 120px; margin-bottom: 12px;
+    height: 110px; margin-bottom: 12px;
     filter: drop-shadow(0 0 12px rgba(0,242,254,0.45));
 }
 .login-box .login-sub {
@@ -285,6 +299,10 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
 
 <!-- LOGIN -->
 <div id="loginScreen">
+    <div id="loginFechaHora">
+        <span class="fh-fecha" id="fhFecha">Cargando...</span>
+        <span class="fh-hora" id="fhHora">--:--:--</span>
+    </div>
     <div class="login-box">
         <img src="./logo.png" onerror="this.style.display='none'" alt="">
         <p class="login-sub">Inventario de Sistemas</p>
@@ -834,6 +852,21 @@ function aplicarPermisos() {
     var th = document.getElementById('thSel');
     if (th) th.style.display = adm ? '' : 'none';
 }
+function actualizarFechaHora() {
+    var fh = document.getElementById('fhFecha');
+    var hh = document.getElementById('fhHora');
+    if (!fh || !hh) return;
+    var dias = ['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'];
+    var meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    var d = new Date();
+    fh.innerText = dias[d.getDay()] + ', ' + d.getDate() + ' de ' + meses[d.getMonth()] + ' de ' + d.getFullYear();
+    var h = ('0'+d.getHours()).slice(-2), m = ('0'+d.getMinutes()).slice(-2), s = ('0'+d.getSeconds()).slice(-2);
+    hh.innerText = h + ':' + m + ':' + s;
+}
+function iniciarFechaHora() {
+    actualizarFechaHora();
+    setInterval(actualizarFechaHora, 1000);
+}
 function iniciarSesion() {
     var em = document.getElementById('loginEmail').value.trim().toLowerCase();
     var pw = document.getElementById('loginPass').value;
@@ -911,6 +944,7 @@ async function guardarContrasena() {
 // ===== INIT =====
 window.onload = function() {
     document.getElementById('currentDate').innerText = new Date().toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    iniciarFechaHora();
     // show mobile top bar on small screens
     if (window.innerWidth <= 768) { document.getElementById('mobileTopBar').style.display = 'flex'; }
     if (haySesion()) {
