@@ -8,7 +8,8 @@ const USUARIOS_INICIALES = [
     { email: 'lcsanchez@fibextelecom.net', pass: 'Chachi1511*-' },
     { email: 'acalderon@fibextelecom.net', pass: null },
     { email: 'fnavarro@fibextelecom.net', pass: null },
-    { email: 'paalvarado@fibextelecom.net', pass: null }
+    { email: 'paalvarado@fibextelecom.net', pass: null },
+    { email: 'aespinal@fibextelecom.net', pass: null }
 ];
 
 async function hash(pw) {
@@ -18,13 +19,16 @@ async function hash(pw) {
 
 async function leerUsuarios(env) {
     const raw = await env.USUARIOS.get('usuarios', 'json');
-    if (raw && Array.isArray(raw) && raw.length) return raw;
-    const base = [];
+    const users = (raw && Array.isArray(raw)) ? raw : [];
+    let changed = users.length === 0;
     for (const u of USUARIOS_INICIALES) {
-        base.push({ email: u.email, pass: u.pass ? await hash(u.pass) : null });
+        if (!users.some(x => x.email === u.email)) {
+            users.push({ email: u.email, pass: u.pass ? await hash(u.pass) : null });
+            changed = true;
+        }
     }
-    await env.USUARIOS.put('usuarios', JSON.stringify(base));
-    return base;
+    if (changed) await env.USUARIOS.put('usuarios', JSON.stringify(users));
+    return users;
 }
 
 function json(data, status = 200) {
