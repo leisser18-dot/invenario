@@ -212,6 +212,15 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
 .login-error { min-height: 18px; font-size: 12px; color: var(--red); font-weight: 600; margin-bottom: 8px; }
 .login-btn { width: 100%; justify-content: center; padding: 12px; font-size: 14px; }
 
+/* CAMBIAR CONTRASENA */
+#modalPass .modal-box { max-width: 420px; }
+#modalPass .modal-box input {
+    width: 100%; padding: 11px 13px; margin-bottom: 10px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface-2); color: var(--text); font-size: 13px; outline: none; transition: var(--transition);
+}
+#modalPass .modal-box input::placeholder { color: var(--text-3); }
+#modalPass .modal-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.15), 0 0 14px rgba(59,130,246,0.4); }
+
 /* LOADER */
 #loadingOverlay {
     display: none; position: fixed; top:0; left:0; width:100%; height:100%;
@@ -302,6 +311,7 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
     <div class="nav-item" data-page="graficos" onclick="showPage('graficos')"><span class="ico">📈</span> Estadisticas</div>
     <div class="nav-item" onclick="document.getElementById('importFile').click()"><span class="ico">📥</span> Importar</div>
     <div class="nav-item" onclick="exportarExcelConImagen()"><span class="ico">📊</span> Exportar Excel</div>
+    <div class="nav-item" onclick="abrirCambiarPass()"><span class="ico">🔑</span> Cambiar Contrasena</div>
     <div class="nav-item" onclick="cerrarSesion()"><span class="ico">🚪</span> Cerrar Sesion</div>
     <div class="spacer"></div>
     <div class="footer-info" id="currentDate"></div>
@@ -398,6 +408,23 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
             <button id="btnDelete" class="btn btn-red" style="display:none;" onclick="eliminarRegistro()">Eliminar</button>
             <button class="btn btn-primary" onclick="guardarRegistro()">💾 Guardar</button>
             <button class="btn btn-accent" onclick="generarActaWord()">📝 Acta</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CAMBIAR CONTRASENA -->
+<div id="modalPass" class="modal">
+    <div class="modal-box">
+        <button class="close-btn" onclick="cerrarModalPass()">&times;</button>
+        <h3>🔑 Cambiar Contrasena</h3>
+        <p style="font-size:11px;color:var(--text-3);margin:-6px 0 14px;" id="passUserEmail"></p>
+        <input type="password" id="passActual" placeholder="Contrasena actual" autocomplete="current-password" onkeydown="if(event.key==='Enter')guardarContrasena()">
+        <input type="password" id="passNueva" placeholder="Nueva contrasena" autocomplete="new-password" onkeydown="if(event.key==='Enter')guardarContrasena()">
+        <input type="password" id="passConfirma" placeholder="Confirmar nueva contrasena" autocomplete="new-password" onkeydown="if(event.key==='Enter')guardarContrasena()">
+        <div class="login-error" id="passError"></div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="cerrarModalPass()">Cancelar</button>
+            <button class="btn btn-primary" onclick="guardarContrasena()">💾 Guardar</button>
         </div>
     </div>
 </div>
@@ -785,6 +812,41 @@ function iniciarSesion() {
 function cerrarSesion() {
     try { localStorage.removeItem('fibex_sesion'); } catch(e) {}
     location.reload();
+}
+
+// ===== CAMBIAR CONTRASENA =====
+function verificarContrasena(em, pw) {
+    var stored = null; try { stored = localStorage.getItem('fibex_pas_' + em); } catch(e) {}
+    var base = (typeof USUARIOS !== 'undefined' && em in USUARIOS) ? USUARIOS[em] : null;
+    if (stored) return stored === pw;
+    if (base === null || base === '' || typeof base === 'undefined') return false;
+    return base === pw;
+}
+function abrirCambiarPass() {
+    var em = ''; try { em = localStorage.getItem('fibex_sesion') || ''; } catch(e) {}
+    document.getElementById('passUserEmail').innerText = em;
+    document.getElementById('passActual').value = '';
+    document.getElementById('passNueva').value = '';
+    document.getElementById('passConfirma').value = '';
+    document.getElementById('passError').innerText = '';
+    document.getElementById('modalPass').style.display = 'flex';
+    setTimeout(function(){ document.getElementById('passActual').focus(); }, 50);
+}
+function cerrarModalPass() { document.getElementById('modalPass').style.display = 'none'; }
+function guardarContrasena() {
+    var em = ''; try { em = localStorage.getItem('fibex_sesion') || ''; } catch(e) {}
+    if (!em) { cerrarModalPass(); return; }
+    var act = document.getElementById('passActual').value;
+    var nva = document.getElementById('passNueva').value;
+    var con = document.getElementById('passConfirma').value;
+    var err = document.getElementById('passError');
+    if (!act) { err.innerText = 'Ingrese su contrasena actual'; return; }
+    if (!verificarContrasena(em, act)) { err.innerText = 'La contrasena actual es incorrecta'; return; }
+    if (nva.length < 6) { err.innerText = 'La nueva contrasena debe tener al menos 6 caracteres'; return; }
+    if (nva !== con) { err.innerText = 'Las contrasenas no coinciden'; return; }
+    try { localStorage.setItem('fibex_pas_' + em, nva); } catch(e) { err.innerText = 'No se pudo guardar en este navegador'; return; }
+    cerrarModalPass();
+    toast('Contrasena actualizada', 'success');
 }
 
 // ===== INIT =====
