@@ -739,6 +739,7 @@ async function guardarRegistro() {
     var hoy=new Date(); var lu=(hoy.getMonth()+1).toString().padStart(2,'0')+'/'+hoy.getDate().toString().padStart(2,'0')+'/'+hoy.getFullYear().toString().slice(-2);
     var eq={id:document.getElementById('edit_id').value||"EQ-"+Date.now(),last_update:lu};
     COLUMNAS_OFICIALES.forEach(function(c){var el=document.getElementById(c);if(el&&c!=='last_update')eq[c]=el.type==='date'?formatToMMDDYY(el.value):el.value.toUpperCase()});
+    ['f_asig_mouse','f_asig_teclado','f_asig_monitor'].forEach(function(f){if(!eq[f]||String(eq[f]).trim()==='')eq[f]=lu});
     eq['registrado_por']=usuarioActual();
     var sv=(eq.serial||"").trim().toUpperCase();
     if(sv!==""&&sv!=="S/N"&&sv!=="N/A"&&sv!=="-"){var dup=DATA_LOCAL.find(function(it){return it.id!==eq.id&&String(it.serial||"").trim().toUpperCase()===sv});if(dup){toast('El serial "'+sv+'" ya existe','error');overlay.style.display='none';return}}

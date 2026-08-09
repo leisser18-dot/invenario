@@ -27,7 +27,70 @@ function doPost(e) {
     eliminarRegistro(body.id);
     return ContentService.createTextOutput('Eliminado');
   }
+  if (body.action === 'migrar_f_asig') {
+    var n = migrarFAsig();
+    return ContentService.createTextOutput('Migrados: ' + n);
+  }
   return ContentService.createTextOutput('Accion no valida');
+}
+
+function limpiarFecha(v) {
+  var s = String(v || '').trim();
+  if (!s || s === 'SI' || s === 'NO' || s === '-') return '';
+  var t = s.split('T')[0].trim();
+  var idx = t.indexOf(',');
+  if (idx >= 0) t = t.substring(0, idx).trim();
+  var m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (m) {
+    var d = parseInt(m[1], 10), mo = parseInt(m[2], 10), y = parseInt(m[3], 10);
+    if (y < 100) y += 2000;
+    if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31) {
+      return String(mo).padStart(2, '0') + '/' + String(d).padStart(2, '0') + '/' + String(y).slice(-2);
+    }
+  }
+  var iso = t.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) {
+    return iso[2] + '/' + iso[3] + '/' + iso[1].slice(-2);
+  }
+  return '';
+}
+
+function migrarFAsig() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = findDataSheet(ss);
+  var headers = getHeaders(sheet);
+  var cMouse = colIndex(headers, 'f_asig_mouse');
+  var cTecl = colIndex(headers, 'f_asig_teclado');
+  var cMon = colIndex(headers, 'f_asig_monitor');
+  var cLu = colIndex(headers, 'last_update');
+  if (cMouse < 0 || cTecl < 0 || cMon < 0 || cLu < 0) return 0;
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return 0;
+  var values = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+  var updated = 0;
+  for (var i = 0; i < values.length; i++) {
+    var row = values[i];
+    var lu = limpiarFecha(row[cLu]);
+    if (!lu) continue;
+    var changed = false;
+    var cols = [cMouse, cTecl, cMon];
+    for (var k = 0; k < cols.length; k++) {
+      var cur = String(row[cols[k]] || '').trim();
+      if (cur === '') {
+        row[cols[k]] = lu;
+        changed = true;
+      }
+    }
+    if (changed) {
+      for (var k2 = 0; k2 < cols.length; k2++) {
+        if (String(row[cols[k2]] || '').trim() !== '') {
+          sheet.getRange(i + 2, cols[k2] + 1).setValue(row[cols[k2]]);
+        }
+      }
+      updated++;
+    }
+  }
+  return updated;
 }
 
 function findDataSheet(ss) {
@@ -88,6 +151,16 @@ function guardarRegistro(eq) {
     var val = eq[name];
     if (val === undefined) continue;
     sheet.getRange(targetRow, j + 1).setValue(val);
+  }
+  var campos = ['f_asig_mouse', 'f_asig_teclado', 'f_asig_monitor'];
+  var lu = limpiarFecha(eq.last_update);
+  for (var k = 0; k < campos.length; k++) {
+    var cIdx = colIndex(headers, campos[k]);
+    if (cIdx < 0) continue;
+    var cur = sheet.getRange(targetRow, cIdx + 1).getValue();
+    if ((String(cur || '').trim() === '') && lu !== '') {
+      sheet.getRange(targetRow, cIdx + 1).setValue(lu);
+    }
   }
   if (eq.registrado_por !== undefined) {
     sheet.getRange(targetRow, regCol + 1).setValue(eq.registrado_por);
