@@ -642,10 +642,12 @@ function renderDashboard() {
     var recent = DATA_LOCAL.slice(0, 15);
     var el = document.getElementById('dashRecent');
     var head = document.getElementById('dashRecentHead');
-    if (head) head.innerHTML = '<th style="width:120px;">FECHA</th><th>TIPO</th>' + cols.map(function(c){return '<th>'+c.toUpperCase().replace(/_/g,' ')+'</th>'}).join('');
+    var admR = esAdmin();
+    if (head) head.innerHTML = '<th style="width:120px;">FECHA</th><th>TIPO</th>' + cols.map(function(c){return '<th>'+c.toUpperCase().replace(/_/g,' ')+'</th>'}).join('') + (admR ? '<th>REGISTRADO POR</th>' : '');
     el.innerHTML = recent.map(function(eq) {
         var cells = '<td>' + fmtFecha(eq.last_update) + '</td><td><span class="badge bg-' + (eq.tipo||'default').toLowerCase().replace(/\s+/g,'-') + '">' + (eq.tipo||'-') + '</span></td>';
         cells += cols.map(function(c){return '<td>' + (eq[c]||'-') + '</td>'}).join('');
+        if (admR) cells += '<td>' + (eq.registrado_por||'-') + '</td>';
         return '<tr>' + cells + '</tr>';
     }).join('') || '<tr><td colspan="' + (cols.length + 2) + '" style="text-align:center;color:var(--text-3);padding:20px;">Sin datos</td></tr>';
 }
@@ -667,8 +669,8 @@ function renderizarTable() {
         var click = sortables.includes(c) ? 'onclick="ordenarPor(\''+c+'\')"' : '';
         headerRow.innerHTML += '<th style="width:140px" '+click+'>'+c.toUpperCase().replace(/_/g,' ')+' ↕</th>';
     });
-    headerRow.innerHTML += '<th class="sticky-action">GESTION</th>';
-    document.getElementById('info_span_tech').colSpan = cols.length;
+    headerRow.innerHTML += (adm ? '<th class="sticky-reg" style="width:150px">REGISTRADO POR</th>' : '') + '<th class="sticky-action">GESTION</th>';
+    document.getElementById('info_span_tech').colSpan = cols.length + (adm ? 1 : 0);
 
     var rp = calcularRepetidos();
 
@@ -687,6 +689,7 @@ function renderizarTable() {
         var html = (esAdmin() ? '<td class="sticky-check"><input type="checkbox" class="rowCheck" value="'+eq.id+'" onchange="updateUISelection()" style="accent-color:var(--primary);"></td>' : '');
         html += '<td class="sticky-type"><span class="badge bg-'+(eq.tipo||'default').toLowerCase().replace(/\s+/g,'-')+'">'+(eq.tipo||'-')+'</span></td>';
         cols.forEach(function(c) { html += '<td>'+(eq[c]||'-')+'</td>'; });
+        if (adm) html += '<td class="sticky-reg">'+(eq.registrado_por||'-')+'</td>';
         html += '<td class="sticky-action"><button class="btn-edit" onclick="prepararEdicion(\''+eq.id+'\')">EDITAR</button></td>';
         return '<tr>' + html + '</tr>';
     }).join('');
@@ -736,6 +739,7 @@ async function guardarRegistro() {
     var hoy=new Date(); var lu=(hoy.getMonth()+1).toString().padStart(2,'0')+'/'+hoy.getDate().toString().padStart(2,'0')+'/'+hoy.getFullYear().toString().slice(-2);
     var eq={id:document.getElementById('edit_id').value||"EQ-"+Date.now(),last_update:lu};
     COLUMNAS_OFICIALES.forEach(function(c){var el=document.getElementById(c);if(el&&c!=='last_update')eq[c]=el.type==='date'?formatToMMDDYY(el.value):el.value.toUpperCase()});
+    eq['registrado_por']=usuarioActual();
     var sv=(eq.serial||"").trim().toUpperCase();
     if(sv!==""&&sv!=="S/N"&&sv!=="N/A"&&sv!=="-"){var dup=DATA_LOCAL.find(function(it){return it.id!==eq.id&&String(it.serial||"").trim().toUpperCase()===sv});if(dup){toast('El serial "'+sv+'" ya existe','error');overlay.style.display='none';return}}
     if(document.getElementById('tipo').value==='IMPRESORA')eq['modelo']=document.getElementById('modelo').value+' - '+document.getElementById('conexion').value+' - '+document.getElementById('consumible').value;
@@ -812,7 +816,9 @@ async function exportarExcelConImagen() {
     var logoId=null; try{var r=await fetch('./logo.png');if(r.ok){var b=await r.arrayBuffer();logoId=wb.addImage({buffer:b,extension:'png'})}}catch(e){}
     for(var nh in grupos){
         var dh=grupos[nh],ws=wb.addWorksheet(nh);
-        ws.columns=COLUMNAS_OFICIALES.map(function(c){return{header:c.toUpperCase().replace('_',' '),key:c,width:20}});
+        var colsExp = COLUMNAS_OFICIALES.slice();
+        if (esAdmin() && colsExp.indexOf('registrado_por') < 0) colsExp.push('registrado_por');
+        ws.columns=colsExp.map(function(c){return{header:c.toUpperCase().replace('_',' '),key:c,width:20}});
         for(var i=0;i<6;i++)ws.insertRow(1,[]);
         if(logoId!==null)ws.addImage(logoId,{tl:{col:0,row:0.2},ext:{width:250,height:110}});
         ws.mergeCells('E2:K2'); ws.getCell('E2').value='DEPARTAMENTO DE SISTEMAS - REPORTE DE INVENTARIO'; ws.getCell('E2').font={name:'Segoe UI',size:14,bold:true}; ws.getCell('E2').alignment={horizontal:'right'};
@@ -844,6 +850,10 @@ function entrar(em) {
 function esAdmin() {
     var em = ''; try { em = localStorage.getItem('fibex_sesion') || ''; } catch(e) {}
     return em === 'lcsanchez@fibextelecom.net' || em === 'paalvarado@fibextelecom.net';
+}
+function usuarioActual() {
+    var em = ''; try { em = localStorage.getItem('fibex_sesion') || ''; } catch(e) {}
+    return em;
 }
 function aplicarPermisos() {
     var adm = esAdmin();
