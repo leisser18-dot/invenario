@@ -9,7 +9,6 @@ const USUARIOS = {
     'lcsanchez@fibextelecom.net': 'Chachi1511*-',
     'acalderon@fibextelecom.net': null,
     'fnavarro@fibextelecom.net': null,
-    'paalvarado@fibextelecom.net': null,
-    'jmoncada@fibextelecom.net': null,
+    'paalvarado@fibextelecom.net': null,   
     'aespinal@fibextelecom.net': null
 };
