@@ -358,7 +358,7 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
     <div style="display:none;align-items:center;gap:10px;margin-bottom:12px;" class="mobile-hamburger" id="mobileTopBar">
         <button class="mobile-hamburger" onclick="toggleSidebar()" style="display:flex;">☰</button>
         <span style="font-weight:700;">Fibex</span>
-        <button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="cargarDesdeNube()">🔄</button>
+        <button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="cargarDesdeNube(true)">🔄</button>
     </div>
 
     <!-- PAGE: DASHBOARD -->
@@ -376,11 +376,11 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
     <!-- PAGE: EQUIPOS (default table view) -->
     <div class="page" id="page-equipos" style="display:none;">
         <div class="toolbar">
-            <div class="search-wrap"><input type="text" id="busqueda" placeholder="Buscar por serial, usuario, ubicacion..." oninput="renderizarTable()"></div>
+            <div class="search-wrap"><input type="text" id="busqueda" placeholder="Buscar por serial, usuario, ubicacion..." oninput="buscarDebounced()"></div>
             <div class="filter-group">
                 <button class="btn btn-primary btn-sm" onclick="nuevoActivo()">+ Nuevo</button>
                 <button id="btnBulkDelete" class="btn btn-red btn-sm" style="display:none;" onclick="eliminarSeleccionados()">🗑️</button>
-                <button class="btn btn-ghost btn-sm" onclick="cargarDesdeNube()">🔄</button>
+                <button class="btn btn-ghost btn-sm" onclick="cargarDesdeNube(true)">🔄</button>
             </div>
         </div>
         <div class="cat-tabs" id="catTabs">
@@ -551,8 +551,38 @@ function filtrarCategoria(cat) {
 }
 
 // ===== LOAD =====
-async function cargarDesdeNube() {
+var busquedaTimer = null;
+function buscarDebounced() {
+    if (busquedaTimer) clearTimeout(busquedaTimer);
+    busquedaTimer = setTimeout(renderizarTable, 180);
+}
+
+var datosCache = null;
+function leerCache() {
+    if (datosCache) return datosCache;
+    try { datosCache = JSON.parse(localStorage.getItem('fibex_cache') || 'null'); } catch(e) { datosCache = null; }
+    return datosCache;
+}
+function guardarCache(datos) {
+    try {
+        localStorage.setItem('fibex_cache', JSON.stringify({ t: Date.now(), d: datos }));
+        datosCache = { t: Date.now(), d: datos };
+    } catch(e) {}
+}
+
+function ordenarPorFecha() {
+    DATA_LOCAL.sort(function(a,b) { var pd = function(d) { if (!d||typeof d!=='string') return 0; var t=d.replace(',',' ').trim(); if(t.indexOf('T')>0){var dt=new Date(t);return isNaN(dt.getTime())?0:dt.getTime()} var m=t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/); if(m){var y=parseInt(m[3],10);if(y<100)y+=2000;return new Date(y,parseInt(m[2],10)-1,parseInt(m[1],10)).getTime()} return 0; }; return pd(b.last_update)-pd(a.last_update); });
+}
+
+async function cargarDesdeNube(forzar) {
     var overlay = document.getElementById('loadingOverlay');
+    var cache = leerCache();
+    if (!forzar && cache && Array.isArray(cache.d) && cache.d.length) {
+        DATA_LOCAL = cache.d;
+        try { renderDashboard(); renderizarTable(); } catch(e) { console.error('Error al renderizar cache:', e); }
+        refrescarSilencioso();
+        return;
+    }
     overlay.style.display = 'flex'; updateProgressBar(0, "Iniciando conexion...");
     var progress = 0;
     var interval = setInterval(function() { if (progress < 90) { progress += Math.random() * 8; updateProgressBar(progress, "Descargando base de datos..."); } }, 500);
@@ -569,8 +599,23 @@ async function cargarDesdeNube() {
     }
     if (!ok) { clearInterval(interval); console.error(err); updateProgressBar(0, "Error de conexion"); setTimeout(function() { overlay.style.display='none'; toast('No se pudieron cargar los datos. Verifique su conexion a internet y use el boton de recargar.', 'error'); }, 200); return; }
     clearInterval(interval); updateProgressBar(100, "Sincronizacion finalizada");
-    DATA_LOCAL.sort(function(a,b) { var pd = function(d) { if (!d||typeof d!=='string') return 0; var t=d.replace(',',' ').trim(); if(t.indexOf('T')>0){var dt=new Date(t);return isNaN(dt.getTime())?0:dt.getTime()} var m=t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/); if(m){var y=parseInt(m[3],10);if(y<100)y+=2000;return new Date(y,parseInt(m[2],10)-1,parseInt(m[1],10)).getTime()} return 0; }; return pd(b.last_update)-pd(a.last_update); });
+    ordenarPorFecha();
+    guardarCache(DATA_LOCAL);
     setTimeout(function() { try { renderDashboard(); renderizarTable(); } catch(e) { console.error('Error al renderizar:', e); } overlay.style.display='none'; toast('Datos sincronizados', 'success'); }, 200);
+}
+
+async function refrescarSilencioso() {
+    try {
+        var ctrl = new AbortController();
+        var timer = setTimeout(function() { ctrl.abort(); }, 20000);
+        var res = await fetch(SCRIPT_URL + "?action=get", { signal: ctrl.signal });
+        clearTimeout(timer);
+        var datos = await res.json();
+        DATA_LOCAL = datos;
+        ordenarPorFecha();
+        guardarCache(DATA_LOCAL);
+        try { renderDashboard(); renderizarTable(); } catch(e) { console.error('Error al renderizar:', e); }
+    } catch(e) { /* silencioso: si falla se quedan los datos del cache */ }
 }
 
 function calcularRepetidos() {
@@ -672,21 +717,22 @@ function renderizarTable() {
     headerRow.innerHTML += (adm ? '<th class="sticky-reg" style="width:150px">REGISTRADO POR</th>' : '') + '<th class="sticky-action">GESTION</th>';
     document.getElementById('info_span_tech').colSpan = cols.length + (adm ? 1 : 0);
 
-    var rp = calcularRepetidos();
+    var rp = null;
+    if (SOLO_REPETIDOS) rp = calcularRepetidos();
 
     var filtrados = DATA_LOCAL.filter(function(eq) {
         if (CATEGORIA_FILTER && MAPA_CATEGORIAS[CATEGORIA_FILTER]) {
             if (!MAPA_CATEGORIAS[CATEGORIA_FILTER].includes(eq.tipo)) return false;
         }
         var cTipo = FILTRO_TIPO === "" || (eq.tipo && eq.tipo.toUpperCase() === FILTRO_TIPO);
-        var cBusq = Object.values(eq).some(function(val) { return String(val).toUpperCase().includes(buscar); });
+        var cBusq = !buscar || Object.values(eq).some(function(val) { return String(val).toUpperCase().includes(buscar); });
         var cRep = true;
         if (SOLO_REPETIDOS) { var sv=String(eq.serial||"").trim().toUpperCase(); var nv=String(eq.nombre_pc||"").trim().toUpperCase(); cRep = rp.repSet.has(sv)||rp.repNom.has(nv); }
         return cTipo && cBusq && cRep;
     });
 
     var rows = filtrados.map(function(eq) {
-        var html = (esAdmin() ? '<td class="sticky-check"><input type="checkbox" class="rowCheck" value="'+eq.id+'" onchange="updateUISelection()" style="accent-color:var(--primary);"></td>' : '');
+        var html = (adm ? '<td class="sticky-check"><input type="checkbox" class="rowCheck" value="'+eq.id+'" onchange="updateUISelection()" style="accent-color:var(--primary);"></td>' : '');
         html += '<td class="sticky-type"><span class="badge bg-'+(eq.tipo||'default').toLowerCase().replace(/\s+/g,'-')+'">'+(eq.tipo||'-')+'</span></td>';
         cols.forEach(function(c) { html += '<td>'+(eq[c]||'-')+'</td>'; });
         if (adm) html += '<td class="sticky-reg">'+(eq.registrado_por||'-')+'</td>';
@@ -745,7 +791,7 @@ async function guardarRegistro() {
     if(sv!==""&&sv!=="S/N"&&sv!=="N/A"&&sv!=="-"){var dup=DATA_LOCAL.find(function(it){return it.id!==eq.id&&String(it.serial||"").trim().toUpperCase()===sv});if(dup){toast('El serial "'+sv+'" ya existe','error');overlay.style.display='none';return}}
     if(document.getElementById('tipo').value==='IMPRESORA')eq['modelo']=document.getElementById('modelo').value+' - '+document.getElementById('conexion').value+' - '+document.getElementById('consumible').value;
     updateProgressBar(60,"Guardando...");
-    try{await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'save',eq:eq})});for(var i=0;i<DATA_LOCAL.length;i++){if(DATA_LOCAL[i].id===eq.id){DATA_LOCAL.splice(i,1);break}}DATA_LOCAL.unshift(eq);updateProgressBar(100,"Guardado");overlay.style.display='none';cerrarModal();toast('Registro guardado','success');renderDashboard();renderizarTable()}catch(e){toast('Error al guardar','error');overlay.style.display='none'}
+    try{await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'save',eq:eq})});for(var i=0;i<DATA_LOCAL.length;i++){if(DATA_LOCAL[i].id===eq.id){DATA_LOCAL.splice(i,1);break}}DATA_LOCAL.unshift(eq);updateProgressBar(100,"Guardado");overlay.style.display='none';cerrarModal();toast('Registro guardado','success');guardarCache(DATA_LOCAL);renderDashboard();renderizarTable()}catch(e){toast('Error al guardar','error');overlay.style.display='none'}
 }
 
 function togglePeriferico(p,v){if(!DEP_PERIFERICOS[p])return;DEP_PERIFERICOS[p].forEach(function(id){var el=document.getElementById(id);if(el){el.style.display='block';el.disabled=false}})}
@@ -832,9 +878,9 @@ async function exportarExcelConImagen() {
 }
 
 // ===== BULK / DELETE / IMPORT =====
-async function eliminarRegistro(){if(!esAdmin()){toast('No autorizado','error');return}var id=document.getElementById('edit_id').value;if(!id||!confirm("Eliminar este registro?"))return;try{await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'delete',id:id})});for(var i=0;i<DATA_LOCAL.length;i++){if(DATA_LOCAL[i].id===id){DATA_LOCAL.splice(i,1);break}}cerrarModal();toast('Registro eliminado','success');renderDashboard();renderizarTable()}catch(e){toast('Error','error')}}
-async function eliminarSeleccionados(){if(!esAdmin()){toast('No autorizado','error');return}var ch=document.querySelectorAll('.rowCheck:checked');if(!ch.length||!confirm("Eliminar "+ch.length+" registros?"))return;var ids={};for(var i=0;i<ch.length;i++){ids[ch[i].value]=1;try{await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'delete',id:ch[i].value})})}catch(e){}}DATA_LOCAL=DATA_LOCAL.filter(function(e){return !ids[e.id]});toast(ch.length+' eliminados','success');renderDashboard();renderizarTable()}
-async function importarExcel(input){if(!esAdmin()){toast('No autorizado','error');input.value='';return}var f=input.files[0];if(!f)return;var ov=document.getElementById('loadingOverlay');ov.style.display='flex';updateProgressBar(10,"Leyendo archivo...");var r=new FileReader();r.onload=async function(e){updateProgressBar(40,"Procesando...");var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});var sh=wb.Sheets[wb.SheetNames[0]];DATA_LOCAL=XLSX.utils.sheet_to_json(sh);updateProgressBar(100,"Listo");setTimeout(function(){renderizarTable();renderDashboard();ov.style.display='none';toast(DATA_LOCAL.length+' registros importados','success')},100)};r.readAsArrayBuffer(f)}
+async function eliminarRegistro(){if(!esAdmin()){toast('No autorizado','error');return}var id=document.getElementById('edit_id').value;if(!id||!confirm("Eliminar este registro?"))return;try{await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'delete',id:id})});for(var i=0;i<DATA_LOCAL.length;i++){if(DATA_LOCAL[i].id===id){DATA_LOCAL.splice(i,1);break}}cerrarModal();toast('Registro eliminado','success');guardarCache(DATA_LOCAL);renderDashboard();renderizarTable()}catch(e){toast('Error','error')}}
+async function eliminarSeleccionados(){if(!esAdmin()){toast('No autorizado','error');return}var ch=document.querySelectorAll('.rowCheck:checked');if(!ch.length||!confirm("Eliminar "+ch.length+" registros?"))return;var ids={};for(var i=0;i<ch.length;i++){ids[ch[i].value]=1;try{await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'delete',id:ch[i].value})})}catch(e){}}DATA_LOCAL=DATA_LOCAL.filter(function(e){return !ids[e.id]});toast(ch.length+' eliminados','success');guardarCache(DATA_LOCAL);renderDashboard();renderizarTable()}
+async function importarExcel(input){if(!esAdmin()){toast('No autorizado','error');input.value='';return}var f=input.files[0];if(!f)return;var ov=document.getElementById('loadingOverlay');ov.style.display='flex';updateProgressBar(10,"Leyendo archivo...");var r=new FileReader();r.onload=async function(e){updateProgressBar(40,"Procesando...");var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});var sh=wb.Sheets[wb.SheetNames[0]];DATA_LOCAL=XLSX.utils.sheet_to_json(sh);guardarCache(DATA_LOCAL);updateProgressBar(100,"Listo");setTimeout(function(){renderizarTable();renderDashboard();ov.style.display='none';toast(DATA_LOCAL.length+' registros importados','success')},100)};r.readAsArrayBuffer(f)}
 
 // ===== WORD =====
 async function generarActaWord(){var id=document.getElementById('edit_id').value;var reg=DATA_LOCAL.find(function(r){return r.id==id});if(!reg){toast('Seleccione un registro','error');return}
