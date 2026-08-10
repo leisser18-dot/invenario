@@ -9,7 +9,8 @@ const USUARIOS_INICIALES = [
     { email: 'acalderon@fibextelecom.net', pass: null },
     { email: 'fnavarro@fibextelecom.net', pass: null },
     { email: 'paalvarado@fibextelecom.net', pass: null },
-    { email: 'aespinal@fibextelecom.net', pass: null }
+    { email: 'aespinal@fibextelecom.net', pass: null },
+    { email: 'jmoncada@fibextelecom.net', pass: null }
 ];
 
 async function hash(pw) {
