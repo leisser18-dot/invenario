@@ -668,7 +668,7 @@ function renderDashboard() {
         var d = document.createElement('div');
         d.className = 'stat-card' + (it.cls ? ' ' + it.cls : '');
         d.innerHTML = '<div class="sc-icon">' + it.ico + '</div><div class="sc-label">' + it.lbl + '</div><div class="sc-value">' + it.val + '</div>';
-        d.onclick = function() { if (it.lbl==='Duplicados') { SOLO_REPETIDOS=true; FILTRO_TIPO=''; } else if (it.lbl==='Total') { SOLO_REPETIDOS=false; FILTRO_TIPO=''; } else { SOLO_REPETIDOS=false; FILTRO_TIPO=TIPO_MAP[it.lbl]||it.lbl.toUpperCase(); } showPage('equipos'); setCategoria(FILTRO_TIPO); };
+        d.onclick = function() { if (it.lbl==='Duplicados') { SOLO_REPETIDOS=true; FILTRO_TIPO=''; } else if (it.lbl==='Total') { SOLO_REPETIDOS=false; FILTRO_TIPO=''; } else { SOLO_REPETIDOS=false; FILTRO_TIPO=TIPO_MAP[it.lbl]||it.lbl.toUpperCase(); } showPage('equipos'); if (it.lbl==='Duplicados') { document.querySelectorAll('.cat-tab').forEach(function(t){ t.classList.remove('active'); }); } else { setCategoria(FILTRO_TIPO); } };
         grid.appendChild(d);
     });
 
