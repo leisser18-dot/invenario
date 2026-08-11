@@ -709,7 +709,7 @@ function renderizarTable() {
     tbody.innerHTML = '';
     var adm = esAdmin();
     headerRow.innerHTML = (adm ? '<th class="sticky-check">Sel</th>' : '') + '<th class="sticky-type" onclick="ordenarPor(\'tipo\')">TIPO ↕</th>';
-    var sortables = ['usuario','ubicacion','sede','departamento','nombre_pc'];
+    var sortables = ['usuario','ubicacion','sede','departamento','nombre_pc','serial'];
     cols.forEach(function(c) {
         var click = sortables.includes(c) ? 'onclick="ordenarPor(\''+c+'\')"' : '';
         headerRow.innerHTML += '<th style="width:140px" '+click+'>'+c.toUpperCase().replace(/_/g,' ')+' ↕</th>';
