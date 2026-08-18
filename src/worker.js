@@ -57,6 +57,7 @@ async function verificar(users, env, body) {
     if (!email || !password) return { ok: false, error: 'Ingrese correo y contrasena' };
     const u = users.find(x => x.email === email);
     if (!u) return { ok: false, error: 'Usuario no encontrado' };
+    if (u.estado === 'INACTIVO') return { ok: false, error: 'Su cuenta ha sido desactivada. Contacte al administrador.' };
     if (!u.pass) {
         u.pass = await hash(password);
         await env.USUARIOS.put('usuarios', JSON.stringify(users));
