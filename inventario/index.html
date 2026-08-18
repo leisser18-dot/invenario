@@ -1076,6 +1076,7 @@ function renderListaUsuarios() {
             '<p class="user-role">' + (esAdminU ? '👑 Administrador' : '👤 Usuario') + '</p>' +
             '<div class="user-actions">' +
                 (esMismo ? '<span style="font-size:11px;color:var(--text-3);">Tu cuenta</span>' :
+                    '<button class="btn btn-sm btn-primary" onclick="editarUsuario(\'' + u.email + '\')">Editar</button>' +
                     '<button class="btn btn-sm btn-toggle-user" onclick="toggleUsuario(\'' + u.email + '\')">' + (isActive ? 'Inactivar' : 'Activar') + '</button>' +
                     '<button class="btn btn-sm btn-user-delete" onclick="eliminarUsuario(\'' + u.email + '\')">Eliminar</button>') +
             '</div>' +
@@ -1096,6 +1097,21 @@ function abrirModalNuevoUsuario() {
     setTimeout(function(){ document.getElementById('user_nombre').focus(); }, 100);
 }
 
+function editarUsuario(email) {
+    var u = USUARIOS_LISTA.find(function(x){return x.email === email});
+    if (!u) return;
+    document.getElementById('modalUsuarioTitle').innerText = 'Editar Usuario';
+    document.getElementById('edit_user_email').value = u.email;
+    document.getElementById('user_nombre').value = u.nombre || '';
+    document.getElementById('user_email').value = u.email;
+    document.getElementById('user_email').disabled = true;
+    document.getElementById('user_password').value = '';
+    document.getElementById('user_rol').value = u.rol || 'USUARIO';
+    document.getElementById('passFieldWrapper').style.display = '';
+    document.getElementById('modalUsuario').style.display = 'flex';
+    setTimeout(function(){ document.getElementById('user_nombre').focus(); }, 100);
+}
+
 function cerrarModalUsuario() { document.getElementById('modalUsuario').style.display = 'none'; }
 
 async function guardarUsuario() {
@@ -1107,18 +1123,24 @@ async function guardarUsuario() {
     if (!nombre || !email) { toast('Nombre y correo son obligatorios', 'error'); return; }
     if (!ES_WORKER) { toast('Solo disponible en la web', 'error'); return; }
     if (editEmail) {
-        toast('Edicion de usuarios existentes proximamente', 'info');
-        cerrarModalUsuario();
+        var r = await apiUsuarios('editar', { email: editEmail, nombre: nombre, rol: rol, password: pass || '' });
+        if (r.ok) {
+            toast('Usuario actualizado', 'success');
+            cerrarModalUsuario();
+            cargarUsuarios();
+        } else {
+            toast(r.error || 'Error al actualizar', 'error');
+        }
         return;
     }
     if (!pass) { toast('La contrasena es obligatoria', 'error'); return; }
-    var r = await apiUsuarios('agregar', { nombre: nombre, email: email, password: pass, rol: rol });
-    if (r.ok) {
+    var r2 = await apiUsuarios('agregar', { nombre: nombre, email: email, password: pass, rol: rol });
+    if (r2.ok) {
         toast('Usuario "' + nombre + '" creado', 'success');
         cerrarModalUsuario();
         cargarUsuarios();
     } else {
-        toast(r.error || 'Error al crear usuario', 'error');
+        toast(r2.error || 'Error al crear usuario', 'error');
     }
 }
 

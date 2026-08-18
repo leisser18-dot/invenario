@@ -120,6 +120,21 @@ async function eliminar(users, env, body) {
     return { ok: true };
 }
 
+async function editar(users, env, body) {
+    const email = (body.email || '').toString().trim().toLowerCase();
+    const nombre = (body.nombre || '').toString().trim();
+    const rol = (body.rol || '').toString().toUpperCase();
+    const nueva = (body.password || '').toString();
+    if (!email) return { ok: false, error: 'Correo requerido' };
+    const u = users.find(x => x.email === email);
+    if (!u) return { ok: false, error: 'Usuario no encontrado' };
+    if (nombre) u.nombre = nombre;
+    if (rol) u.rol = rol;
+    if (nueva && nueva.length >= 6) u.pass = await hash(nueva);
+    await env.USUARIOS.put('usuarios', JSON.stringify(users));
+    return { ok: true };
+}
+
 export default {
     async fetch(request, env) {
         const url = new URL(request.url);
@@ -135,6 +150,7 @@ export default {
             if (accion === 'agregar') return json(await agregar(users, env, body));
             if (accion === 'toggle') return json(await toggleEstado(users, env, body));
             if (accion === 'eliminar') return json(await eliminar(users, env, body));
+            if (accion === 'editar') return json(await editar(users, env, body));
             return json({ ok: false, error: 'Accion desconocida' });
         }
 
