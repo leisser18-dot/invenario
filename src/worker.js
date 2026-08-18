@@ -44,7 +44,12 @@ async function leerUsuarios(env) {
 function json(data, status = 200) {
     return new Response(JSON.stringify(data), {
         status,
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': ORIGEN_PERMITIDO,
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type'
+        }
     });
 }
 
@@ -54,7 +59,10 @@ async function leerBody(req) {
 
 function esOrigenPermitido(req) {
     const origin = req.headers.get('Origin') || '';
-    return origin === ORIGEN_PERMITIDO;
+    if (origin === ORIGEN_PERMITIDO) return true;
+    const referer = req.headers.get('Referer') || '';
+    if (referer.startsWith(ORIGEN_PERMITIDO)) return true;
+    return false;
 }
 
 async function verificar(users, env, body) {
@@ -145,6 +153,17 @@ async function editar(users, env, body) {
 export default {
     async fetch(request, env) {
         const url = new URL(request.url);
+
+        if (request.method === 'OPTIONS' && url.pathname.startsWith('/api/usuarios/')) {
+            return new Response(null, {
+                status: 204,
+                headers: {
+                    'Access-Control-Allow-Origin': ORIGEN_PERMITIDO,
+                    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type'
+                }
+            });
+        }
 
         if (request.method === 'POST' && url.pathname.startsWith('/api/usuarios/')) {
             if (!esOrigenPermitido(request)) return json({ ok: false, error: 'Origen no permitido' }, 403);
