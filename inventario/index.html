@@ -293,6 +293,41 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
     .mobile-hamburger { display: flex !important; align-items: center; justify-content: center; width: 36px; height: 36px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 18px; }
 }
 .mobile-hamburger { display: none; }
+
+/* GESTION DE USUARIOS */
+.users-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+.user-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px; transition: var(--transition);
+}
+.user-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(59,130,246,0.15); }
+.user-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.user-avatar {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 800; color: white;
+}
+.user-avatar.inactive { background: linear-gradient(135deg, #4b5563, #6b7280); }
+.user-status { padding: 3px 9px; border-radius: 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.user-status.active { background: rgba(16,185,129,0.15); color: #34d399; }
+.user-status.inactive { background: rgba(239,68,68,0.12); color: #f87171; }
+.user-name { font-size: 14px; font-weight: 700; margin: 0 0 3px; }
+.user-email { font-size: 11px; color: var(--text-3); margin: 0 0 3px; word-break: break-all; }
+.user-role { font-size: 11px; color: var(--accent); font-weight: 600; margin: 0 0 10px; }
+.user-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.btn-toggle-user { background: var(--orange); color: white; box-shadow: 0 0 8px rgba(245,158,11,0.4); }
+.btn-toggle-user:hover { background: #d97706; }
+.btn-user-delete { background: var(--red); color: white; box-shadow: 0 0 8px rgba(239,68,68,0.4); }
+.btn-user-delete:hover { background: #dc2626; }
+.modal-small .modal-box { max-width: 480px; }
+.user-add-grid { display: grid; gap: 10px; }
+.user-add-grid input, .user-add-grid select {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface-2); color: var(--text); font-size: 12px; outline: none; transition: var(--transition);
+}
+.user-add-grid input:focus, .user-add-grid select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+.user-add-grid label { font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 3px; display: block; }
 </style>
 </head>
 <body>
@@ -346,6 +381,7 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
     <div class="nav-item" data-page="graficos" onclick="showPage('graficos')"><span class="ico">📈</span> Estadisticas</div>
     <div class="nav-item" id="navImportar" onclick="document.getElementById('importFile').click()"><span class="ico">📥</span> Importar</div>
     <div class="nav-item" onclick="exportarExcelConImagen()"><span class="ico">📊</span> Exportar Excel</div>
+    <div class="nav-item" id="navUsuarios" data-page="usuarios" onclick="showPage('usuarios')" style="display:none;"><span class="ico">👤</span> Gestion de Usuarios</div>
     <div class="nav-item" onclick="abrirCambiarPass()"><span class="ico">🔑</span> Cambiar Contrasena</div>
     <div class="nav-item" onclick="cerrarSesion()"><span class="ico">🚪</span> Cerrar Sesion</div>
     <div class="spacer"></div>
@@ -419,6 +455,18 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
         </div>
         <div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;" id="statsBreakdown"></div>
     </div>
+
+    <!-- PAGE: USUARIOS -->
+    <div class="page" id="page-usuarios" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+            <div>
+                <div style="font-size:18px;font-weight:700;">Gestion de Usuarios</div>
+                <div style="font-size:11px;color:var(--text-3);margin-top:2px;">Administrar accesos al sistema de inventario</div>
+            </div>
+            <button class="btn btn-green" onclick="abrirModalNuevoUsuario()">+ Agregar Usuario</button>
+        </div>
+        <div class="users-grid" id="usersGrid"></div>
+    </div>
 </div>
 
 <!-- MODAL -->
@@ -454,10 +502,29 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
     </div>
 </div>
 
+<!-- MODAL USUARIO -->
+<div id="modalUsuario" class="modal modal-small">
+    <div class="modal-box">
+        <button class="close-btn" onclick="cerrarModalUsuario()">&times;</button>
+        <h3 id="modalUsuarioTitle">Nuevo Usuario</h3>
+        <input type="hidden" id="edit_user_email">
+        <div class="user-add-grid">
+            <div><label>Nombre Completo</label><input type="text" id="user_nombre" placeholder="Nombre y apellido"></div>
+            <div><label>Correo Electronico</label><input type="email" id="user_email" placeholder="correo@fibextelecom.net"></div>
+            <div id="passFieldWrapper"><label>Contrasena</label><input type="password" id="user_password" placeholder="Minimo 6 caracteres"></div>
+            <div><label>Rol</label><select id="user_rol"><option value="USUARIO">USUARIO</option><option value="ADMIN">ADMINISTRADOR</option></select></div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="cerrarModalUsuario()">Cancelar</button>
+            <button class="btn btn-primary" onclick="guardarUsuario()">💾 Guardar</button>
+        </div>
+    </div>
+</div>
+
 <input type="file" id="importFile" style="display:none" accept=".xlsx,.xls" onchange="importarExcel(this)">
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzlP6iWm8AAP6w40MJrrmj0NVLSikVEpohao6LlrhioMsY52RGfjYHhtNumkgjCcHrM/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxEq0Dvco_51J8Ug3QyApc4EneTZO3zGGeeLdB99jYhAumkWtjQcOiC0wlDn1ite9G6/exec";
 let DATA_LOCAL = [], FILTRO_TIPO = "", SOLO_REPETIDOS = false, CATEGORIA_FILTER = "";
 let chartT = null, chartS = null, chartM = null, SORT_COL = "", SORT_ASC = true;
 
@@ -533,6 +600,7 @@ function showPage(id) {
     if (id === 'dashboard') { renderDashboard(); }
     if (id === 'equipos') { renderizarTable(); }
     if (id === 'graficos') { renderGraficosFull(); }
+    if (id === 'usuarios') { cargarUsuarios(); }
     if (window.innerWidth <= 768) { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
 }
 
@@ -908,6 +976,8 @@ function aplicarPermisos() {
     if (imp) imp.style.display = adm ? '' : 'none';
     var th = document.getElementById('thSel');
     if (th) th.style.display = adm ? '' : 'none';
+    var navUsr = document.getElementById('navUsuarios');
+    if (navUsr) navUsr.style.display = adm ? '' : 'none';
 }
 function actualizarFechaHora() {
     var fh = document.getElementById('fhFecha');
@@ -972,6 +1042,103 @@ function iniciarInactividad() {
         window.addEventListener(evs[i], reiniciarTemporizador, { passive: true });
     }
     reiniciarTemporizador();
+}
+
+// ===== GESTION DE USUARIOS =====
+var USUARIOS_LISTA = [];
+
+async function cargarUsuarios() {
+    if (!ES_WORKER) { toast('Gestion de usuarios solo disponible en la web', 'info'); return; }
+    try {
+        var r = await apiUsuarios('listar', {});
+        if (r.ok) { USUARIOS_LISTA = r.usuarios || []; renderListaUsuarios(); }
+        else { toast(r.error || 'Error cargando usuarios', 'error'); }
+    } catch(e) { toast('Error de conexion', 'error'); }
+}
+
+function renderListaUsuarios() {
+    var grid = document.getElementById('usersGrid');
+    if (!grid) return;
+    if (!USUARIOS_LISTA.length) { grid.innerHTML = '<div style="text-align:center;color:var(--text-3);padding:30px;">No hay usuarios registrados.</div>'; return; }
+    var sesion = usuarioActual();
+    grid.innerHTML = USUARIOS_LISTA.map(function(u) {
+        var ini = (u.nombre || u.email).split(' ').map(function(p){return p[0]}).join('').substring(0,2).toUpperCase();
+        var isActive = u.estado === 'ACTIVO';
+        var esMismo = u.email === sesion;
+        var esAdminU = u.rol === 'ADMIN';
+        return '<div class="user-card">' +
+            '<div class="user-card-header">' +
+                '<div class="user-avatar' + (isActive ? '' : ' inactive') + '">' + ini + '</div>' +
+                '<span class="user-status ' + (isActive ? 'active' : 'inactive') + '">' + (isActive ? 'Activo' : 'Inactivo') + '</span>' +
+            '</div>' +
+            '<p class="user-name">' + (u.nombre || 'Sin nombre') + '</p>' +
+            '<p class="user-email">' + u.email + '</p>' +
+            '<p class="user-role">' + (esAdminU ? '👑 Administrador' : '👤 Usuario') + '</p>' +
+            '<div class="user-actions">' +
+                (esMismo ? '<span style="font-size:11px;color:var(--text-3);">Tu cuenta</span>' :
+                    '<button class="btn btn-sm btn-toggle-user" onclick="toggleUsuario(\'' + u.email + '\')">' + (isActive ? 'Inactivar' : 'Activar') + '</button>' +
+                    '<button class="btn btn-sm btn-user-delete" onclick="eliminarUsuario(\'' + u.email + '\')">Eliminar</button>') +
+            '</div>' +
+        '</div>';
+    }).join('');
+}
+
+function abrirModalNuevoUsuario() {
+    document.getElementById('modalUsuarioTitle').innerText = 'Nuevo Usuario';
+    document.getElementById('edit_user_email').value = '';
+    document.getElementById('user_nombre').value = '';
+    document.getElementById('user_email').value = '';
+    document.getElementById('user_password').value = '';
+    document.getElementById('user_rol').value = 'USUARIO';
+    document.getElementById('user_email').disabled = false;
+    document.getElementById('passFieldWrapper').style.display = '';
+    document.getElementById('modalUsuario').style.display = 'flex';
+    setTimeout(function(){ document.getElementById('user_nombre').focus(); }, 100);
+}
+
+function cerrarModalUsuario() { document.getElementById('modalUsuario').style.display = 'none'; }
+
+async function guardarUsuario() {
+    var editEmail = document.getElementById('edit_user_email').value;
+    var nombre = document.getElementById('user_nombre').value.trim();
+    var email = document.getElementById('user_email').value.trim().toLowerCase();
+    var pass = document.getElementById('user_password').value;
+    var rol = document.getElementById('user_rol').value;
+    if (!nombre || !email) { toast('Nombre y correo son obligatorios', 'error'); return; }
+    if (!ES_WORKER) { toast('Solo disponible en la web', 'error'); return; }
+    if (editEmail) {
+        toast('Edicion de usuarios existentes proximamente', 'info');
+        cerrarModalUsuario();
+        return;
+    }
+    if (!pass) { toast('La contrasena es obligatoria', 'error'); return; }
+    var r = await apiUsuarios('agregar', { nombre: nombre, email: email, password: pass, rol: rol });
+    if (r.ok) {
+        toast('Usuario "' + nombre + '" creado', 'success');
+        cerrarModalUsuario();
+        cargarUsuarios();
+    } else {
+        toast(r.error || 'Error al crear usuario', 'error');
+    }
+}
+
+async function toggleUsuario(email) {
+    var u = USUARIOS_LISTA.find(function(x){return x.email === email});
+    if (!u) return;
+    var accion = u.estado === 'ACTIVO' ? 'inactivar' : 'activar';
+    if (!confirm(accion.charAt(0).toUpperCase() + accion.slice(1) + ' al usuario "' + (u.nombre || email) + '"?')) return;
+    var r = await apiUsuarios('toggle', { email: email });
+    if (r.ok) { toast('Usuario ' + accion + 'do', 'success'); cargarUsuarios(); }
+    else { toast(r.error || 'Error', 'error'); }
+}
+
+async function eliminarUsuario(email) {
+    var u = USUARIOS_LISTA.find(function(x){return x.email === email});
+    if (!u) return;
+    if (!confirm('Eliminar permanentemente al usuario "' + (u.nombre || email) + '"?')) return;
+    var r = await apiUsuarios('eliminar', { email: email });
+    if (r.ok) { toast('Usuario eliminado', 'success'); cargarUsuarios(); }
+    else { toast(r.error || 'Error', 'error'); }
 }
 
 // ===== CAMBIAR CONTRASENA =====

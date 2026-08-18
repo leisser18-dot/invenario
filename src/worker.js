@@ -5,15 +5,15 @@
 const ORIGEN_PERMITIDO = 'https://invenario.leisser-18.workers.dev';
 
 const USUARIOS_INICIALES = [
-    { email: 'lcsanchez@fibextelecom.net', pass: 'Chachi1511*-' },
-    { email: 'acalderon@fibextelecom.net', pass: null },
-    { email: 'fnavarro@fibextelecom.net', pass: null },
-    { email: 'paalvarado@fibextelecom.net', pass: null },
-    { email: 'aespinal@fibextelecom.net', pass: null },
-    { email: 'jmoncada@fibextelecom.net', pass: null },
-    { email: 'eperez@fibextelecom.net', pass: null },
-    { email: 'carangel@fibextelecom.net', pass: null },
-    { email: 'aldiaz@fibextelecom.net', pass: null }
+    { email: 'lcsanchez@fibextelecom.net', pass: 'Chachi1511*-', nombre: 'Luis Sanchez', rol: 'ADMIN', estado: 'ACTIVO' },
+    { email: 'acalderon@fibextelecom.net', pass: null, nombre: 'Andres Calderon', rol: 'USUARIO', estado: 'ACTIVO' },
+    { email: 'fnavarro@fibextelecom.net', pass: null, nombre: 'Francisco Navarro', rol: 'USUARIO', estado: 'ACTIVO' },
+    { email: 'paalvarado@fibextelecom.net', pass: null, nombre: 'Paola Alvarado', rol: 'ADMIN', estado: 'ACTIVO' },
+    { email: 'aespinal@fibextelecom.net', pass: null, nombre: 'Andres Espinal', rol: 'USUARIO', estado: 'ACTIVO' },
+    { email: 'jmoncada@fibextelecom.net', pass: null, nombre: 'Jhair Moncada', rol: 'USUARIO', estado: 'ACTIVO' },
+    { email: 'eperez@fibextelecom.net', pass: null, nombre: 'Elena Perez', rol: 'USUARIO', estado: 'ACTIVO' },
+    { email: 'carangel@fibextelecom.net', pass: null, nombre: 'Carlos Angel', rol: 'USUARIO', estado: 'ACTIVO' },
+    { email: 'aldiaz@fibextelecom.net', pass: null, nombre: 'Andres Diaz', rol: 'USUARIO', estado: 'ACTIVO' }
 ];
 
 async function hash(pw) {
@@ -80,6 +80,46 @@ async function cambiar(users, env, body) {
     return { ok: true };
 }
 
+function listar(users) {
+    const safe = users.map(u => ({ email: u.email, nombre: u.nombre || '', rol: u.rol || 'USUARIO', estado: u.estado || 'ACTIVO' }));
+    return { ok: true, usuarios: safe };
+}
+
+async function agregar(users, env, body) {
+    const email = (body.email || '').toString().trim().toLowerCase();
+    const nombre = (body.nombre || '').toString().trim();
+    const pass = (body.password || '').toString();
+    const rol = (body.rol || 'USUARIO').toString().toUpperCase();
+    if (!email || !nombre) return { ok: false, error: 'Nombre y correo son obligatorios' };
+    if (users.some(x => x.email === email)) return { ok: false, error: 'Ya existe un usuario con ese correo' };
+    if (!pass) return { ok: false, error: 'La contraseña es obligatoria' };
+    users.push({ email, pass: await hash(pass), nombre, rol, estado: 'ACTIVO' });
+    await env.USUARIOS.put('usuarios', JSON.stringify(users));
+    return { ok: true };
+}
+
+async function toggleEstado(users, env, body) {
+    const email = (body.email || '').toString().trim().toLowerCase();
+    if (!email) return { ok: false, error: 'Correo requerido' };
+    const u = users.find(x => x.email === email);
+    if (!u) return { ok: false, error: 'Usuario no encontrado' };
+    u.estado = (u.estado === 'ACTIVO') ? 'INACTIVO' : 'ACTIVO';
+    await env.USUARIOS.put('usuarios', JSON.stringify(users));
+    return { ok: true, estado: u.estado };
+}
+
+async function eliminar(users, env, body) {
+    const email = (body.email || '').toString().trim().toLowerCase();
+    if (!email) return { ok: false, error: 'Correo requerido' };
+    const adminEmails = USUARIOS_INICIALES.filter(u => u.rol === 'ADMIN').map(u => u.email);
+    if (adminEmails.includes(email)) return { ok: false, error: 'No se puede eliminar un administrador principal' };
+    const idx = users.findIndex(x => x.email === email);
+    if (idx < 0) return { ok: false, error: 'Usuario no encontrado' };
+    users.splice(idx, 1);
+    await env.USUARIOS.put('usuarios', JSON.stringify(users));
+    return { ok: true };
+}
+
 export default {
     async fetch(request, env) {
         const url = new URL(request.url);
@@ -91,6 +131,10 @@ export default {
             const users = await leerUsuarios(env);
             if (accion === 'verificar') return json(await verificar(users, env, body));
             if (accion === 'cambiar') return json(await cambiar(users, env, body));
+            if (accion === 'listar') return json(listar(users));
+            if (accion === 'agregar') return json(await agregar(users, env, body));
+            if (accion === 'toggle') return json(await toggleEstado(users, env, body));
+            if (accion === 'eliminar') return json(await eliminar(users, env, body));
             return json({ ok: false, error: 'Accion desconocida' });
         }
 
