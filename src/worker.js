@@ -25,9 +25,15 @@ async function leerUsuarios(env) {
     const raw = await env.USUARIOS.get('usuarios', 'json');
     const users = (raw && Array.isArray(raw)) ? raw : [];
     let changed = users.length === 0;
-    for (const u of USUARIOS_INICIALES) {
-        if (!users.some(x => x.email === u.email)) {
-            users.push({ email: u.email, pass: u.pass ? await hash(u.pass) : null });
+    for (const init of USUARIOS_INICIALES) {
+        const existing = users.find(x => x.email === init.email);
+        if (!existing) {
+            users.push({ email: init.email, pass: init.pass ? await hash(init.pass) : null, nombre: init.nombre, rol: init.rol, estado: init.estado });
+            changed = true;
+        } else if (!existing.nombre || !existing.rol || !existing.estado) {
+            if (!existing.nombre) existing.nombre = init.nombre;
+            if (!existing.rol) existing.rol = init.rol;
+            if (!existing.estado) existing.estado = init.estado;
             changed = true;
         }
     }
