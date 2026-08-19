@@ -97,16 +97,21 @@ function migrarFAsig() {
 
 function findDataSheet(ss) {
   var sheets = ss.getSheets();
+  var best = null, bestScore = 0;
   for (var s = 0; s < sheets.length; s++) {
-    var h = sheets[s].getRange(1, 1, 1, 50).getValues()[0];
-    var hasId = false, hasUsr = false;
+    var sh = sheets[s];
+    var lastRow = sh.getLastRow();
+    if (lastRow < 2) continue;
+    var h = sh.getRange(1, 1, 1, Math.min(sh.getLastColumn(), 50)).getValues()[0];
+    var score = 0;
+    var known = ['id','usuario','cedula_identidad','tipo','serial','marca','modelo','departamento','sede','ubicacion'];
     for (var j = 0; j < h.length; j++) {
       var v = String(h[j]).trim().toLowerCase();
-      if (v === 'id') hasId = true;
-      if (v === 'usuario') hasUsr = true;
+      if (known.indexOf(v) >= 0) score++;
     }
-    if (hasId && hasUsr) return sheets[s];
+    if (score > bestScore) { bestScore = score; best = sh; }
   }
+  if (best) return best;
   return sheets[0];
 }
 

@@ -541,7 +541,7 @@ async function apiUsuarios(accion, datos) {
     } catch(e) { return { ok: false, error: 'Sin conexion con el servidor' }; }
 }
 
-const COLUMNAS_OFICIALES = ['usuario','ubicacion','sede','departamento','nombre_pc','os','cpu','memoria_gb','disco','tipo','marca','modelo','serial','v_android','ip','mac','password','diadema','f_asig_diadema','mouse','mouse_modelo','f_asig_mouse','teclado','teclado_modelo','f_asig_teclado','monitor','monitor_modelo','f_asig_monitor','bolsos','f_asig_bolsos','last_update'];
+const COLUMNAS_OFICIALES = ['usuario','cedula_identidad','ubicacion','sede','departamento','nombre_pc','os','cpu','memoria_gb','disco','tipo','marca','modelo','serial','v_android','ip','mac','password','diadema','f_asig_diadema','mouse','mouse_modelo','f_asig_mouse','teclado','teclado_modelo','f_asig_teclado','monitor','monitor_modelo','f_asig_monitor','bolsos','f_asig_bolsos','last_update'];
 
 const MAPA_CATEGORIAS = {
     'DESKTOP': ['DESKTOP'],
