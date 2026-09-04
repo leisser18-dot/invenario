@@ -328,6 +328,21 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
 }
 .user-add-grid input:focus, .user-add-grid select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
 .user-add-grid label { font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 3px; display: block; }
+
+/* GESTION DE OPCIONES */
+.opc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+.opc-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.opc-card:hover { border-color: var(--primary); }
+.opc-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.opc-list { display: flex; flex-direction: column; gap: 5px; max-height: 240px; overflow-y: auto; }
+.opc-list .opc-empty { font-size: 11px; color: var(--text-3); padding: 6px 0; }
+.opc-item { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 6px 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; font-size: 11px; }
+.opc-item .opc-label { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.opc-item .opc-count { font-size: 10px; color: var(--text-3); background: var(--surface-3); padding: 0 6px; border-radius: 8px; }
+.opc-del { background: none; border: none; color: var(--red); cursor: pointer; font-size: 13px; padding: 0 4px; }
+.opc-del:hover { color: #fff; }
+.opc-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); color: var(--text); font-size: 12px; outline: none; transition: var(--transition); }
+.opc-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
 </style>
 </head>
 <body>
@@ -466,6 +481,65 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
             <button class="btn btn-green" onclick="abrirModalNuevoUsuario()">+ Agregar Usuario</button>
         </div>
         <div class="users-grid" id="usersGrid"></div>
+
+        <!-- GESTION DE OPCIONES (solo admin) -->
+        <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);">
+            <div style="font-size:16px;font-weight:700;margin-bottom:2px;">Gestion de Opciones</div>
+            <div style="font-size:11px;color:var(--text-3);margin-bottom:14px;">Administrar estados, sedes y departamentos del inventario</div>
+
+            <div class="opc-grid">
+                <div class="opc-card">
+                    <div class="opc-head">
+                        <div>
+                            <div style="font-weight:700;">Estados / Ubicaciones</div>
+                            <div style="font-size:11px;color:var(--text-3);">Provincias donde operan sedes</div>
+                        </div>
+                        <button class="btn btn-sm btn-green" onclick="abrirModalOpcion('ubicacion')">+</button>
+                    </div>
+                    <div class="opc-list" id="opcListUbicaciones"></div>
+                </div>
+                <div class="opc-card">
+                    <div class="opc-head">
+                        <div>
+                            <div style="font-weight:700;">Sedes</div>
+                            <div style="font-size:11px;color:var(--text-3);">Puntos de operacion por estado</div>
+                        </div>
+                        <button class="btn btn-sm btn-green" onclick="abrirModalOpcion('sede')">+</button>
+                    </div>
+                    <div class="opc-list" id="opcListSedes"></div>
+                </div>
+                <div class="opc-card">
+                    <div class="opc-head">
+                        <div>
+                            <div style="font-weight:700;">Departamentos</div>
+                            <div style="font-size:11px;color:var(--text-3);">Areas de la empresa</div>
+                        </div>
+                        <button class="btn btn-sm btn-green" onclick="abrirModalOpcion('departamento')">+</button>
+                    </div>
+                    <div class="opc-list" id="opcListDepartamentos"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL OPCION -->
+<div id="modalOpcion" class="modal modal-small">
+    <div class="modal-box">
+        <button class="close-btn" onclick="cerrarModalOpcion()">&times;</button>
+        <h3 id="opcModalTitle">Nueva Opcion</h3>
+        <input type="hidden" id="opc_tipo">
+        <div id="opcUbicacionWrap" style="display:none;">
+            <label style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:3px;display:block;">Estado</label>
+            <select id="opc_ubicacion" class="opc-input" style="margin-bottom:10px;"></select>
+        </div>
+        <label style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:3px;display:block;">Nombre</label>
+        <input type="text" id="opc_nombre" class="opc-input" placeholder="Nombre de la opcion" onkeydown="if(event.key==='Enter')guardarOpcion()">
+        <div class="login-error" id="opcError"></div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="cerrarModalOpcion()">Cancelar</button>
+            <button class="btn btn-primary" onclick="guardarOpcion()">💾 Guardar</button>
+        </div>
     </div>
 </div>
 
@@ -540,6 +614,112 @@ async function apiUsuarios(accion, datos) {
         return await r.json();
     } catch(e) { return { ok: false, error: 'Sin conexion con el servidor' }; }
 }
+async function apiOpciones(accion, datos) {
+    try {
+        var r = await fetch(ORIGEN_WORKER + '/api/opciones/' + accion, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+        return await r.json();
+    } catch(e) { return { ok: false, error: 'Sin conexion con el servidor' }; }
+}
+var OPCIONES_DATA = null;
+async function cargarOpciones() {
+    if (!ES_WORKER) return;
+    try {
+        var r = await apiOpciones('listar', {});
+        if (r.ok) OPCIONES_DATA = r.opciones;
+        else OPCIONES_DATA = { ubicaciones: RELACION_UBICACION_SEDE, departamentos: LISTA_DEPARTAMENTOS };
+    } catch(e) { OPCIONES_DATA = { ubicaciones: RELACION_UBICACION_SEDE, departamentos: LISTA_DEPARTAMENTOS }; }
+    return OPCIONES_DATA;
+}
+function opcionesUbicaciones() { return (OPCIONES_DATA && OPCIONES_DATA.ubicaciones) ? OPCIONES_DATA.ubicaciones : RELACION_UBICACION_SEDE; }
+function opcionesDepartamentos() { return (OPCIONES_DATA && OPCIONES_DATA.departamentos) ? OPCIONES_DATA.departamentos : LISTA_DEPARTAMENTOS; }
+function renderizarOpciones() {
+    var ubis = opcionesUbicaciones();
+    var deps = opcionesDepartamentos();
+    var lU = document.getElementById('opcListUbicaciones');
+    var lS = document.getElementById('opcListSedes');
+    var lD = document.getElementById('opcListDepartamentos');
+    if (lU) lU.innerHTML = Object.keys(ubis).map(function(u){ return '<div class="opc-item"><span class="opc-label">'+u+'<span class="opc-count">'+ubis[u].length+' sedes</span></span><button class="opc-del" onclick="eliminarOpcion(\'ubicacion\',\''+u+'\')">✕</button></div>'; }).join('') || '<div class="opc-empty">Sin estados</div>';
+    if (lS) {
+        var html = '';
+        Object.keys(ubis).forEach(function(u){ ubis[u].forEach(function(s){ html += '<div class="opc-item"><span class="opc-label">'+s+'<span class="opc-count">'+u+'</span></span><button class="opc-del" onclick="eliminarOpcion(\'sede\',\''+s+'\',\''+u+'\')">✕</button></div>'; }); });
+        lS.innerHTML = html || '<div class="opc-empty">Sin sedes</div>';
+    }
+    if (lD) lD.innerHTML = deps.map(function(d){ return '<div class="opc-item"><span class="opc-label">'+d+'</span><button class="opc-del" onclick="eliminarOpcion(\'departamento\',\''+d+'\')">✕</button></div>'; }).join('') || '<div class="opc-empty">Sin departamentos</div>';
+}
+function abrirModalOpcion(tipo) {
+    if (!ES_WORKER) { toast('Solo disponible en la web', 'error'); return; }
+    document.getElementById('opc_tipo').value = tipo;
+    document.getElementById('opc_nombre').value = '';
+    document.getElementById('opcError').innerText = '';
+    var t = tipo === 'ubicacion' ? 'Nuevo Estado' : (tipo === 'sede' ? 'Nueva Sede' : 'Nuevo Departamento');
+    document.getElementById('opcModalTitle').innerText = t;
+    var wrap = document.getElementById('opcUbicacionWrap');
+    if (tipo === 'sede') {
+        wrap.style.display = '';
+        var sel = document.getElementById('opc_ubicacion');
+        sel.innerHTML = '<option value="" disabled selected>Seleccione un estado</option>' + Object.keys(opcionesUbicaciones()).map(function(u){ return '<option value="'+u+'">'+u+'</option>'; }).join('');
+    } else {
+        wrap.style.display = 'none';
+    }
+    document.getElementById('modalOpcion').style.display = 'flex';
+    setTimeout(function(){ document.getElementById('opc_nombre').focus(); }, 100);
+}
+function cerrarModalOpcion() { document.getElementById('modalOpcion').style.display = 'none'; }
+async function guardarOpcion() {
+    var tipo = document.getElementById('opc_tipo').value;
+    var nombre = document.getElementById('opc_nombre').value;
+    var err = document.getElementById('opcError');
+    if (!nombre) { err.innerText = 'Ingrese un nombre'; return; }
+    var datos = { tipo: tipo, nombre: nombre };
+    if (tipo === 'sede') datos.ubicacion = document.getElementById('opc_ubicacion').value;
+    if (tipo === 'sede' && !datos.ubicacion) { err.innerText = 'Seleccione un estado'; return; }
+    var r = await apiOpciones('agregar', datos);
+    if (r.ok) {
+        toast('Opcion agregada', 'success');
+        cerrarModalOpcion();
+        cargarOpciones().then(renderizarOpciones);
+        actualizarSelectsDinamicos();
+    } else {
+        err.innerText = r.error || 'Error al agregar';
+    }
+}
+async function eliminarOpcion(tipo, nombre, ubicacion) {
+    if (!confirm('Eliminar "' + nombre + '"?')) return;
+    var datos = { tipo: tipo, nombre: nombre };
+    if (tipo === 'sede') datos.ubicacion = ubicacion;
+    var r = await apiOpciones('eliminar', datos);
+    if (r.ok) {
+        toast('Opcion eliminada', 'success');
+        cargarOpciones().then(renderizarOpciones);
+        actualizarSelectsDinamicos();
+    } else {
+        toast(r.error || 'Error al eliminar', 'error');
+    }
+}
+function actualizarSelectsDinamicos() {
+    var ubis = opcionesUbicaciones();
+    var deps = opcionesDepartamentos();
+    var elUbicacion = document.getElementById('ubicacion');
+    if (elUbicacion && elUbicacion.tagName === 'SELECT') {
+        var cur = elUbicacion.value;
+        elUbicacion.innerHTML = '<option value="" selected disabled>Ubicacion / Estado</option>' + Object.keys(ubis).map(function(u){ return '<option value="'+u+'">'+u+'</option>'; }).join('');
+        if (cur && ubis[cur]) elUbicacion.value = cur;
+    }
+    var elDepartamento = document.getElementById('departamento');
+    if (elDepartamento && elDepartamento.tagName === 'SELECT') {
+        var curD = elDepartamento.value;
+        elDepartamento.innerHTML = '<option value="" selected disabled>Seleccione departamento</option>' + deps.map(function(d){ return '<option value="'+d+'">'+d+'</option>'; }).join('');
+        if (curD && deps.indexOf(curD) >= 0) elDepartamento.value = curD;
+    }
+    var elUbicacionModal = document.getElementById('opc_ubicacion');
+    if (elUbicacionModal) {
+        elUbicacionModal.innerHTML = '<option value="" disabled selected>Seleccione un estado</option>' + Object.keys(ubis).map(function(u){ return '<option value="'+u+'">'+u+'</option>'; }).join('');
+    }
+}
 
 const COLUMNAS_OFICIALES = ['usuario','cedula_identidad','ubicacion','sede','departamento','nombre_pc','os','cpu','memoria_gb','disco','tipo','marca','modelo','serial','v_android','ip','mac','password','diadema','f_asig_diadema','mouse','mouse_modelo','f_asig_mouse','teclado','teclado_modelo','f_asig_teclado','monitor','monitor_modelo','f_asig_monitor','bolsos','f_asig_bolsos','last_update'];
 
@@ -600,7 +780,7 @@ function showPage(id) {
     if (id === 'dashboard') { renderDashboard(); }
     if (id === 'equipos') { renderizarTable(); }
     if (id === 'graficos') { renderGraficosFull(); }
-    if (id === 'usuarios') { cargarUsuarios(); }
+    if (id === 'usuarios') { cargarUsuarios(); cargarOpciones().then(function(){ renderizarOpciones(); actualizarSelectsDinamicos(); }); }
     if (window.innerWidth <= 768) { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
 }
 
@@ -819,9 +999,9 @@ function inicializarEstructuraModal() {
     html += '<select id="consumible" style="display:none;"><option value="">CONSUMIBLE</option><option value="TONER">TONER</option><option value="TINTA">TINTA</option></select>';
     COLUMNAS_OFICIALES.forEach(function(c) {
         if (c==='last_update'||c==='tipo') return;
-        if (c==='ubicacion') { var ops = Object.keys(RELACION_UBICACION_SEDE).map(function(u){return '<option value="'+u+'">'+u+'</option>'}).join(''); html += '<select id="ubicacion" onchange="actualizarSedesPorUbicacion(this.value)"><option value="" selected disabled>Ubicacion / Estado</option>'+ops+'</select>'; }
+        if (c==='ubicacion') { var ubis = opcionesUbicaciones(); var ops = Object.keys(ubis).map(function(u){return '<option value="'+u+'">'+u+'</option>'}).join(''); html += '<select id="ubicacion" onchange="actualizarSedesPorUbicacion(this.value)"><option value="" selected disabled>Ubicacion / Estado</option>'+ops+'</select>'; }
         else if (c==='sede') { html += '<select id="sede"><option value="" selected disabled>Seleccione sede</option></select>'; }
-        else if (c==='departamento') { var ops = LISTA_DEPARTAMENTOS.map(function(d){return '<option value="'+d+'">'+d+'</option>'}).join(''); html += '<select id="departamento"><option value="" selected disabled>Seleccione departamento</option>'+ops+'</select>'; }
+        else if (c==='departamento') { var deps = opcionesDepartamentos(); var ops = deps.map(function(d){return '<option value="'+d+'">'+d+'</option>'}).join(''); html += '<select id="departamento"><option value="" selected disabled>Seleccione departamento</option>'+ops+'</select>'; }
         else if (c==='memoria_gb') { var mems = ["4 GB DDR3","6 GB DDR3","8 GB DDR3","12 GB DDR3","16 GB DDR3","8 GB DDR4","12 GB DDR4","16 GB DDR4","32 GB DDR4"]; var ops = mems.map(function(m){return '<option value="'+m+'">'+m+'</option>'}).join(''); html += '<select id="memoria_gb"><option value="" selected disabled>Memoria</option>'+ops+'</select>'; }
         else if (c==='disco') { var dsc = ["64 GB SSD","120 GB SSD","240 GB SSD","320 GB SSD","500 GB SSD","1TB SSD"]; var ops = dsc.map(function(d){return '<option value="'+d+'">'+d+'</option>'}).join(''); html += '<select id="disco"><option value="" selected disabled>Disco</option>'+ops+'</select>'; }
         else if (c==='os') { html += '<select id="os"><option value="" selected disabled>SO</option><option value="WINDOWS 10 PRO">WINDOWS 10 PRO</option><option value="WINDOWS 11 PRO">WINDOWS 11 PRO</option></select>'; }
@@ -832,7 +1012,7 @@ function inicializarEstructuraModal() {
     c.innerHTML = html;
 }
 
-function actualizarSedesPorUbicacion(ubicacion, v) { if(typeof v==='undefined') v=''; var s=document.getElementById('sede'); if(!s) return; s.innerHTML='<option value="" selected disabled>Seleccione sede</option>'; if(ubicacion&&RELACION_UBICACION_SEDE[ubicacion]){RELACION_UBICACION_SEDE[ubicacion].forEach(function(sd){var o=document.createElement('option');o.value=sd;o.text=sd;s.appendChild(o)});} if(v) s.value=v; }
+function actualizarSedesPorUbicacion(ubicacion, v) { if(typeof v==='undefined') v=''; var s=document.getElementById('sede'); if(!s) return; s.innerHTML='<option value="" selected disabled>Seleccione sede</option>'; var ubis = opcionesUbicaciones(); if(ubicacion&&ubis[ubicacion]){ubis[ubicacion].forEach(function(sd){var o=document.createElement('option');o.value=sd;o.text=sd;s.appendChild(o)});} if(v) s.value=v; }
 function nuevoActivo() { abrirModal(); document.getElementById('edit_id').value=""; document.getElementById('btnDelete').style.display='none'; COLUMNAS_OFICIALES.forEach(function(c){var el=document.getElementById(c);if(el){if(el.tagName==='SELECT'){if(['tipo','ubicacion','sede','departamento','os','memoria_gb','disco'].includes(el.id))el.value="";else el.value='NO'}else el.value="";if(c.startsWith('f_asig_'))el.disabled=true}}); }
 function abrirModal() { inicializarEstructuraModal(); document.getElementById('modal').style.display='flex'; }
 
@@ -963,6 +1143,7 @@ function entrar(em) {
     try { localStorage.setItem('fibex_sesion', em); } catch(e) {}
     document.getElementById('loginScreen').classList.remove('show');
     aplicarPermisos();
+    cargarOpciones();
     cargarDesdeNube();
 }
 function esAdmin() {
@@ -1220,6 +1401,7 @@ window.onload = function() {
     if (haySesion()) {
         document.getElementById('loginScreen').classList.remove('show');
         aplicarPermisos();
+        cargarOpciones();
         cargarDesdeNube();
     } else {
         document.getElementById('loginScreen').classList.add('show');

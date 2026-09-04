@@ -150,11 +150,81 @@ async function editar(users, env, body) {
     return { ok: true };
 }
 
+const UBICACIONES_INICIALES = {
+    "APURE": ["BIRUACA"], "CARABOBO": ["TORRE FIBEX","TORRE CRISTAL","DISTELNET","PASEO LAS INDUSTRIAS","METROPOLIS VALENCIA","ALIANZA MALL","CC SAMBIL","CENTRO DE EXPERIENCIA","JAC VALENCIA","NIUPROTECTOR","SMARTBUY"],
+    "CARACAS": ["EL PARAISO","PROPATRIA","GALERIAS","CARICUAO","LA URBINA","GUARENAS"],
+    "BARQUISIMETO": ["CC LEONALDO DAVINCI","METROPOLIS BARQUISIMETO"], "BARINAS": ["BARINAS"],
+    "CAGUA": ["CENTRO AUTOMOTRIATRIZ CAGUA"],
+    "COJEDES": ["AGROPECUARIA SIERRA MORANA","OFI SAN CARLOS","OFI TINAQUILLO"],
+    "SUCRE": ["CUMANA","CARUPANO"],
+    "MARGARITA": ["LA ASUNCION","RATTAN","FIBEX PRO","CERRO MAR","VILLA ROSA","JUAN GRIEGO"],
+    "GUARICO": ["SAN JUAN DE LOS MORROS","CENTRO AUTOMOTRIZ VALLE DE LA PASCUA"],
+    "YARACUY": ["YARITAGUA"],
+    "ANZOATEGUI": ["OFICINA COMERCIAL PUENTE REAL BARCELONA","OFICINA COMERCIAL REGINA PTO LA CRUZ","OFICINA COMERCIAL SANTA FE DE PEÑALVER","OFICINA COMERCIAL BOCA DE UCHIRE","TORRE FIBEX LECHERIA","PTO PIRITU"]
+};
+
+const DEPARTAMENTOS_INICIALES = ["ADMINISTRACION","ALMACEN","ATENCION AL CLIENTE","AUDITORIA","ALIADOS INTEGRALES","BIENVENIDA Y FIDELIZACION","CALL CENTER","CDR","CECOM","CLUB FIBEX","COBRANZA","COMERCIALIZA","COMPRAS","CONCILIACION","CONTABILIDAD","DESARROLLO","FINANZAS","GESTION DEL CAMBIO","INGENIERIA","GPS","LA INTERNACIONAL","MERCADEO","MESA DE APOYO","NOC","O&M","OPERACIONES","POSTVENTAS","NEGOCIOS CORPORATIVOS","PROCESOS","RRHH","SALA DE REUNIONES","SEGURIDAD LABORAL","TECNOLOGIA Y SISTEMA","TELEVENTAS","TALLER MECANICO","VGT","VENTAS HOGAR","NIUPROTECTOR","SMARTBUY"];
+
+async function leerOpciones(env) {
+    const raw = await env.USUARIOS.get('opciones', 'json');
+    if (raw && raw.ubicaciones && raw.departamentos) return raw;
+    const opciones = { ubicaciones: UBICACIONES_INICIALES, departamentos: DEPARTAMENTOS_INICIALES };
+    await env.USUARIOS.put('opciones', JSON.stringify(opciones));
+    return opciones;
+}
+
+function listarOpciones(opciones) {
+    return { ok: true, opciones };
+}
+
+async function agregarOpcion(opciones, env, body) {
+    const tipo = (body.tipo || '').toString();
+    const nombre = (body.nombre || '').toString().trim().toUpperCase();
+    const ubicacion = (body.ubicacion || '').toString().trim().toUpperCase();
+    if (!nombre) return { ok: false, error: 'Nombre requerido' };
+    if (tipo === 'ubicacion') {
+        if (opciones.ubicaciones[nombre]) return { ok: false, error: 'Ese estado ya existe' };
+        opciones.ubicaciones[nombre] = [];
+    } else if (tipo === 'sede') {
+        if (!ubicacion) return { ok: false, error: 'Debe seleccionar un estado' };
+        if (!opciones.ubicaciones[ubicacion]) opciones.ubicaciones[ubicacion] = [];
+        if (opciones.ubicaciones[ubicacion].includes(nombre)) return { ok: false, error: 'Esa sede ya existe en ese estado' };
+        opciones.ubicaciones[ubicacion].push(nombre);
+    } else if (tipo === 'departamento') {
+        if (opciones.departamentos.includes(nombre)) return { ok: false, error: 'Ese departamento ya existe' };
+        opciones.departamentos.push(nombre);
+    } else {
+        return { ok: false, error: 'Tipo invalido' };
+    }
+    await env.USUARIOS.put('opciones', JSON.stringify(opciones));
+    return { ok: true };
+}
+
+async function eliminarOpcion(opciones, env, body) {
+    const tipo = (body.tipo || '').toString();
+    const nombre = (body.nombre || '').toString().trim().toUpperCase();
+    const ubicacion = (body.ubicacion || '').toString().trim().toUpperCase();
+    if (!nombre) return { ok: false, error: 'Nombre requerido' };
+    if (tipo === 'ubicacion') {
+        delete opciones.ubicaciones[nombre];
+    } else if (tipo === 'sede') {
+        if (opciones.ubicaciones[ubicacion]) {
+            opciones.ubicaciones[ubicacion] = opciones.ubicaciones[ubicacion].filter(function(s){ return s.toUpperCase() !== nombre; });
+        }
+    } else if (tipo === 'departamento') {
+        opciones.departamentos = opciones.departamentos.filter(function(d){ return d.toUpperCase() !== nombre; });
+    } else {
+        return { ok: false, error: 'Tipo invalido' };
+    }
+    await env.USUARIOS.put('opciones', JSON.stringify(opciones));
+    return { ok: true };
+}
+
 export default {
     async fetch(request, env) {
         const url = new URL(request.url);
 
-        if (request.method === 'OPTIONS' && url.pathname.startsWith('/api/usuarios/')) {
+        if (request.method === 'OPTIONS' && (url.pathname.startsWith('/api/usuarios/') || url.pathname.startsWith('/api/opciones/'))) {
             return new Response(null, {
                 status: 204,
                 headers: {
@@ -177,6 +247,17 @@ export default {
             if (accion === 'toggle') return json(await toggleEstado(users, env, body));
             if (accion === 'eliminar') return json(await eliminar(users, env, body));
             if (accion === 'editar') return json(await editar(users, env, body));
+            return json({ ok: false, error: 'Accion desconocida' });
+        }
+
+        if (request.method === 'POST' && url.pathname.startsWith('/api/opciones/')) {
+            if (!esOrigenPermitido(request)) return json({ ok: false, error: 'Origen no permitido' }, 403);
+            const body = await leerBody(request);
+            const accion = url.pathname.slice('/api/opciones/'.length);
+            const opciones = await leerOpciones(env);
+            if (accion === 'listar') return json(listarOpciones(opciones));
+            if (accion === 'agregar') return json(await agregarOpcion(opciones, env, body));
+            if (accion === 'eliminar') return json(await eliminarOpcion(opciones, env, body));
             return json({ ok: false, error: 'Accion desconocida' });
         }
 
