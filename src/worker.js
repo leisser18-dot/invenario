@@ -220,6 +220,23 @@ async function eliminarOpcion(opciones, env, body) {
     return { ok: true };
 }
 
+async function reordenarOpcion(opciones, env, body) {
+    const tipo = (body.tipo || '').toString();
+    const nombre = (body.nombre || '').toString().trim().toUpperCase();
+    const direccion = (body.direccion || '').toString();
+    if (tipo !== 'departamento') return { ok: false, error: 'Solo se puede reordenar departamentos' };
+    if (!nombre || (direccion !== 'up' && direccion !== 'down')) return { ok: false, error: 'Parametros invalidos' };
+    const idx = opciones.departamentos.findIndex(function(d){ return d.toUpperCase() === nombre; });
+    if (idx < 0) return { ok: false, error: 'Departamento no encontrado' };
+    const nuevoIdx = direccion === 'up' ? idx - 1 : idx + 1;
+    if (nuevoIdx < 0 || nuevoIdx >= opciones.departamentos.length) return { ok: false, error: 'No se puede mover mas' };
+    const item = opciones.departamentos[idx];
+    opciones.departamentos.splice(idx, 1);
+    opciones.departamentos.splice(nuevoIdx, 0, item);
+    await env.USUARIOS.put('opciones', JSON.stringify(opciones));
+    return { ok: true, departamentos: opciones.departamentos };
+}
+
 export default {
     async fetch(request, env) {
         const url = new URL(request.url);
@@ -258,6 +275,8 @@ export default {
             if (accion === 'listar') return json(listarOpciones(opciones));
             if (accion === 'agregar') return json(await agregarOpcion(opciones, env, body));
             if (accion === 'eliminar') return json(await eliminarOpcion(opciones, env, body));
+            if (accion === 'reordenar') return json(await reordenarOpcion(opciones, env, body));
+            return json({ ok: false, error: 'Accion no valida' }, 400);
             return json({ ok: false, error: 'Accion desconocida' });
         }
 
