@@ -1154,16 +1154,24 @@ doc.render(dd);var out=doc.getZip().generate({type:"blob",mimeType:"application/
 
 // ===== LOGIN =====
 function haySesion() { try { return !!localStorage.getItem('fibex_sesion'); } catch(e) { return true; } }
-function entrar(em) {
+function entrar(em, rol) {
     try { localStorage.setItem('fibex_sesion', em); } catch(e) {}
+    if (rol) { try { localStorage.setItem('fibex_rol', rol); } catch(e) {} }
     document.getElementById('loginScreen').classList.remove('show');
     aplicarPermisos();
     cargarOpciones();
     cargarDesdeNube();
 }
 function esAdmin() {
-    var em = ''; try { em = localStorage.getItem('fibex_sesion') || ''; } catch(e) {}
-    return em === 'lcsanchez@fibextelecom.net' || em === 'paalvarado@fibextelecom.net';
+    var em = usuarioActual();
+    if (em === 'lcsanchez@fibextelecom.net' || em === 'paalvarado@fibextelecom.net') return true;
+    var rol = ''; try { rol = localStorage.getItem('fibex_rol') || ''; } catch(e) {}
+    if (rol === 'ADMIN') return true;
+    if (em && typeof USUARIOS_LISTA !== 'undefined') {
+        var u = USUARIOS_LISTA.find(function(x){ return x.email === em; });
+        if (u && u.rol === 'ADMIN') return true;
+    }
+    return false;
 }
 function usuarioActual() {
     var em = ''; try { em = localStorage.getItem('fibex_sesion') || ''; } catch(e) {}
@@ -1201,7 +1209,7 @@ function iniciarSesion() {
     if (!em || !pw) { err.innerText = 'Ingrese correo y contrasena'; return; }
     if (ES_WORKER) {
         apiUsuarios('verificar', { email: em, password: pw }).then(function(r) {
-            if (r.ok) { entrar(em); }
+            if (r.ok) { entrar(em, r.rol); }
             else { err.innerText = r.error || 'Error'; document.getElementById('loginPass').value = ''; }
         });
         return;
@@ -1250,7 +1258,13 @@ async function cargarUsuarios() {
     if (!ES_WORKER) { toast('Gestion de usuarios solo disponible en la web', 'info'); return; }
     try {
         var r = await apiUsuarios('listar', {});
-        if (r.ok) { USUARIOS_LISTA = r.usuarios || []; renderListaUsuarios(); }
+        if (r.ok) {
+            USUARIOS_LISTA = r.usuarios || [];
+            renderListaUsuarios();
+            var me = USUARIOS_LISTA.find(function(x){ return x.email === usuarioActual(); });
+            if (me) { try { localStorage.setItem('fibex_rol', me.rol || 'USUARIO'); } catch(e) {} }
+            aplicarPermisos();
+        }
         else { toast(r.error || 'Error cargando usuarios', 'error'); }
     } catch(e) { toast('Error de conexion', 'error'); }
 }

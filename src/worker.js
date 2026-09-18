@@ -75,9 +75,9 @@ async function verificar(users, env, body) {
     if (!u.pass) {
         u.pass = await hash(password);
         await env.USUARIOS.put('usuarios', JSON.stringify(users));
-        return { ok: true };
+        return { ok: true, rol: u.rol || 'USUARIO' };
     }
-    if (u.pass === await hash(password)) return { ok: true };
+    if (u.pass === await hash(password)) return { ok: true, rol: u.rol || 'USUARIO' };
     return { ok: false, error: 'Correo o contrasena incorrectos' };
 }
 
