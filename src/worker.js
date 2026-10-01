@@ -237,11 +237,51 @@ async function reordenarOpcion(opciones, env, body) {
     return { ok: true, departamentos: opciones.departamentos };
 }
 
+async function leerCorreos(env) {
+    const raw = await env.USUARIOS.get('correos', 'json');
+    return (raw && Array.isArray(raw)) ? raw : [];
+}
+
+function listarCorreos(correos) {
+    return { ok: true, correos };
+}
+
+function nuevoIdCorreo(correos) {
+    let id = 1;
+    const nums = correos.map(c => parseInt(String(c.id), 10)).filter(n => !isNaN(n));
+    if (nums.length) id = Math.max(...nums) + 1;
+    return id;
+}
+
+async function agregarCorreo(correos, env, body) {
+    const nombre = (body.nombre || '').toString().trim();
+    const cargo = (body.cargo || '').toString().trim();
+    const departamento = (body.departamento || '').toString().trim();
+    const correo = (body.correo || '').toString().trim().toLowerCase();
+    if (!nombre) return { ok: false, error: 'Nombre y apellido son obligatorios' };
+    if (!correo) return { ok: false, error: 'El correo corporativo es obligatorio' };
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return { ok: false, error: 'Correo corporativo invalido' };
+    if (correos.some(c => String(c.correo || '').toLowerCase() === correo)) return { ok: false, error: 'Ese correo ya esta registrado' };
+    correos.push({ id: nuevoIdCorreo(correos), nombre, cargo: cargo || '-', departamento: departamento || '-', correo, last_update: new Date().toISOString() });
+    await env.USUARIOS.put('correos', JSON.stringify(correos));
+    return { ok: true };
+}
+
+async function eliminarCorreo(correos, env, body) {
+    const id = parseInt(String(body.id || ''), 10);
+    if (isNaN(id)) return { ok: false, error: 'Id requerido' };
+    const idx = correos.findIndex(c => parseInt(String(c.id), 10) === id);
+    if (idx < 0) return { ok: false, error: 'Registro no encontrado' };
+    correos.splice(idx, 1);
+    await env.USUARIOS.put('correos', JSON.stringify(correos));
+    return { ok: true };
+}
+
 export default {
     async fetch(request, env) {
         const url = new URL(request.url);
 
-        if (request.method === 'OPTIONS' && (url.pathname.startsWith('/api/usuarios/') || url.pathname.startsWith('/api/opciones/'))) {
+        if (request.method === 'OPTIONS' && (url.pathname.startsWith('/api/usuarios/') || url.pathname.startsWith('/api/opciones/') || url.pathname.startsWith('/api/correos/'))) {
             return new Response(null, {
                 status: 204,
                 headers: {
@@ -277,7 +317,17 @@ export default {
             if (accion === 'eliminar') return json(await eliminarOpcion(opciones, env, body));
             if (accion === 'reordenar') return json(await reordenarOpcion(opciones, env, body));
             return json({ ok: false, error: 'Accion no valida' }, 400);
-            return json({ ok: false, error: 'Accion desconocida' });
+        }
+
+        if (request.method === 'POST' && url.pathname.startsWith('/api/correos/')) {
+            if (!esOrigenPermitido(request)) return json({ ok: false, error: 'Origen no permitido' }, 403);
+            const body = await leerBody(request);
+            const accion = url.pathname.slice('/api/correos/'.length);
+            const correos = await leerCorreos(env);
+            if (accion === 'listar') return json(listarCorreos(correos));
+            if (accion === 'agregar') return json(await agregarCorreo(correos, env, body));
+            if (accion === 'eliminar') return json(await eliminarCorreo(correos, env, body));
+            return json({ ok: false, error: 'Accion no valida' }, 400);
         }
 
         return env.ASSETS.fetch(request);

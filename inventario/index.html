@@ -401,6 +401,7 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
     <div class="nav-item" id="navImportar" onclick="document.getElementById('importFile').click()"><span class="ico">📥</span> Importar</div>
     <div class="nav-item" onclick="exportarExcelConImagen()"><span class="ico">📊</span> Exportar Excel</div>
     <div class="nav-item" id="navUsuarios" data-page="usuarios" onclick="showPage('usuarios')" style="display:none;"><span class="ico">👤</span> Gestion de Usuarios</div>
+    <div class="nav-item" id="navCorreos" data-page="correos" onclick="showPage('correos')" style="display:none;"><span class="ico">✉️</span> Correos Corporativos</div>
     <div class="nav-item" onclick="abrirCambiarPass()"><span class="ico">🔑</span> Cambiar Contrasena</div>
     <div class="nav-item" onclick="cerrarSesion()"><span class="ico">🚪</span> Cerrar Sesion</div>
     <div class="spacer"></div>
@@ -525,6 +526,29 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
             </div>
         </div>
     </div>
+
+    <!-- PAGE: CORREOS CORPORATIVOS -->
+    <div class="page" id="page-correos" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+            <div>
+                <div style="font-size:18px;font-weight:700;">Correos Corporativos</div>
+                <div style="font-size:11px;color:var(--text-3);margin-top:2px;">Registro de creaciones de correos corporativos (no afecta el inventario)</div>
+            </div>
+            <button class="btn btn-green" onclick="abrirModalNuevoCorreo()">+ Nuevo Correo</button>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr>
+                    <th>NOMBRE Y APELLIDO</th>
+                    <th>CARGO</th>
+                    <th>DEPARTAMENTO</th>
+                    <th>CORREO CORPORATIVO</th>
+                    <th id="thCorreoDel">ELIMINAR</th>
+                </tr></thead>
+                <tbody id="correosTable"></tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <!-- MODAL OPCION -->
@@ -599,6 +623,26 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
     </div>
 </div>
 
+<!-- MODAL CORREO -->
+<div id="modalCorreo" class="modal modal-small">
+    <div class="modal-box">
+        <button class="close-btn" onclick="cerrarModalCorreo()">&times;</button>
+        <h3 id="modalCorreoTitle">Nuevo Correo Corporativo</h3>
+        <input type="hidden" id="edit_correo_id">
+        <div class="user-add-grid">
+            <div><label>Nombre y Apellido</label><input type="text" id="correo_nombre" placeholder="Nombre y apellido"></div>
+            <div><label>Cargo</label><input type="text" id="correo_cargo" placeholder="Cargo"></div>
+            <div><label>Departamento</label><select id="correo_departamento"></select></div>
+            <div><label>Correo Corporativo</label><input type="email" id="correo_email" placeholder="correo@fibextelecom.net"></div>
+        </div>
+        <div class="login-error" id="correoError"></div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="cerrarModalCorreo()">Cancelar</button>
+            <button class="btn btn-primary" onclick="guardarCorreo()">💾 Guardar</button>
+        </div>
+    </div>
+</div>
+
 <input type="file" id="importFile" style="display:none" accept=".xlsx,.xls" onchange="importarExcel(this)">
 
 <script>
@@ -627,6 +671,81 @@ async function apiOpciones(accion, datos) {
         });
         return await r.json();
     } catch(e) { return { ok: false, error: 'Sin conexion con el servidor' }; }
+}
+async function apiCorreos(accion, datos) {
+    try {
+        var r = await fetch(ORIGEN_WORKER + '/api/correos/' + accion, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+        return await r.json();
+    } catch(e) { return { ok: false, error: 'Sin conexion con el servidor' }; }
+}
+var CORREOS_LISTA = [];
+async function cargarCorreos() {
+    if (!ES_WORKER) { toast('Solo disponible en la web', 'info'); return; }
+    try {
+        var r = await apiCorreos('listar', {});
+        if (r.ok) { CORREOS_LISTA = r.correos || []; renderTablaCorreos(); }
+        else { toast(r.error || 'Error cargando correos', 'error'); }
+    } catch(e) { toast('Error de conexion', 'error'); }
+}
+function renderTablaCorreos() {
+    var tb = document.getElementById('correosTable');
+    if (!tb) return;
+    var adm = esAdmin();
+    var th = document.getElementById('thCorreoDel');
+    if (th) th.style.display = adm ? '' : 'none';
+    if (!CORREOS_LISTA.length) { tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-3);padding:30px;">No hay correos corporativos registrados.</td></tr>'; return; }
+    tb.innerHTML = CORREOS_LISTA.map(function(c) {
+        var del = adm ? '<button class="btn btn-sm btn-user-delete" onclick="eliminarCorreo(' + c.id + ')">Eliminar</button>' : '';
+        return '<tr>' +
+            '<td>' + (c.nombre || '-') + '</td>' +
+            '<td>' + (c.cargo || '-') + '</td>' +
+            '<td>' + (c.departamento || '-') + '</td>' +
+            '<td>' + (c.correo || '-') + '</td>' +
+            '<td>' + del + '</td>' +
+        '</tr>';
+    }).join('');
+}
+function abrirModalNuevoCorreo() {
+    if (!ES_WORKER) { toast('Solo disponible en la web', 'error'); return; }
+    if (!esAdmin()) { toast('No autorizado', 'error'); return; }
+    document.getElementById('edit_correo_id').value = '';
+    document.getElementById('correo_nombre').value = '';
+    document.getElementById('correo_cargo').value = '';
+    document.getElementById('correo_email').value = '';
+    document.getElementById('correoError').innerText = '';
+    var sel = document.getElementById('correo_departamento');
+    sel.innerHTML = '<option value="" disabled selected>Seleccione departamento</option>' + opcionesDepartamentos().map(function(d){ return '<option value="'+d+'">'+d+'</option>'; }).join('');
+    document.getElementById('modalCorreoTitle').innerText = 'Nuevo Correo Corporativo';
+    document.getElementById('modalCorreo').style.display = 'flex';
+    setTimeout(function(){ document.getElementById('correo_nombre').focus(); }, 100);
+}
+function cerrarModalCorreo() { document.getElementById('modalCorreo').style.display = 'none'; }
+async function guardarCorreo() {
+    var nombre = document.getElementById('correo_nombre').value.trim();
+    var cargo = document.getElementById('correo_cargo').value.trim();
+    var departamento = document.getElementById('correo_departamento').value;
+    var correo = document.getElementById('correo_email').value.trim();
+    var err = document.getElementById('correoError');
+    if (!nombre) { err.innerText = 'Ingrese nombre y apellido'; return; }
+    if (!correo) { err.innerText = 'Ingrese el correo corporativo'; return; }
+    var r = await apiCorreos('agregar', { nombre: nombre, cargo: cargo, departamento: departamento, correo: correo });
+    if (r.ok) {
+        toast('Correo registrado', 'success');
+        cerrarModalCorreo();
+        cargarCorreos();
+    } else {
+        err.innerText = r.error || 'Error al guardar';
+    }
+}
+async function eliminarCorreo(id) {
+    if (!confirm('Eliminar este registro?')) return;
+    var r = await apiCorreos('eliminar', { id: id });
+    if (r.ok) { toast('Registro eliminado', 'success'); cargarCorreos(); }
+    else { toast(r.error || 'Error al eliminar', 'error'); }
 }
 var OPCIONES_DATA = null;
 async function cargarOpciones() {
@@ -796,6 +915,7 @@ function showPage(id) {
     if (id === 'equipos') { renderizarTable(); }
     if (id === 'graficos') { renderGraficosFull(); }
     if (id === 'usuarios') { cargarUsuarios(); cargarOpciones().then(function(){ renderizarOpciones(); actualizarSelectsDinamicos(); }); }
+    if (id === 'correos') { cargarOpciones(); cargarCorreos(); }
     if (window.innerWidth <= 768) { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
 }
 
@@ -1185,6 +1305,8 @@ function aplicarPermisos() {
     if (th) th.style.display = adm ? '' : 'none';
     var navUsr = document.getElementById('navUsuarios');
     if (navUsr) navUsr.style.display = adm ? '' : 'none';
+    var navCorr = document.getElementById('navCorreos');
+    if (navCorr) navCorr.style.display = adm ? '' : 'none';
 }
 function actualizarFechaHora() {
     var fh = document.getElementById('fhFecha');
