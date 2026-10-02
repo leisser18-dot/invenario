@@ -280,6 +280,29 @@ async function eliminarCorreo(correos, env, body) {
     return { ok: true };
 }
 
+async function editarCorreo(correos, env, body) {
+    const id = parseInt(String(body.id || ''), 10);
+    if (isNaN(id)) return { ok: false, error: 'Id requerido' };
+    const idx = correos.findIndex(c => parseInt(String(c.id), 10) === id);
+    if (idx < 0) return { ok: false, error: 'Registro no encontrado' };
+    const correo = (body.correo || '').toString().trim().toLowerCase();
+    const existente = correos.find(c => c !== correos[idx] && String(c.correo || '').toLowerCase() === correo);
+    if (existente) return { ok: false, error: 'Ese correo ya esta registrado' };
+    if (body.nombre !== undefined) correos[idx].nombre = (body.nombre || '').toString().trim();
+    if (body.cargo !== undefined) correos[idx].cargo = (body.cargo || '').toString().trim() || '-';
+    if (body.ubicacion !== undefined) correos[idx].ubicacion = (body.ubicacion || '').toString().trim() || '-';
+    if (body.sede !== undefined) correos[idx].sede = (body.sede || '').toString().trim() || '-';
+    if (body.departamento !== undefined) correos[idx].departamento = (body.departamento || '').toString().trim() || '-';
+    if (body.correo !== undefined) correos[idx].correo = correo;
+    if (body.contrasena !== undefined) correos[idx].contrasena = (body.contrasena || '').toString().trim();
+    if (!correos[idx].nombre) return { ok: false, error: 'Nombre y apellido son obligatorios' };
+    if (!correos[idx].correo) return { ok: false, error: 'El correo corporativo es obligatorio' };
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correos[idx].correo)) return { ok: false, error: 'Correo corporativo invalido' };
+    correos[idx].last_update = new Date().toISOString();
+    await env.USUARIOS.put('correos', JSON.stringify(correos));
+    return { ok: true };
+}
+
 export default {
     async fetch(request, env) {
         const url = new URL(request.url);
@@ -329,6 +352,7 @@ export default {
             const correos = await leerCorreos(env);
             if (accion === 'listar') return json(listarCorreos(correos));
             if (accion === 'agregar') return json(await agregarCorreo(correos, env, body));
+            if (accion === 'editar') return json(await editarCorreo(correos, env, body));
             if (accion === 'eliminar') return json(await eliminarCorreo(correos, env, body));
             return json({ ok: false, error: 'Accion no valida' }, 400);
         }

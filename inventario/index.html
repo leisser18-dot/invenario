@@ -546,7 +546,7 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
                     <th>DEPARTAMENTO</th>
                     <th>CORREO CORPORATIVO</th>
                     <th>CONTRASEÑA</th>
-                    <th id="thCorreoDel">ELIMINAR</th>
+                    <th>ACCIONES</th>
                 </tr></thead>
                 <tbody id="correosTable"></tbody>
             </table>
@@ -701,8 +701,6 @@ function renderTablaCorreos() {
     var tb = document.getElementById('correosTable');
     if (!tb) return;
     var adm = esAdmin();
-    var th = document.getElementById('thCorreoDel');
-    if (th) th.style.display = adm ? '' : 'none';
     if (!CORREOS_LISTA.length) { tb.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-3);padding:30px;">No hay correos corporativos registrados.</td></tr>'; return; }
     tb.innerHTML = CORREOS_LISTA.map(function(c) {
         var del = adm ? '<button class="btn btn-sm btn-user-delete" onclick="eliminarCorreo(' + c.id + ')">Eliminar</button>' : '';
@@ -715,7 +713,7 @@ function renderTablaCorreos() {
             '<td>' + (c.departamento || '-') + '</td>' +
             '<td>' + (c.correo || '-') + '</td>' +
             '<td>' + pass + '</td>' +
-            '<td>' + del + '</td>' +
+            '<td><button class="btn btn-sm btn-ghost" onclick="editarCorreo(' + c.id + ')">Editar</button> ' + del + '</td>' +
         '</tr>';
     }).join('');
 }
@@ -752,8 +750,30 @@ function actualizarSedesCorreo(ubicacion) {
         ubis[ubicacion].forEach(function(sd){ var o = document.createElement('option'); o.value = sd; o.text = sd; s.appendChild(o); });
     }
 }
+function editarCorreo(id) {
+    var c = CORREOS_LISTA.find(function(x){ return x.id === id; });
+    if (!c) return;
+    document.getElementById('edit_correo_id').value = c.id;
+    document.getElementById('correo_nombre').value = c.nombre || '';
+    document.getElementById('correo_cargo').value = c.cargo || '';
+    document.getElementById('correo_email').value = c.correo || '';
+    document.getElementById('correo_password').value = c.contrasena || '';
+    document.getElementById('correoError').innerText = '';
+    var selU = document.getElementById('correo_ubicacion');
+    selU.innerHTML = '<option value="" disabled>Seleccione un estado</option>' + Object.keys(opcionesUbicaciones()).map(function(u){ return '<option value="'+u+'">'+u+'</option>'; }).join('');
+    if (c.ubicacion && c.ubicacion !== '-') selU.value = c.ubicacion;
+    actualizarSedesCorreo(selU.value);
+    if (c.sede && c.sede !== '-') document.getElementById('correo_sede').value = c.sede;
+    var sel = document.getElementById('correo_departamento');
+    sel.innerHTML = '<option value="" disabled>Seleccione departamento</option>' + opcionesDepartamentos().map(function(d){ return '<option value="'+d+'">'+d+'</option>'; }).join('');
+    if (c.departamento && c.departamento !== '-') sel.value = c.departamento;
+    document.getElementById('modalCorreoTitle').innerText = 'Editar Correo Corporativo';
+    document.getElementById('modalCorreo').style.display = 'flex';
+    setTimeout(function(){ document.getElementById('correo_nombre').focus(); }, 100);
+}
 function cerrarModalCorreo() { document.getElementById('modalCorreo').style.display = 'none'; }
 async function guardarCorreo() {
+    var id = document.getElementById('edit_correo_id').value;
     var nombre = document.getElementById('correo_nombre').value.trim();
     var cargo = document.getElementById('correo_cargo').value.trim();
     var ubicacion = document.getElementById('correo_ubicacion').value;
@@ -764,9 +784,10 @@ async function guardarCorreo() {
     var err = document.getElementById('correoError');
     if (!nombre) { err.innerText = 'Ingrese nombre y apellido'; return; }
     if (!correo) { err.innerText = 'Ingrese el correo corporativo'; return; }
-    var r = await apiCorreos('agregar', { nombre: nombre, cargo: cargo, ubicacion: ubicacion, sede: sede, departamento: departamento, correo: correo, contrasena: contrasena });
+    var datos = { nombre: nombre, cargo: cargo, ubicacion: ubicacion, sede: sede, departamento: departamento, correo: correo, contrasena: contrasena };
+    var r = id ? await apiCorreos('editar', Object.assign({ id: parseInt(id, 10) }, datos)) : await apiCorreos('agregar', datos);
     if (r.ok) {
-        toast('Correo registrado', 'success');
+        toast(id ? 'Correo actualizado' : 'Correo registrado', 'success');
         cerrarModalCorreo();
         cargarCorreos();
     } else {
