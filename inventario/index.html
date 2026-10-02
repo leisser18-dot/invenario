@@ -721,7 +721,6 @@ function togglePassCorreo(id) {
 }
 function abrirModalNuevoCorreo() {
     if (!ES_WORKER) { toast('Solo disponible en la web', 'error'); return; }
-    if (!esAdmin()) { toast('No autorizado', 'error'); return; }
     document.getElementById('edit_correo_id').value = '';
     document.getElementById('correo_nombre').value = '';
     document.getElementById('correo_cargo').value = '';
@@ -1320,7 +1319,7 @@ function aplicarPermisos() {
     var navCorr = document.getElementById('navCorreos');
     if (navCorr) navCorr.style.display = '';
     var btnCorr = document.getElementById('btnNuevoCorreo');
-    if (btnCorr) btnCorr.style.display = adm ? '' : 'none';
+    if (btnCorr) btnCorr.style.display = '';
 }
 function actualizarFechaHora() {
     var fh = document.getElementById('fhFecha');
