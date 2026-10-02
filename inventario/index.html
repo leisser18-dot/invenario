@@ -534,7 +534,7 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
                 <div style="font-size:18px;font-weight:700;">Correos Corporativos</div>
                 <div style="font-size:11px;color:var(--text-3);margin-top:2px;">Registro de creaciones de correos corporativos (no afecta el inventario)</div>
             </div>
-            <button class="btn btn-green" onclick="abrirModalNuevoCorreo()">+ Nuevo Correo</button>
+            <button class="btn btn-green" id="btnNuevoCorreo" onclick="abrirModalNuevoCorreo()">+ Nuevo Correo</button>
         </div>
         <div class="table-wrap">
             <table>
@@ -1318,7 +1318,9 @@ function aplicarPermisos() {
     var navUsr = document.getElementById('navUsuarios');
     if (navUsr) navUsr.style.display = adm ? '' : 'none';
     var navCorr = document.getElementById('navCorreos');
-    if (navCorr) navCorr.style.display = adm ? '' : 'none';
+    if (navCorr) navCorr.style.display = '';
+    var btnCorr = document.getElementById('btnNuevoCorreo');
+    if (btnCorr) btnCorr.style.display = adm ? '' : 'none';
 }
 function actualizarFechaHora() {
     var fh = document.getElementById('fhFecha');
