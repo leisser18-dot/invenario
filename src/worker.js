@@ -258,11 +258,12 @@ async function agregarCorreo(correos, env, body) {
     const cargo = (body.cargo || '').toString().trim();
     const departamento = (body.departamento || '').toString().trim();
     const correo = (body.correo || '').toString().trim().toLowerCase();
+    const contrasena = (body.contrasena || '').toString();
     if (!nombre) return { ok: false, error: 'Nombre y apellido son obligatorios' };
     if (!correo) return { ok: false, error: 'El correo corporativo es obligatorio' };
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return { ok: false, error: 'Correo corporativo invalido' };
     if (correos.some(c => String(c.correo || '').toLowerCase() === correo)) return { ok: false, error: 'Ese correo ya esta registrado' };
-    correos.push({ id: nuevoIdCorreo(correos), nombre, cargo: cargo || '-', departamento: departamento || '-', correo, last_update: new Date().toISOString() });
+    correos.push({ id: nuevoIdCorreo(correos), nombre, cargo: cargo || '-', departamento: departamento || '-', correo, contrasena: contrasena || '', last_update: new Date().toISOString() });
     await env.USUARIOS.put('correos', JSON.stringify(correos));
     return { ok: true };
 }
