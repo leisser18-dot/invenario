@@ -549,6 +549,7 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
                     <th>DEPARTAMENTO</th>
                     <th>CORREO CORPORATIVO</th>
                     <th>CONTRASEÑA</th>
+                    <th>FECHA DE REGISTRO</th>
                     <th>ACCIONES</th>
                 </tr></thead>
                 <tbody id="correosTable"></tbody>
@@ -704,10 +705,11 @@ function renderTablaCorreos() {
     var tb = document.getElementById('correosTable');
     if (!tb) return;
     var adm = esAdmin();
-    if (!CORREOS_LISTA.length) { tb.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-3);padding:30px;">No hay correos corporativos registrados.</td></tr>'; return; }
+    if (!CORREOS_LISTA.length) { tb.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-3);padding:30px;">No hay correos corporativos registrados.</td></tr>'; return; }
     tb.innerHTML = CORREOS_LISTA.map(function(c) {
         var del = adm ? '<button class="btn btn-sm btn-user-delete" onclick="eliminarCorreo(' + c.id + ')">Eliminar</button>' : '';
         var pass = c.contrasena ? '<span class="correo-pass" id="pass_' + c.id + '">••••••••</span> <button class="btn btn-sm btn-ghost" onclick="togglePassCorreo(' + c.id + ')">👁</button>' : '-';
+        var fecha = fmtFecha(c.last_update);
         return '<tr>' +
             '<td>' + (c.nombre || '-') + '</td>' +
             '<td>' + (c.cargo || '-') + '</td>' +
@@ -716,6 +718,7 @@ function renderTablaCorreos() {
             '<td>' + (c.departamento || '-') + '</td>' +
             '<td>' + (c.correo || '-') + '</td>' +
             '<td>' + pass + '</td>' +
+            '<td>' + fecha + '</td>' +
             '<td><button class="btn btn-sm btn-ghost" onclick="editarCorreo(' + c.id + ')">Editar</button> ' + del + '</td>' +
         '</tr>';
     }).join('');
