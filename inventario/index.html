@@ -537,7 +537,10 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
                 <div style="font-size:18px;font-weight:700;">Correos Corporativos</div>
                 <div style="font-size:11px;color:var(--text-3);margin-top:2px;">Registro de creaciones de correos corporativos (no afecta el inventario)</div>
             </div>
-            <button class="btn btn-green" id="btnNuevoCorreo" onclick="abrirModalNuevoCorreo()">+ Nuevo Correo</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-green" id="btnNuevoCorreo" onclick="abrirModalNuevoCorreo()">+ Nuevo Correo</button>
+                <button class="btn btn-primary" onclick="exportarCorreosExcel()">📊 Exportar Excel</button>
+            </div>
         </div>
         <div class="table-wrap">
             <table>
@@ -806,7 +809,42 @@ async function eliminarCorreo(id) {
     if (r.ok) { toast('Registro eliminado', 'success'); cargarCorreos(); }
     else { toast(r.error || 'Error al eliminar', 'error'); }
 }
-var OPCIONES_DATA = null;
+async function exportarCorreosExcel() {
+    if (!CORREOS_LISTA.length) { toast('No hay datos para exportar', 'info'); return; }
+    var wb = new ExcelJS.Workbook();
+    var ws = wb.addWorksheet('Correos Corporativos');
+    ws.columns = [
+        { header: 'ID', key: 'id', width: 5 },
+        { header: 'NOMBRE Y APELLIDO', key: 'nombre', width: 30 },
+        { header: 'CARGO', key: 'cargo', width: 20 },
+        { header: 'ESTADO', key: 'ubicacion', width: 18 },
+        { header: 'SEDE', key: 'sede', width: 30 },
+        { header: 'DEPARTAMENTO', key: 'departamento', width: 25 },
+        { header: 'CORREO CORPORATIVO', key: 'correo', width: 35 },
+        { header: 'CONTRASENA', key: 'contrasena', width: 20 },
+        { header: 'FECHA DE REGISTRO', key: 'fecha', width: 20 }
+    ];
+    CORREOS_LISTA.forEach(function(c) {
+        ws.addRow({
+            id: c.id || '',
+            nombre: (c.nombre || '').toUpperCase(),
+            cargo: (c.cargo || '-').toUpperCase(),
+            ubicacion: (c.ubicacion || '-').toUpperCase(),
+            sede: (c.sede || '-').toUpperCase(),
+            departamento: (c.departamento || '-').toUpperCase(),
+            correo: (c.correo || '').toLowerCase(),
+            contrasena: c.contrasena || '',
+            fecha: fmtFecha(c.last_update)
+        });
+    });
+    try {
+        var buf = await wb.xlsx.writeBuffer();
+        saveAs(new Blob([buf]), 'Correos_Corporativos_Fibex_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+        toast('Excel de correos exportado', 'success');
+    } catch (e) {
+        toast('Error al exportar', 'error');
+    }
+}
 async function cargarOpciones() {
     if (!ES_WORKER) return;
     try {
