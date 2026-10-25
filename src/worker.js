@@ -46,7 +46,10 @@ function json(data, status = 200) {
         status,
         headers: {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': ORIGEN_PERMITIDO,
+            // El control real de acceso lo hace esOrigenPermitido() (devuelve 403).
+            // '*' permite leer la respuesta desde produccion y desde localhost
+            // sin enviar cookies (la API no usa credenciales).
+            'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'POST, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type'
         }
@@ -60,8 +63,11 @@ async function leerBody(req) {
 function esOrigenPermitido(req) {
     const origin = req.headers.get('Origin') || '';
     if (origin === ORIGEN_PERMITIDO) return true;
+    // Desarrollo local: permite probar la API con `wrangler dev` sin tocar produccion.
+    if (origin && (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) return true;
     const referer = req.headers.get('Referer') || '';
     if (referer.startsWith(ORIGEN_PERMITIDO)) return true;
+    if (referer.startsWith('http://localhost:') || referer.startsWith('http://127.0.0.1:')) return true;
     return false;
 }
 
@@ -303,15 +309,134 @@ async function editarCorreo(correos, env, body) {
     return { ok: true };
 }
 
+// ===== MODULO TURICOPY (inventario independiente) =====
+// Los registros TuriCopy se guardan en su propia clave de KV ('turicopy')
+// y nunca se mezclan con los del inventario general.
+
+const TC_CATEGORIAS = ['Desktop', 'Laptop', 'Impresora'];
+const TC_ESTADOS = ['Operativo', 'En revision', 'Fuera de servicio'];
+const TC_MAX_REGISTROS = 5000;
+
+async function leerTuriCopy(env) {
+    const raw = await env.USUARIOS.get('turicopy', 'json');
+    return (raw && Array.isArray(raw)) ? raw : [];
+}
+
+function listarTuriCopy(registros) {
+    return { ok: true, registros };
+}
+
+function nuevoIdTuriCopy(registros) {
+    let id = 1;
+    const nums = registros.map(r => parseInt(String(r.id), 10)).filter(n => !isNaN(n));
+    if (nums.length) id = Math.max(...nums) + 1;
+    return id;
+}
+
+function soloTexto(v) {
+    if (v === undefined || v === null) return '';
+    return String(v).trim();
+}
+
+function construirTuriCopy(body) {
+    const categoria = soloTexto(body.categoria);
+    const usuario = soloTexto(body.usuario);
+    if (!categoria) return { error: 'La categoria es obligatoria' };
+    if (!TC_CATEGORIAS.includes(categoria)) return { error: 'Categoria no valida (Desktop, Laptop o Impresora)' };
+    if (!usuario) return { error: 'El usuario responsable es obligatorio' };
+    const estado = soloTexto(body.estado) || 'Operativo';
+    if (!TC_ESTADOS.includes(estado)) return { error: 'Estado no valido' };
+    return { registro: {
+        categoria,
+        usuario,
+        cedula_identidad: soloTexto(body.cedula_identidad),
+        ubicacion: soloTexto(body.ubicacion) || '-',
+        sede: soloTexto(body.sede) || '-',
+        departamento: soloTexto(body.departamento) || '-',
+        nombre_pc: soloTexto(body.nombre_pc),
+        os: soloTexto(body.os),
+        cpu: soloTexto(body.cpu),
+        memoria_gb: soloTexto(body.memoria_gb),
+        disco: soloTexto(body.disco),
+        marca: soloTexto(body.marca),
+        modelo: soloTexto(body.modelo),
+        serial: soloTexto(body.serial).toUpperCase(),
+        estado,
+        observaciones: soloTexto(body.observaciones),
+        last_update: new Date().toISOString()
+    }};
+}
+
+function haySerialDuplicado(registros, serial, ignorarIdx) {
+    if (!serial) return false;
+    return registros.some(function(r, i) {
+        return i !== ignorarIdx && String(r.serial || '').toUpperCase() === serial;
+    });
+}
+
+async function agregarTuriCopy(registros, env, body) {
+    if (registros.length >= TC_MAX_REGISTROS) return { ok: false, error: 'Se alcanzo el limite de ' + TC_MAX_REGISTROS + ' registros' };
+    const res = construirTuriCopy(body);
+    if (res.error) return { ok: false, error: res.error };
+    if (haySerialDuplicado(registros, res.registro.serial, -1)) return { ok: false, error: 'Ya existe un registro con ese serial en TuriCopy' };
+    res.registro.id = nuevoIdTuriCopy(registros);
+    registros.push(res.registro);
+    await env.USUARIOS.put('turicopy', JSON.stringify(registros));
+    return { ok: true, id: res.registro.id };
+}
+
+async function editarTuriCopy(registros, env, body) {
+    const id = parseInt(String(body.id || ''), 10);
+    if (isNaN(id)) return { ok: false, error: 'Id requerido' };
+    const idx = registros.findIndex(r => parseInt(String(r.id), 10) === id);
+    if (idx < 0) return { ok: false, error: 'Registro no encontrado' };
+    const res = construirTuriCopy(body);
+    if (res.error) return { ok: false, error: res.error };
+    if (haySerialDuplicado(registros, res.registro.serial, idx)) return { ok: false, error: 'Ya existe otro registro con ese serial en TuriCopy' };
+    registros[idx] = Object.assign({}, registros[idx], res.registro, { id });
+    await env.USUARIOS.put('turicopy', JSON.stringify(registros));
+    return { ok: true };
+}
+
+async function eliminarTuriCopy(registros, env, body) {
+    const id = parseInt(String(body.id || ''), 10);
+    if (isNaN(id)) return { ok: false, error: 'Id requerido' };
+    const idx = registros.findIndex(r => parseInt(String(r.id), 10) === id);
+    if (idx < 0) return { ok: false, error: 'Registro no encontrado' };
+    registros.splice(idx, 1);
+    await env.USUARIOS.put('turicopy', JSON.stringify(registros));
+    return { ok: true };
+}
+
+async function importarTuriCopy(registros, env, body) {
+    const lista = Array.isArray(body.registros) ? body.registros : [];
+    if (!lista.length) return { ok: false, error: 'No hay registros para importar' };
+    let agregados = 0;
+    let omitidos = 0;
+    let primerError = '';
+    let siguienteId = nuevoIdTuriCopy(registros);
+    for (const item of lista) {
+        if (registros.length >= TC_MAX_REGISTROS) { omitidos++; break; }
+        const res = construirTuriCopy(item || {});
+        if (res.error) { omitidos++; if (!primerError) primerError = res.error; continue; }
+        if (haySerialDuplicado(registros, res.registro.serial, -1)) { omitidos++; if (!primerError && res.registro.serial) primerError = 'Serial duplicado: ' + res.registro.serial; continue; }
+        res.registro.id = siguienteId++;
+        registros.push(res.registro);
+        agregados++;
+    }
+    if (agregados) await env.USUARIOS.put('turicopy', JSON.stringify(registros));
+    return { ok: true, agregados, omitidos, primerError };
+}
+
 export default {
     async fetch(request, env) {
         const url = new URL(request.url);
 
-        if (request.method === 'OPTIONS' && (url.pathname.startsWith('/api/usuarios/') || url.pathname.startsWith('/api/opciones/') || url.pathname.startsWith('/api/correos/'))) {
+        if (request.method === 'OPTIONS' && (url.pathname.startsWith('/api/usuarios/') || url.pathname.startsWith('/api/opciones/') || url.pathname.startsWith('/api/correos/') || url.pathname.startsWith('/api/turicopy/'))) {
             return new Response(null, {
                 status: 204,
                 headers: {
-                    'Access-Control-Allow-Origin': ORIGEN_PERMITIDO,
+                    'Access-Control-Allow-Origin': '*',
                     'Access-Control-Allow-Methods': 'POST, OPTIONS',
                     'Access-Control-Allow-Headers': 'Content-Type'
                 }
@@ -354,6 +479,19 @@ export default {
             if (accion === 'agregar') return json(await agregarCorreo(correos, env, body));
             if (accion === 'editar') return json(await editarCorreo(correos, env, body));
             if (accion === 'eliminar') return json(await eliminarCorreo(correos, env, body));
+            return json({ ok: false, error: 'Accion no valida' }, 400);
+        }
+
+        if (request.method === 'POST' && url.pathname.startsWith('/api/turicopy/')) {
+            if (!esOrigenPermitido(request)) return json({ ok: false, error: 'Origen no permitido' }, 403);
+            const body = await leerBody(request);
+            const accion = url.pathname.slice('/api/turicopy/'.length);
+            const registros = await leerTuriCopy(env);
+            if (accion === 'listar') return json(listarTuriCopy(registros));
+            if (accion === 'agregar') return json(await agregarTuriCopy(registros, env, body));
+            if (accion === 'editar') return json(await editarTuriCopy(registros, env, body));
+            if (accion === 'eliminar') return json(await eliminarTuriCopy(registros, env, body));
+            if (accion === 'importar') return json(await importarTuriCopy(registros, env, body));
             return json({ ok: false, error: 'Accion no valida' }, 400);
         }
 

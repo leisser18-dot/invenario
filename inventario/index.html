@@ -405,6 +405,7 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
     <div class="nav-item" onclick="exportarExcelConImagen()"><span class="ico">📊</span> Exportar Excel</div>
     <div class="nav-item" id="navUsuarios" data-page="usuarios" onclick="showPage('usuarios')" style="display:none;"><span class="ico">👤</span> Gestion de Usuarios</div>
     <div class="nav-item" id="navCorreos" data-page="correos" onclick="showPage('correos')" style="display:none;"><span class="ico">✉️</span> Correos Corporativos</div>
+    <div class="nav-item" id="navTuriCopy" data-page="turicopy" onclick="showPage('turicopy')"><span class="ico">🧩</span> TuriCopy <span class="badge" id="tcBadgeTotal">0</span></div>
     <div class="nav-item" onclick="abrirCambiarPass()"><span class="ico">🔑</span> Cambiar Contrasena</div>
     <div class="nav-item" onclick="cerrarSesion()"><span class="ico">🚪</span> Cerrar Sesion</div>
     <div class="spacer"></div>
@@ -559,6 +560,48 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
             </table>
         </div>
     </div>
+
+    <!-- PAGE: TURICOPY (inventario independiente) -->
+    <div class="page" id="page-turicopy" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+            <div>
+                <div style="font-size:18px;font-weight:700;">TuriCopy</div>
+                <div style="font-size:11px;color:var(--text-3);margin-top:2px;">Inventario independiente de activos TuriCopy (no afecta el inventario general)</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-green" onclick="abrirModalTuriCopy()">+ Nuevo Registro</button>
+                <button class="btn btn-ghost" id="tcBtnImportar" onclick="document.getElementById('tcImportFile').click()">📥 Importar</button>
+                <button class="btn btn-primary" onclick="exportarTuriCopyExcel()">📊 Exportar Excel</button>
+                <button class="btn btn-ghost" onclick="cargarTuriCopy(true)">🔄</button>
+            </div>
+        </div>
+        <div class="toolbar">
+            <div class="search-wrap"><input type="text" id="tcBusqueda" placeholder="Buscar por serial, usuario, modelo, nombre de equipo..." oninput="renderTuriCopy()"></div>
+        </div>
+        <div class="cat-tabs" id="tcCatTabs">
+            <div class="cat-tab active" data-cat="" onclick="setCategoriaTuriCopy('')">Todos</div>
+            <div class="cat-tab" data-cat="Desktop" onclick="setCategoriaTuriCopy('Desktop')">🖥️ Desktop</div>
+            <div class="cat-tab" data-cat="Laptop" onclick="setCategoriaTuriCopy('Laptop')">💻 Laptop</div>
+            <div class="cat-tab" data-cat="Impresora" onclick="setCategoriaTuriCopy('Impresora')">🖨️ Impresora</div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr>
+                    <th>CATEGORIA</th>
+                    <th>USUARIO</th>
+                    <th>DEPARTAMENTO</th>
+                    <th>SEDE</th>
+                    <th>NOMBRE PC</th>
+                    <th>MARCA / MODELO</th>
+                    <th>SERIAL</th>
+                    <th>ESTADO</th>
+                    <th>FECHA DE REGISTRO</th>
+                    <th>ACCIONES</th>
+                </tr></thead>
+                <tbody id="tcTable"></tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <!-- MODAL OPCION -->
@@ -656,7 +699,53 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
     </div>
 </div>
 
+<!-- MODAL TURICOPY -->
+<div id="modalTuriCopy" class="modal">
+    <div class="modal-box">
+        <button class="close-btn" onclick="cerrarModalTuriCopy()">&times;</button>
+        <h3 id="tcModalTitle">Nuevo Registro TuriCopy</h3>
+        <input type="hidden" id="tc_edit_id">
+        <div class="user-add-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
+            <div><label>Categoria *</label>
+                <select id="tc_categoria">
+                    <option value="Desktop">Desktop</option>
+                    <option value="Laptop">Laptop</option>
+                    <option value="Impresora">Impresora</option>
+                </select>
+            </div>
+            <div><label>Usuario responsable *</label><input type="text" id="tc_usuario" placeholder="Nombre y apellido"></div>
+            <div><label>Cedula</label><input type="text" id="tc_cedula" placeholder="V-00000000"></div>
+            <div><label>Estado / Ubicacion</label><select id="tc_ubicacion" onchange="actualizarSedesTuriCopy(this.value)"></select></div>
+            <div><label>Sede</label><select id="tc_sede"></select></div>
+            <div><label>Departamento</label><select id="tc_departamento"></select></div>
+            <div><label>Nombre del equipo</label><input type="text" id="tc_nombre_pc" placeholder="Ej: TC-DESK-01"></div>
+            <div><label>Sistema operativo</label><input type="text" id="tc_os" placeholder="Ej: Windows 11 Pro"></div>
+            <div><label>Procesador</label><input type="text" id="tc_cpu" placeholder="Ej: Intel i5 1240P"></div>
+            <div><label>Memoria (GB)</label><input type="text" id="tc_memoria" placeholder="Ej: 16"></div>
+            <div><label>Disco</label><input type="text" id="tc_disco" placeholder="Ej: SSD 512GB"></div>
+            <div><label>Marca</label><input type="text" id="tc_marca" placeholder="Ej: HP, Dell, Lenovo..."></div>
+            <div><label>Modelo</label><input type="text" id="tc_modelo" placeholder="Modelo del equipo"></div>
+            <div><label>Serial</label><input type="text" id="tc_serial" placeholder="Numero de serie"></div>
+            <div><label>Estado</label>
+                <select id="tc_estado">
+                    <option value="Operativo">Operativo</option>
+                    <option value="En revision">En revision</option>
+                    <option value="Fuera de servicio">Fuera de servicio</option>
+                </select>
+            </div>
+            <div><label>Observaciones</label><input type="text" id="tc_observaciones" placeholder="Notas adicionales..."></div>
+        </div>
+        <div class="login-error" id="tcError"></div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="cerrarModalTuriCopy()">Cancelar</button>
+            <button id="tcBtnDelete" class="btn btn-red" style="display:none;" onclick="eliminarTuriCopyActual()">Eliminar</button>
+            <button class="btn btn-primary" onclick="guardarTuriCopy()">💾 Guardar</button>
+        </div>
+    </div>
+</div>
+
 <input type="file" id="importFile" style="display:none" accept=".xlsx,.xls" onchange="importarExcel(this)">
+<input type="file" id="tcImportFile" style="display:none" accept=".xlsx,.xls" onchange="importarTuriCopyExcel(this)">
 
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx3Caz3nzo3Z3BJS1tb5WK7_baM2iBu-BSsherq88NKgDNT7xnAt4EHt1zR3XzAIf1E/exec";
@@ -664,10 +753,14 @@ let DATA_LOCAL = [], FILTRO_TIPO = "", SOLO_REPETIDOS = false, CATEGORIA_FILTER 
 let chartT = null, chartS = null, chartM = null, SORT_COL = "", SORT_ASC = true;
 
 const ORIGEN_WORKER = 'https://invenario.leisser-18.workers.dev';
-const ES_WORKER = (typeof location !== 'undefined' && location.origin === ORIGEN_WORKER);
+// En localhost (wrangler dev) la app la sirve el propio worker, asi que las
+// llamadas API van al mismo origen en lugar de a produccion.
+const ES_LOCALHOST = (typeof location !== 'undefined') && (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+const ES_WORKER = ES_LOCALHOST || (typeof location !== 'undefined' && location.origin === ORIGEN_WORKER);
+const API_BASE = ES_LOCALHOST ? location.origin : ORIGEN_WORKER;
 async function apiUsuarios(accion, datos) {
     try {
-        var r = await fetch(ORIGEN_WORKER + '/api/usuarios/' + accion, {
+        var r = await fetch(API_BASE + '/api/usuarios/' + accion, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datos)
@@ -677,7 +770,7 @@ async function apiUsuarios(accion, datos) {
 }
 async function apiOpciones(accion, datos) {
     try {
-        var r = await fetch(ORIGEN_WORKER + '/api/opciones/' + accion, {
+        var r = await fetch(API_BASE + '/api/opciones/' + accion, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datos)
@@ -687,7 +780,7 @@ async function apiOpciones(accion, datos) {
 }
 async function apiCorreos(accion, datos) {
     try {
-        var r = await fetch(ORIGEN_WORKER + '/api/correos/' + accion, {
+        var r = await fetch(API_BASE + '/api/correos/' + accion, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datos)
@@ -845,6 +938,306 @@ async function exportarCorreosExcel() {
         toast('Error al exportar', 'error');
     }
 }
+
+// ===== MODULO TURICOPY (inventario independiente) =====
+// Guarda en la clave de KV 'turicopy', separado del inventario general.
+var TC_LISTA = [], TC_CAT = '';
+var TC_CAMPOS = ['categoria','usuario','cedula_identidad','ubicacion','sede','departamento','nombre_pc','os','cpu','memoria_gb','disco','marca','modelo','serial','estado','observaciones'];
+
+async function apiTuriCopy(accion, datos) {
+    try {
+        var r = await fetch(API_BASE + '/api/turicopy/' + accion, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+        return await r.json();
+    } catch(e) { return { ok: false, error: 'Sin conexion con el servidor' }; }
+}
+async function cargarTuriCopy(forzar) {
+    if (!ES_WORKER) { toast('Solo disponible en la web', 'info'); return; }
+    try {
+        var r = await apiTuriCopy('listar', {});
+        if (r.ok) { TC_LISTA = r.registros || []; renderTuriCopy(); }
+        else { toast(r.error || 'Error cargando TuriCopy', 'error'); }
+    } catch(e) { toast('Error de conexion', 'error'); }
+}
+function tcBadge() {
+    var b = document.getElementById('tcBadgeTotal');
+    if (b) b.textContent = TC_LISTA.length;
+}
+function setCategoriaTuriCopy(cat) {
+    TC_CAT = cat || '';
+    var tabs = document.querySelectorAll('#tcCatTabs .cat-tab');
+    for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('active', tabs[i].getAttribute('data-cat') === TC_CAT);
+    renderTuriCopy();
+}
+function tcEsc(v) {
+    return String(v === undefined || v === null ? '' : v)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function tcColor(cat) {
+    if (cat === 'Desktop') return '#2563eb';
+    if (cat === 'Laptop') return '#16a34a';
+    if (cat === 'Impresora') return '#d97706';
+    return '#64748b';
+}
+function tcFiltrados() {
+    var q = (document.getElementById('tcBusqueda') ? document.getElementById('tcBusqueda').value : '').trim().toLowerCase();
+    return TC_LISTA.filter(function(r) {
+        if (TC_CAT && r.categoria !== TC_CAT) return false;
+        if (!q) return true;
+        var campos = [r.categoria, r.usuario, r.serial, r.marca, r.modelo, r.nombre_pc, r.departamento, r.sede, r.cedula_identidad];
+        for (var i = 0; i < campos.length; i++) {
+            if (String(campos[i] || '').toLowerCase().indexOf(q) >= 0) return true;
+        }
+        return false;
+    }).sort(function(a, b) { return String(b.last_update || '').localeCompare(String(a.last_update || '')); });
+}
+function renderTuriCopy() {
+    tcBadge();
+    var tb = document.getElementById('tcTable');
+    if (!tb) return;
+    var adm = esAdmin();
+    var filas = tcFiltrados();
+    if (!filas.length) {
+        tb.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-3);padding:30px;">No hay registros TuriCopy.</td></tr>';
+        return;
+    }
+    tb.innerHTML = filas.map(function(r) {
+        var del = adm ? ' <button class="btn btn-sm btn-user-delete" onclick="eliminarTuriCopy(' + r.id + ')">Eliminar</button>' : '';
+        var equipo = [r.marca, r.modelo].filter(Boolean).join(' ') || '-';
+        return '<tr>' +
+            '<td><span class="badge" style="background:' + tcColor(r.categoria) + '">' + tcEsc(r.categoria || '-') + '</span></td>' +
+            '<td>' + tcEsc(r.usuario || '-') + '</td>' +
+            '<td>' + tcEsc(r.departamento || '-') + '</td>' +
+            '<td>' + tcEsc(r.sede || '-') + '</td>' +
+            '<td>' + tcEsc(r.nombre_pc || '-') + '</td>' +
+            '<td>' + tcEsc(equipo) + '</td>' +
+            '<td style="font-family:monospace;">' + tcEsc(r.serial || '-') + '</td>' +
+            '<td>' + tcEsc(r.estado || '-') + '</td>' +
+            '<td>' + fmtFecha(r.last_update) + '</td>' +
+            '<td><button class="btn btn-sm btn-ghost" onclick="editarTuriCopy(' + r.id + ')">Editar</button>' + del + '</td>' +
+        '</tr>';
+    }).join('');
+}
+function actualizarSedesTuriCopy(ubicacion) {
+    var s = document.getElementById('tc_sede');
+    if (!s) return;
+    s.innerHTML = '<option value="">Seleccione sede</option>';
+    var ubis = opcionesUbicaciones();
+    if (ubicacion && ubis[ubicacion]) {
+        ubis[ubicacion].forEach(function(sd) { var o = document.createElement('option'); o.value = sd; o.text = sd; s.appendChild(o); });
+    }
+}
+function abrirModalTuriCopy(id) {
+    if (!ES_WORKER) { toast('Solo disponible en la web', 'error'); return; }
+    var reg = null;
+    if (id) {
+        reg = TC_LISTA.find(function(x) { return parseInt(String(x.id), 10) === parseInt(String(id), 10); });
+        if (!reg) { toast('Registro no encontrado', 'error'); return; }
+    }
+    document.getElementById('tcModalTitle').innerText = reg ? 'Editar Registro TuriCopy' : 'Nuevo Registro TuriCopy';
+    document.getElementById('tc_edit_id').value = reg ? reg.id : '';
+    document.getElementById('tcError').innerText = '';
+    document.getElementById('tc_usuario').value = reg ? (reg.usuario || '') : '';
+    document.getElementById('tc_cedula').value = reg ? (reg.cedula_identidad || '') : '';
+    document.getElementById('tc_nombre_pc').value = reg ? (reg.nombre_pc || '') : '';
+    document.getElementById('tc_os').value = reg ? (reg.os || '') : '';
+    document.getElementById('tc_cpu').value = reg ? (reg.cpu || '') : '';
+    document.getElementById('tc_memoria').value = reg ? (reg.memoria_gb || '') : '';
+    document.getElementById('tc_disco').value = reg ? (reg.disco || '') : '';
+    document.getElementById('tc_marca').value = reg ? (reg.marca || '') : '';
+    document.getElementById('tc_modelo').value = reg ? (reg.modelo || '') : '';
+    document.getElementById('tc_serial').value = reg ? (reg.serial || '') : '';
+    document.getElementById('tc_observaciones').value = reg ? (reg.observaciones || '') : '';
+
+    var ubis = opcionesUbicaciones();
+    var selU = document.getElementById('tc_ubicacion');
+    selU.innerHTML = '<option value="">Seleccione un estado</option>' + Object.keys(ubis).map(function(u) { return '<option value="' + tcEsc(u) + '">' + tcEsc(u) + '</option>'; }).join('');
+    if (reg && reg.ubicacion && reg.ubicacion !== '-') selU.value = reg.ubicacion;
+    actualizarSedesTuriCopy(selU.value);
+    if (reg && reg.sede && reg.sede !== '-') document.getElementById('tc_sede').value = reg.sede;
+
+    var selD = document.getElementById('tc_departamento');
+    selD.innerHTML = '<option value="">Seleccione departamento</option>' + opcionesDepartamentos().map(function(d) { return '<option value="' + tcEsc(d) + '">' + tcEsc(d) + '</option>'; }).join('');
+    if (reg && reg.departamento && reg.departamento !== '-') selD.value = reg.departamento;
+
+    document.getElementById('tc_categoria').value = reg ? (reg.categoria || 'Desktop') : 'Desktop';
+    document.getElementById('tc_estado').value = reg && reg.estado ? reg.estado : 'Operativo';
+    var del = document.getElementById('tcBtnDelete');
+    del.style.display = (reg && esAdmin()) ? '' : 'none';
+    document.getElementById('modalTuriCopy').style.display = 'flex';
+    setTimeout(function() { var el = document.getElementById('tc_usuario'); if (el) el.focus(); }, 100);
+}
+function editarTuriCopy(id) { abrirModalTuriCopy(id); }
+function cerrarModalTuriCopy() { document.getElementById('modalTuriCopy').style.display = 'none'; }
+async function guardarTuriCopy() {
+    var id = document.getElementById('tc_edit_id').value;
+    var err = document.getElementById('tcError');
+    err.innerText = '';
+    var datos = {
+        categoria: document.getElementById('tc_categoria').value,
+        usuario: document.getElementById('tc_usuario').value.trim(),
+        cedula_identidad: document.getElementById('tc_cedula').value.trim(),
+        ubicacion: document.getElementById('tc_ubicacion').value,
+        sede: document.getElementById('tc_sede').value,
+        departamento: document.getElementById('tc_departamento').value,
+        nombre_pc: document.getElementById('tc_nombre_pc').value.trim(),
+        os: document.getElementById('tc_os').value.trim(),
+        cpu: document.getElementById('tc_cpu').value.trim(),
+        memoria_gb: document.getElementById('tc_memoria').value.trim(),
+        disco: document.getElementById('tc_disco').value.trim(),
+        marca: document.getElementById('tc_marca').value.trim(),
+        modelo: document.getElementById('tc_modelo').value.trim(),
+        serial: document.getElementById('tc_serial').value.trim(),
+        estado: document.getElementById('tc_estado').value,
+        observaciones: document.getElementById('tc_observaciones').value.trim()
+    };
+    if (!datos.usuario) { err.innerText = 'Ingrese el usuario responsable'; return; }
+    var r = id ? await apiTuriCopy('editar', Object.assign({ id: parseInt(id, 10) }, datos))
+               : await apiTuriCopy('agregar', datos);
+    if (r.ok) {
+        toast(id ? 'Registro actualizado' : 'Registro TuriCopy agregado', 'success');
+        cerrarModalTuriCopy();
+        cargarTuriCopy();
+    } else {
+        err.innerText = r.error || 'Error al guardar';
+    }
+}
+async function eliminarTuriCopy(id) {
+    if (!esAdmin()) { toast('No autorizado', 'error'); return; }
+    if (!confirm('Eliminar este registro TuriCopy?')) return;
+    var r = await apiTuriCopy('eliminar', { id: parseInt(id, 10) });
+    if (r.ok) { toast('Registro eliminado', 'success'); cargarTuriCopy(); }
+    else { toast(r.error || 'Error al eliminar', 'error'); }
+}
+async function eliminarTuriCopyActual() {
+    var id = document.getElementById('tc_edit_id').value;
+    if (!id) return;
+    await eliminarTuriCopy(parseInt(id, 10));
+}
+async function exportarTuriCopyExcel() {
+    if (!TC_LISTA.length) { toast('No hay datos para exportar', 'info'); return; }
+    var wb = new ExcelJS.Workbook();
+    var ws = wb.addWorksheet('TuriCopy');
+    ws.columns = [
+        { header: 'CATEGORIA', key: 'categoria', width: 14 },
+        { header: 'USUARIO', key: 'usuario', width: 26 },
+        { header: 'CEDULA', key: 'cedula_identidad', width: 14 },
+        { header: 'UBICACION', key: 'ubicacion', width: 24 },
+        { header: 'SEDE', key: 'sede', width: 28 },
+        { header: 'DEPARTAMENTO', key: 'departamento', width: 24 },
+        { header: 'NOMBRE PC', key: 'nombre_pc', width: 16 },
+        { header: 'SISTEMA OPERATIVO', key: 'os', width: 20 },
+        { header: 'PROCESADOR', key: 'cpu', width: 20 },
+        { header: 'MEMORIA (GB)', key: 'memoria_gb', width: 13 },
+        { header: 'DISCO', key: 'disco', width: 16 },
+        { header: 'MARCA', key: 'marca', width: 14 },
+        { header: 'MODELO', key: 'modelo', width: 20 },
+        { header: 'SERIAL', key: 'serial', width: 20 },
+        { header: 'ESTADO', key: 'estado', width: 16 },
+        { header: 'OBSERVACIONES', key: 'observaciones', width: 30 },
+        { header: 'FECHA DE REGISTRO', key: 'fecha', width: 20 }
+    ];
+    TC_LISTA.forEach(function(r) {
+        ws.addRow({
+            categoria: r.categoria || '',
+            usuario: (r.usuario || '').toUpperCase(),
+            cedula_identidad: r.cedula_identidad || '',
+            ubicacion: r.ubicacion || '-',
+            sede: r.sede || '-',
+            departamento: r.departamento || '-',
+            nombre_pc: r.nombre_pc || '',
+            os: r.os || '',
+            cpu: r.cpu || '',
+            memoria_gb: r.memoria_gb || '',
+            disco: r.disco || '',
+            marca: r.marca || '',
+            modelo: r.modelo || '',
+            serial: r.serial || '',
+            estado: r.estado || '',
+            observaciones: r.observaciones || '',
+            fecha: fmtFecha(r.last_update)
+        });
+    });
+    try {
+        var buf = await wb.xlsx.writeBuffer();
+        saveAs(new Blob([buf]), 'TuriCopy_Inventario_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+        toast('Excel de TuriCopy exportado', 'success');
+    } catch (e) {
+        toast('Error al exportar', 'error');
+    }
+}
+function tcCategoriaExcel(v) {
+    var s = String(v || '').trim().toLowerCase();
+    if (!s) return '';
+    if (s.indexOf('desk') === 0) return 'Desktop';
+    if (s.indexOf('lapt') === 0) return 'Laptop';
+    if (s.indexOf('impr') === 0) return 'Impresora';
+    return String(v).trim();
+}
+function tcEstadoExcel(v) {
+    var s = String(v || '').trim().toLowerCase();
+    if (!s) return '';
+    if (s.indexOf('fuera') >= 0 || s.indexOf('dañ') >= 0 || s.indexOf('dan') >= 0) return 'Fuera de servicio';
+    if (s.indexOf('revisi') >= 0 || s.indexOf('pendi') >= 0) return 'En revision';
+    if (s.indexOf('oper') === 0 || s.indexOf('acti') === 0) return 'Operativo';
+    return String(v).trim();
+}
+function tcMapearFila(row) {
+    return {
+        categoria: tcCategoriaExcel(row['CATEGORIA'] || row['categoria'] || ''),
+        usuario: String(row['USUARIO'] || row['usuario'] || '').trim(),
+        cedula_identidad: String(row['CEDULA'] || row['cedula_identidad'] || '').trim(),
+        ubicacion: String(row['UBICACION'] || row['ubicacion'] || '').trim(),
+        sede: String(row['SEDE'] || row['sede'] || '').trim(),
+        departamento: String(row['DEPARTAMENTO'] || row['departamento'] || '').trim(),
+        nombre_pc: String(row['NOMBRE PC'] || row['nombre_pc'] || '').trim(),
+        os: String(row['SISTEMA OPERATIVO'] || row['os'] || '').trim(),
+        cpu: String(row['PROCESADOR'] || row['cpu'] || '').trim(),
+        memoria_gb: String(row['MEMORIA (GB)'] || row['MEMORIA'] || row['memoria_gb'] || '').trim(),
+        disco: String(row['DISCO'] || row['disco'] || '').trim(),
+        marca: String(row['MARCA'] || row['marca'] || '').trim(),
+        modelo: String(row['MODELO'] || row['modelo'] || '').trim(),
+        serial: String(row['SERIAL'] || row['serial'] || '').trim(),
+        estado: tcEstadoExcel(row['ESTADO'] || row['estado'] || ''),
+        observaciones: String(row['OBSERVACIONES'] || row['observaciones'] || '').trim()
+    };
+}
+async function importarTuriCopyExcel(input) {
+    if (!esAdmin()) { toast('No autorizado', 'error'); input.value = ''; return; }
+    if (!ES_WORKER) { toast('Solo disponible en la web', 'error'); input.value = ''; return; }
+    var f = input.files[0];
+    if (!f) return;
+    var ov = document.getElementById('loadingOverlay');
+    var r = new FileReader();
+    r.onload = async function(e) {
+        try {
+            var wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+            var sh = wb.Sheets[wb.SheetNames[0]];
+            var filas = XLSX.utils.sheet_to_json(sh);
+            var registros = filas.map(tcMapearFila);
+            if (ov) ov.style.display = 'flex';
+            var res = await apiTuriCopy('importar', { registros: registros });
+            if (ov) ov.style.display = 'none';
+            if (res.ok) {
+                var msg = res.agregados + ' registros importados';
+                if (res.omitidos) msg += ' (' + res.omitidos + ' omitidos' + (res.primerError ? ': ' + res.primerError : '') + ')';
+                toast(msg, res.omitidos ? 'info' : 'success');
+                cargarTuriCopy();
+            } else {
+                toast(res.error || 'Error al importar', 'error');
+            }
+        } catch (err) {
+            if (ov) ov.style.display = 'none';
+            toast('No se pudo leer el archivo Excel', 'error');
+        }
+        input.value = '';
+    };
+    r.readAsArrayBuffer(f);
+}
+
 async function cargarOpciones() {
     if (!ES_WORKER) return;
     try {
@@ -1013,12 +1406,13 @@ function showPage(id) {
     if (id === 'graficos') { renderGraficosFull(); }
     if (id === 'usuarios') { cargarUsuarios(); cargarOpciones().then(function(){ renderizarOpciones(); actualizarSelectsDinamicos(); }); }
     if (id === 'correos') { cargarOpciones(); cargarCorreos(); }
+    if (id === 'turicopy') { cargarTuriCopy(); }
     if (window.innerWidth <= 768) { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
 }
 
 function setCategoria(cat) {
     FILTRO_TIPO = cat; SOLO_REPETIDOS = false;
-    document.querySelectorAll('.cat-tab').forEach(function(t) { t.classList.toggle('active', t.dataset.cat === cat); });
+    document.querySelectorAll('#catTabs .cat-tab').forEach(function(t) { t.classList.toggle('active', t.dataset.cat === cat); });
     renderizarTable();
 }
 
@@ -1026,7 +1420,7 @@ function filtrarCategoria(cat) {
     CATEGORIA_FILTER = cat;
     showPage('equipos');
     FILTRO_TIPO = "";
-    document.querySelectorAll('.cat-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('#catTabs .cat-tab').forEach(function(t) { t.classList.remove('active'); });
     renderizarTable();
 }
 
@@ -1148,7 +1542,7 @@ function renderDashboard() {
         var d = document.createElement('div');
         d.className = 'stat-card' + (it.cls ? ' ' + it.cls : '');
         d.innerHTML = '<div class="sc-icon">' + it.ico + '</div><div class="sc-label">' + it.lbl + '</div><div class="sc-value">' + it.val + '</div>';
-        d.onclick = function() { if (it.lbl==='Duplicados') { SOLO_REPETIDOS=true; FILTRO_TIPO=''; } else if (it.lbl==='Total') { SOLO_REPETIDOS=false; FILTRO_TIPO=''; } else { SOLO_REPETIDOS=false; FILTRO_TIPO=TIPO_MAP[it.lbl]||it.lbl.toUpperCase(); } showPage('equipos'); if (it.lbl==='Duplicados') { document.querySelectorAll('.cat-tab').forEach(function(t){ t.classList.remove('active'); }); } else { setCategoria(FILTRO_TIPO); } };
+        d.onclick = function() { if (it.lbl==='Duplicados') { SOLO_REPETIDOS=true; FILTRO_TIPO=''; } else if (it.lbl==='Total') { SOLO_REPETIDOS=false; FILTRO_TIPO=''; } else { SOLO_REPETIDOS=false; FILTRO_TIPO=TIPO_MAP[it.lbl]||it.lbl.toUpperCase(); } showPage('equipos'); if (it.lbl==='Duplicados') { document.querySelectorAll('#catTabs .cat-tab').forEach(function(t){ t.classList.remove('active'); }); } else { setCategoria(FILTRO_TIPO); } };
         grid.appendChild(d);
     });
 
@@ -1378,6 +1772,7 @@ function entrar(em, rol) {
     aplicarPermisos();
     cargarOpciones();
     cargarDesdeNube();
+    if (ES_WORKER) cargarTuriCopy(); // carga el badge sin avisar si estamos en modo offline
 }
 function esAdmin() {
     var em = usuarioActual();
@@ -1404,6 +1799,8 @@ function aplicarPermisos() {
     if (navUsr) navUsr.style.display = adm ? '' : 'none';
     var navCorr = document.getElementById('navCorreos');
     if (navCorr) navCorr.style.display = '';
+    var tcImp = document.getElementById('tcBtnImportar');
+    if (tcImp) tcImp.style.display = adm ? '' : 'none';
     var btnCorr = document.getElementById('btnNuevoCorreo');
     if (btnCorr) btnCorr.style.display = '';
 }
@@ -1653,6 +2050,7 @@ window.onload = function() {
         aplicarPermisos();
         cargarOpciones();
         cargarDesdeNube();
+        if (ES_WORKER) cargarTuriCopy(); // badge del modulo TuriCopy
     } else {
         document.getElementById('loginScreen').classList.add('show');
         var le = document.getElementById('loginEmail'); if (le) le.focus();
