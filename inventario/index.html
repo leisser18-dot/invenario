@@ -1580,7 +1580,7 @@ function renderDashboard() {
 
 // ===== TABLE =====
 function columnasVisibles() {
-    if (CATEGORIA_FILTER === 'PUNTOS DE VENTA') return ['marca','modelo','serial','sede','estatus'];
+    if (CATEGORIA_FILTER === 'PUNTOS DE VENTA') return ['marca','modelo','serial','ubicacion','sede','estatus'];
     var ignorarEnTabla = ['diadema','mouse','teclado','monitor'];
     return COLUMNAS_OFICIALES.filter(function(c) { return c!=='tipo' && !ignorarEnTabla.includes(c); });
 }
@@ -1689,7 +1689,7 @@ function toggleCamposDinamicos(tipo){
     else if(tipo==='DESKTOP') q=['v_android','bolsos','f_asig_bolsos','ip','mac','password'];
     else if(tipo==='LAPTOP') q=['v_android','teclado','teclado_modelo','f_asig_teclado','ip','mac','password'];
     else if(tipo==='PANTALLA PUBLICITARIA') q=COLUMNAS_OFICIALES.filter(function(c){return !['ubicacion','sede','nombre_pc','ip','mac','password','tipo','last_update'].includes(c)});
-    else if(tipo==='PUNTOS DE VENTA') q=['marca','modelo','serial','sede','estatus'];
+    else if(tipo==='PUNTOS DE VENTA') q=['marca','modelo','serial','ubicacion','sede','estatus'];
     else q=['ip','mac','password'];
     q.forEach(function(id){if(document.getElementById(id))document.getElementById(id).style.display='block'});
     if(con&&tipo==='IMPRESORA')con.style.display='block'; if(cns&&tipo==='IMPRESORA')cns.style.display='block';
