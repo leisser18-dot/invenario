@@ -150,6 +150,7 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
 .bg-impresora { background: linear-gradient(135deg,#06b6d4,#0e7490); }
 .bg-autopago { background: linear-gradient(135deg,#6b7280,#374151); }
 .bg-pantalla-publicitaria { background: linear-gradient(135deg,#ec4899,#be185d); }
+.bg-pdv { background: linear-gradient(135deg,#f97316,#c2410c); }
 .btn-edit { background: var(--primary); color: white; border: none; padding: 4px 9px; border-radius: 5px; cursor: pointer; font-size: 10px; font-weight: 600; transition: var(--transition); text-shadow: 0 0 4px rgba(255,255,255,0.4); box-shadow: 0 0 8px rgba(59,130,246,0.45), inset 0 0 4px rgba(255,255,255,0.15); }
 .btn-edit:hover { background: #2563eb; box-shadow: 0 0 14px rgba(59,130,246,0.75), inset 0 0 6px rgba(255,255,255,0.2); }
 
@@ -399,6 +400,7 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
     <div class="nav-item" data-page="cat-impresoras" onclick="filtrarCategoria('IMPRESORA')"><span class="ico">🖨️</span> Impresoras <span class="badge" id="catImp">0</span></div>
     <div class="nav-item" data-page="cat-pantallas" onclick="filtrarCategoria('PANTALLA PUBLICITARIA')"><span class="ico">📺</span> Pantalla Publicitaria <span class="badge" id="catPan">0</span></div>
     <div class="nav-item" data-page="cat-autopago" onclick="filtrarCategoria('AUTOPAGO')"><span class="ico">🏧</span> AutoPago <span class="badge" id="catAuto">0</span></div>
+    <div class="nav-item" data-page="cat-pdv" onclick="filtrarCategoria('PUNTOS DE VENTA')"><span class="ico">🏪</span> Puntos de Venta <span class="badge" id="catPdv">0</span></div>
     <div class="nav-section">Herramientas</div>
     <div class="nav-item" data-page="graficos" onclick="showPage('graficos')"><span class="ico">📈</span> Estadisticas</div>
     <div class="nav-item" id="navImportar" onclick="document.getElementById('importFile').click()"><span class="ico">📥</span> Importar</div>
@@ -452,6 +454,7 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
             <div class="cat-tab" data-cat="IMPRESORA" onclick="setCategoria('IMPRESORA')">🖨️ Impresora</div>
             <div class="cat-tab" data-cat="AUTOPAGO" onclick="setCategoria('AUTOPAGO')">🏧 Autopago</div>
             <div class="cat-tab" data-cat="PANTALLA PUBLICITARIA" onclick="setCategoria('PANTALLA PUBLICITARIA')">📺 Pantalla</div>
+            <div class="cat-tab" data-cat="PUNTOS DE VENTA" onclick="setCategoria('PUNTOS DE VENTA')">🏪 Puntos de Venta</div>
         </div>
         <div class="table-wrap" id="tableWrap">
             <table>
@@ -1354,7 +1357,8 @@ const MAPA_CATEGORIAS = {
     'TABLET': ['TABLET'],
     'IMPRESORA': ['IMPRESORA'],
     'PANTALLA PUBLICITARIA': ['PANTALLA PUBLICITARIA'],
-    'AUTOPAGO': ['AUTOPAGO']
+    'AUTOPAGO': ['AUTOPAGO'],
+    'PUNTOS DE VENTA': ['PUNTOS DE VENTA']
 };
 
 const RELACION_UBICACION_SEDE = {
@@ -1516,6 +1520,7 @@ function renderDashboard() {
     var imps = DATA_LOCAL.filter(function(x){return x.tipo==='IMPRESORA'}).length;
     var autos = DATA_LOCAL.filter(function(x){return x.tipo==='AUTOPAGO'}).length;
     var pants = DATA_LOCAL.filter(function(x){return x.tipo==='PANTALLA PUBLICITARIA'}).length;
+    var pdvs = DATA_LOCAL.filter(function(x){return x.tipo==='PUNTOS DE VENTA'}).length;
 
     var excl = ["-","N/A","S/N","AUTO-PAGO","TECNO SPARK 20C","TECNO SPARK 30C","USUARIO","BLACKVIEW","GALAXY TAB","TAB 15","TAB 70"];
     var rp = calcularRepetidos();
@@ -1526,7 +1531,7 @@ function renderDashboard() {
     }
 
     grid.innerHTML = '';
-    var TIPO_MAP = {'Desktop':'DESKTOP','Laptop':'LAPTOP','Movil':'CELULAR','Tablet':'TABLET','Impresora':'IMPRESORA','Autopago':'AUTOPAGO','Pantalla':'PANTALLA PUBLICITARIA'};
+    var TIPO_MAP = {'Desktop':'DESKTOP','Laptop':'LAPTOP','Movil':'CELULAR','Tablet':'TABLET','Impresora':'IMPRESORA','Autopago':'AUTOPAGO','Pantalla':'PANTALLA PUBLICITARIA','Punto de Venta':'PUNTOS DE VENTA'};
     var items = [
         {ico:'📋', lbl:'Total', val:total, cls:''},
         {ico:'🖥️', lbl:'Desktop', val:desks, cls:''},
@@ -1536,6 +1541,7 @@ function renderDashboard() {
         {ico:'🖨️', lbl:'Impresora', val:imps, cls:''},
         {ico:'🏧', lbl:'Autopago', val:autos, cls:''},
         {ico:'📺', lbl:'Pantalla', val:pants, cls:''},
+        {ico:'🏪', lbl:'Punto de Venta', val:pdvs, cls:''},
         {ico:'⚠️', lbl:'Duplicados', val:reps, cls:'alert'}
     ];
     items.forEach(function(it) {
@@ -1555,6 +1561,7 @@ function renderDashboard() {
     document.getElementById('catImp').innerText = imps;
     document.getElementById('catPan').innerText = pants;
     document.getElementById('catAuto').innerText = autos;
+    document.getElementById('catPdv').innerText = pdvs;
 
     // recent (mismas columnas que la vista de equipos, con FECHA primero)
     var cols = columnasVisibles();
@@ -1620,7 +1627,7 @@ function renderizarTable() {
 function inicializarEstructuraModal() {
     var c = document.getElementById('modal_fields');
     if (c.innerHTML !== "") return;
-    var html = '<select id="tipo" onchange="toggleCamposDinamicos(this.value)"><option value="">TIPO: SELECCIONE</option><option value="DESKTOP">DESKTOP</option><option value="LAPTOP">LAPTOP</option><option value="CELULAR">CELULAR</option><option value="TABLET">TABLET</option><option value="IMPRESORA">IMPRESORA</option><option value="AUTOPAGO">AUTOPAGO</option><option value="PANTALLA PUBLICITARIA">PANTALLA PUBLICITARIA</option></select>';
+    var html = '<select id="tipo" onchange="toggleCamposDinamicos(this.value)"><option value="">TIPO: SELECCIONE</option><option value="DESKTOP">DESKTOP</option><option value="LAPTOP">LAPTOP</option><option value="CELULAR">CELULAR</option><option value="TABLET">TABLET</option><option value="IMPRESORA">IMPRESORA</option><option value="AUTOPAGO">AUTOPAGO</option><option value="PANTALLA PUBLICITARIA">PANTALLA PUBLICITARIA</option><option value="PUNTOS DE VENTA">PUNTOS DE VENTA</option></select>';
     html += '<select id="conexion" style="display:none;"><option value="">CONEXION</option><option value="IP">IP</option><option value="USB">USB</option><option value="RED">RED</option></select>';
     html += '<select id="consumible" style="display:none;"><option value="">CONSUMIBLE</option><option value="TONER">TONER</option><option value="TINTA">TINTA</option></select>';
     COLUMNAS_OFICIALES.forEach(function(c) {
@@ -1680,6 +1687,7 @@ function toggleCamposDinamicos(tipo){
     else if(tipo==='DESKTOP') q=['v_android','bolsos','f_asig_bolsos','ip','mac','password'];
     else if(tipo==='LAPTOP') q=['v_android','teclado','teclado_modelo','f_asig_teclado','ip','mac','password'];
     else if(tipo==='PANTALLA PUBLICITARIA') q=COLUMNAS_OFICIALES.filter(function(c){return !['ubicacion','sede','nombre_pc','ip','mac','password','tipo','last_update'].includes(c)});
+    else if(tipo==='PUNTOS DE VENTA') q=['usuario','nombre_pc','os','cpu','memoria_gb','disco','ubicacion','sede','ip','mac','password'];
     else q=['ip','mac','password'];
     q.forEach(function(id){if(document.getElementById(id))document.getElementById(id).style.display='none'});
 }
