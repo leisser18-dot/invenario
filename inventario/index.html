@@ -1580,6 +1580,7 @@ function renderDashboard() {
 
 // ===== TABLE =====
 function columnasVisibles() {
+    if (CATEGORIA_FILTER === 'PUNTOS DE VENTA') return ['marca','modelo','serial','sede','estatus'];
     var ignorarEnTabla = ['diadema','mouse','teclado','monitor'];
     return COLUMNAS_OFICIALES.filter(function(c) { return c!=='tipo' && !ignorarEnTabla.includes(c); });
 }
