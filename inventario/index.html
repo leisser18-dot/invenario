@@ -1693,6 +1693,11 @@ function toggleCamposDinamicos(tipo){
     else q=['ip','mac','password'];
     q.forEach(function(id){if(document.getElementById(id))document.getElementById(id).style.display='block'});
     if(con&&tipo==='IMPRESORA')con.style.display='block'; if(cns&&tipo==='IMPRESORA')cns.style.display='block';
+    if(tipo==='PUNTOS DE VENTA'){
+        var mEl=document.getElementById('marca'), mdEl=document.getElementById('modelo');
+        if(mEl && mEl.value==='') mEl.value='SITEF';
+        if(mdEl && mdEl.value==='') mdEl.value='PPC 930';
+    }
 }
 
 function cerrarModal(){document.getElementById('modal').style.display='none'}
