@@ -1678,18 +1678,18 @@ async function guardarRegistro() {
 function togglePeriferico(p,v){if(!DEP_PERIFERICOS[p])return;DEP_PERIFERICOS[p].forEach(function(id){var el=document.getElementById(id);if(el){el.style.display='block';el.disabled=false}})}
 
 function toggleCamposDinamicos(tipo){
-    COLUMNAS_OFICIALES.forEach(function(c){if(document.getElementById(c))document.getElementById(c).style.display='none'});
+    COLUMNAS_OFICIALES.forEach(function(c){if(document.getElementById(c))document.getElementById(c).style.display='block'});
     var con=document.getElementById('conexion'),cns=document.getElementById('consumible');
-    if(con)con.style.display='none'; if(cns)cns.style.display='none';
+    if(con)con.style.display=(tipo==='IMPRESORA')?'block':'none'; if(cns)cns.style.display=(tipo==='IMPRESORA')?'block':'none';
     var q=[];
     if(tipo==='IMPRESORA') q=['usuario','nombre_pc','os','cpu','memoria_gb','disco','v_android','diadema','f_asig_diadema','mouse','mouse_modelo','f_asig_mouse','teclado','teclado_modelo','f_asig_teclado','monitor','monitor_modelo','f_asig_monitor','bolsos','f_asig_bolsos','ip','mac','password'];
     else if(tipo==='CELULAR'||tipo==='AUTOPAGO'||tipo==='TABLET') q=['diadema','f_asig_diadema','mouse','mouse_modelo','f_asig_mouse','teclado','teclado_modelo','f_asig_teclado','monitor','monitor_modelo','f_asig_monitor','bolsos','f_asig_bolsos','ip','mac','password'];
     else if(tipo==='DESKTOP') q=['v_android','bolsos','f_asig_bolsos','ip','mac','password'];
     else if(tipo==='LAPTOP') q=['v_android','teclado','teclado_modelo','f_asig_teclado','ip','mac','password'];
     else if(tipo==='PANTALLA PUBLICITARIA') q=COLUMNAS_OFICIALES.filter(function(c){return !['ubicacion','sede','nombre_pc','ip','mac','password','tipo','last_update'].includes(c)});
+    else if(tipo==='PUNTOS DE VENTA') q=['usuario','nombre_pc','os','cpu','memoria_gb','disco','ubicacion','sede','ip','mac','password'];
     else q=['ip','mac','password'];
-    q.forEach(function(id){if(document.getElementById(id))document.getElementById(id).style.display='block'});
-    if(con&&tipo==='IMPRESORA')con.style.display='block'; if(cns&&tipo==='IMPRESORA')cns.style.display='block';
+    q.forEach(function(id){if(document.getElementById(id))document.getElementById(id).style.display='none'});
 }
 
 function cerrarModal(){document.getElementById('modal').style.display='none'}
