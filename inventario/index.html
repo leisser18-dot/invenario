@@ -1348,7 +1348,7 @@ function actualizarSelectsDinamicos() {
     }
 }
 
-const COLUMNAS_OFICIALES = ['usuario','cedula_identidad','ubicacion','sede','departamento','nombre_pc','os','cpu','memoria_gb','disco','tipo','marca','modelo','serial','estatus','v_android','ip','mac','password','diadema','f_asig_diadema','mouse','mouse_modelo','f_asig_mouse','teclado','teclado_modelo','f_asig_teclado','monitor','monitor_modelo','f_asig_monitor','bolsos','f_asig_bolsos','last_update'];
+const COLUMNAS_OFICIALES = ['usuario','cedula_identidad','ubicacion','sede','departamento','nombre_pc','os','cpu','memoria_gb','disco','tipo','marca','modelo','serial','v_android','ip','mac','password','diadema','f_asig_diadema','mouse','mouse_modelo','f_asig_mouse','teclado','teclado_modelo','f_asig_teclado','monitor','monitor_modelo','f_asig_monitor','bolsos','f_asig_bolsos','last_update'];
 
 const MAPA_CATEGORIAS = {
     'DESKTOP': ['DESKTOP'],
@@ -1580,7 +1580,6 @@ function renderDashboard() {
 
 // ===== TABLE =====
 function columnasVisibles() {
-    if (CATEGORIA_FILTER === 'PUNTOS DE VENTA') return ['marca','modelo','serial','ubicacion','sede','estatus'];
     var ignorarEnTabla = ['diadema','mouse','teclado','monitor'];
     return COLUMNAS_OFICIALES.filter(function(c) { return c!=='tipo' && !ignorarEnTabla.includes(c); });
 }
@@ -1639,7 +1638,6 @@ function inicializarEstructuraModal() {
         else if (c==='memoria_gb') { var mems = ["4 GB DDR3","6 GB DDR3","8 GB DDR3","12 GB DDR3","16 GB DDR3","8 GB DDR4","12 GB DDR4","16 GB DDR4","32 GB DDR4"]; var ops = mems.map(function(m){return '<option value="'+m+'">'+m+'</option>'}).join(''); html += '<select id="memoria_gb"><option value="" selected disabled>Memoria</option>'+ops+'</select>'; }
         else if (c==='disco') { var dsc = ["64 GB SSD","120 GB SSD","240 GB SSD","320 GB SSD","500 GB SSD","1TB SSD"]; var ops = dsc.map(function(d){return '<option value="'+d+'">'+d+'</option>'}).join(''); html += '<select id="disco"><option value="" selected disabled>Disco</option>'+ops+'</select>'; }
         else if (c==='os') { html += '<select id="os"><option value="" selected disabled>SO</option><option value="WINDOWS 10 PRO">WINDOWS 10 PRO</option><option value="WINDOWS 11 PRO">WINDOWS 11 PRO</option></select>'; }
-        else if (c==='estatus') { html += '<select id="estatus"><option value="" selected disabled>Estatus</option><option value="BUENO">BUENO</option><option value="MALO">MALO</option></select>'; }
         else if (['diadema','mouse','teclado','monitor','bolsos'].includes(c)) { html += '<select id="'+c+'" onchange="togglePeriferico(\''+c+'\',this.value)"><option value="NO">'+c.toUpperCase()+': NO</option><option value="SI">'+c.toUpperCase()+': SI</option></select>'; }
         else if (c.startsWith('f_asig_')) { html += '<input type="date" id="'+c+'" title="'+c.toUpperCase()+'" disabled>'; }
         else { var ph = c.toUpperCase(); if(c==='cpu') ph='Procesador'; if(c==='password') ph='Contrasena'; if(c==='ip') ph='IP'; if(c==='mac') ph='MAC'; if(c==='nombre_pc') ph='Nombre / Pantalla'; html += '<input type="text" id="'+c+'" placeholder="'+ph+'">'; }
@@ -1648,7 +1646,7 @@ function inicializarEstructuraModal() {
 }
 
 function actualizarSedesPorUbicacion(ubicacion, v) { if(typeof v==='undefined') v=''; var s=document.getElementById('sede'); if(!s) return; s.innerHTML='<option value="" selected disabled>Seleccione sede</option>'; var ubis = opcionesUbicaciones(); if(ubicacion&&ubis[ubicacion]){ubis[ubicacion].forEach(function(sd){var o=document.createElement('option');o.value=sd;o.text=sd;s.appendChild(o)});} if(v) s.value=v; }
-function nuevoActivo() { abrirModal(); document.getElementById('edit_id').value=""; document.getElementById('btnDelete').style.display='none'; COLUMNAS_OFICIALES.forEach(function(c){var el=document.getElementById(c);if(el){if(el.tagName==='SELECT'){if(['tipo','ubicacion','sede','departamento','os','memoria_gb','disco','estatus'].includes(el.id))el.value="";else el.value='NO'}else el.value="";if(c.startsWith('f_asig_'))el.disabled=true}}); }
+function nuevoActivo() { abrirModal(); document.getElementById('edit_id').value=""; document.getElementById('btnDelete').style.display='none'; COLUMNAS_OFICIALES.forEach(function(c){var el=document.getElementById(c);if(el){if(el.tagName==='SELECT'){if(['tipo','ubicacion','sede','departamento','os','memoria_gb','disco'].includes(el.id))el.value="";else el.value='NO'}else el.value="";if(c.startsWith('f_asig_'))el.disabled=true}}); }
 function abrirModal() { inicializarEstructuraModal(); document.getElementById('modal').style.display='flex'; }
 
 function prepararEdicion(id) {
@@ -1668,7 +1666,6 @@ async function guardarRegistro() {
     var hoy=new Date(); var lu=(hoy.getMonth()+1).toString().padStart(2,'0')+'/'+hoy.getDate().toString().padStart(2,'0')+'/'+hoy.getFullYear().toString().slice(-2);
     var eq={id:document.getElementById('edit_id').value||"EQ-"+Date.now(),last_update:lu};
     COLUMNAS_OFICIALES.forEach(function(c){var el=document.getElementById(c);if(el&&c!=='last_update')eq[c]=el.type==='date'?formatToMMDDYY(el.value):el.value.toUpperCase()});
-    if(!eq.tipo || String(eq.tipo).trim()===''){overlay.style.display='none';toast('Seleccione una categoria antes de guardar','error');return;}
     ['f_asig_mouse','f_asig_teclado','f_asig_monitor'].forEach(function(f){if(!eq[f]||String(eq[f]).trim()==='')eq[f]=lu});
     eq['registrado_por']=usuarioActual();
     var sv=(eq.serial||"").trim().toUpperCase();
@@ -1681,7 +1678,7 @@ async function guardarRegistro() {
 function togglePeriferico(p,v){if(!DEP_PERIFERICOS[p])return;DEP_PERIFERICOS[p].forEach(function(id){var el=document.getElementById(id);if(el){el.style.display='block';el.disabled=false}})}
 
 function toggleCamposDinamicos(tipo){
-    COLUMNAS_OFICIALES.forEach(function(c){if(c!=='tipo' && document.getElementById(c))document.getElementById(c).style.display='none'});
+    COLUMNAS_OFICIALES.forEach(function(c){if(document.getElementById(c))document.getElementById(c).style.display='none'});
     var con=document.getElementById('conexion'),cns=document.getElementById('consumible');
     if(con)con.style.display='none'; if(cns)cns.style.display='none';
     var q=[];
@@ -1690,15 +1687,9 @@ function toggleCamposDinamicos(tipo){
     else if(tipo==='DESKTOP') q=['v_android','bolsos','f_asig_bolsos','ip','mac','password'];
     else if(tipo==='LAPTOP') q=['v_android','teclado','teclado_modelo','f_asig_teclado','ip','mac','password'];
     else if(tipo==='PANTALLA PUBLICITARIA') q=COLUMNAS_OFICIALES.filter(function(c){return !['ubicacion','sede','nombre_pc','ip','mac','password','tipo','last_update'].includes(c)});
-    else if(tipo==='PUNTOS DE VENTA') q=['marca','modelo','serial','ubicacion','sede','estatus'];
     else q=['ip','mac','password'];
     q.forEach(function(id){if(document.getElementById(id))document.getElementById(id).style.display='block'});
     if(con&&tipo==='IMPRESORA')con.style.display='block'; if(cns&&tipo==='IMPRESORA')cns.style.display='block';
-    if(tipo==='PUNTOS DE VENTA'){
-        var mEl=document.getElementById('marca'), mdEl=document.getElementById('modelo');
-        if(mEl && mEl.value==='') mEl.value='SITEF';
-        if(mdEl && mdEl.value==='') mdEl.value='PPC 930';
-    }
 }
 
 function cerrarModal(){document.getElementById('modal').style.display='none'}
