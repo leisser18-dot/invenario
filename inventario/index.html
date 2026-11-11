@@ -1698,6 +1698,41 @@ function toggleCamposDinamicos(tipo){
         if(mEl && mEl.value==='') mEl.value='SITEF';
         if(mdEl && mdEl.value==='') mdEl.value='PPC 930';
     }
+    else if(tipo==='DESKTOP'){
+        var mEl=document.getElementById('marca'), mdEl=document.getElementById('modelo');
+        if(mEl && mEl.value==='') mEl.value='SITEF';
+        if(mdEl && mdEl.value==='') mdEl.value='DT-01';
+    }
+    else if(tipo==='LAPTOP'){
+        var mEl=document.getElementById('marca'), mdEl=document.getElementById('modelo');
+        if(mEl && mEl.value==='') mEl.value='SITEF';
+        if(mdEl && mdEl.value==='') mdEl.value='LP-01';
+    }
+    else if(tipo==='CELULAR'){
+        var mEl=document.getElementById('marca'), mdEl=document.getElementById('modelo');
+        if(mEl && mEl.value==='') mEl.value='GENÉRICO';
+        if(mdEl && mdEl.value==='') mdEl.value='Smartphone';
+    }
+    else if(tipo==='TABLET'){
+        var mEl=document.getElementById('marca'), mdEl=document.getElementById('modelo');
+        if(mEl && mEl.value==='') mEl.value='GENÉRICO';
+        if(mdEl && mdEl.value==='') mdEl.value='Tablet';
+    }
+    else if(tipo==='IMPRESORA'){
+        var mEl=document.getElementById('marca'), mdEl=document.getElementById('modelo');
+        if(mEl && mEl.value==='') mEl.value='HP';
+        if(mdEl && mdEl.value==='') mdEl.value='LaserJet';
+    }
+    else if(tipo==='AUTOPAGO'){
+        var mEl=document.getElementById('marca'), mdEl=document.getElementById('modelo');
+        if(mEl && mEl.value==='') mEl.value='GENÉRICO';
+        if(mdEl && mdEl.value==='') mdEl.value='AutoPago';
+    }
+    else if(tipo==='PANTALLA PUBLICITARIA'){
+        var mEl=document.getElementById('marca'), mdEl=document.getElementById('modelo');
+        if(mEl && mEl.value==='') mEl.value='GENÉRICO';
+        if(mdEl && mdEl.value==='') mdEl.value='Pantalla LED';
+    }
 }
 
 function cerrarModal(){document.getElementById('modal').style.display='none'}
