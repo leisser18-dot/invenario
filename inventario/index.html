@@ -546,6 +546,9 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
                 <button class="btn btn-primary" onclick="exportarCorreosExcel()">📊 Exportar Excel</button>
             </div>
         </div>
+        <div class="toolbar">
+            <div class="search-wrap"><input type="text" id="correosBusqueda" placeholder="Buscar por nombre, cargo, correo, sede, departamento..." oninput="renderTablaCorreos()"></div>
+        </div>
         <div class="table-wrap">
             <table>
                 <thead><tr>
@@ -800,12 +803,19 @@ async function cargarCorreos() {
         else { toast(r.error || 'Error cargando correos', 'error'); }
     } catch(e) { toast('Error de conexion', 'error'); }
 }
+var CORREOS_BUSQUEDA = '';
 function renderTablaCorreos() {
     var tb = document.getElementById('correosTable');
     if (!tb) return;
     var adm = esAdmin();
-    if (!CORREOS_LISTA.length) { tb.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-3);padding:30px;">No hay correos corporativos registrados.</td></tr>'; return; }
-    tb.innerHTML = CORREOS_LISTA.map(function(c) {
+    var buscar = (document.getElementById('correosBusqueda') ? document.getElementById('correosBusqueda').value : '').toUpperCase();
+    var lista = CORREOS_LISTA.filter(function(c) {
+        if (!buscar) return true;
+        var texto = ((c.nombre||'') + ' ' + (c.cargo||'') + ' ' + (c.ubicacion||'') + ' ' + (c.sede||'') + ' ' + (c.departamento||'') + ' ' + (c.correo||'')).toUpperCase();
+        return texto.indexOf(buscar) >= 0;
+    });
+    if (!lista.length) { tb.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-3);padding:30px;">No se encontraron coincidencias.</td></tr>'; return; }
+    tb.innerHTML = lista.map(function(c) {
         var del = adm ? '<button class="btn btn-sm btn-user-delete" onclick="eliminarCorreo(' + c.id + ')">Eliminar</button>' : '';
         var pass = c.contrasena ? '<span class="correo-pass" id="pass_' + c.id + '">••••••••</span> <button class="btn btn-sm btn-ghost" onclick="togglePassCorreo(' + c.id + ')">👁</button>' : '-';
         var fecha = fmtFecha(c.last_update);
